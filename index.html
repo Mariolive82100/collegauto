@@ -352,13 +352,29 @@ body.wz-on{overflow:hidden}
 .welcome{border-color:var(--amber)}
 .welcome h2{font-size:18px;text-transform:none;letter-spacing:0;color:var(--fg)}
 @media (display-mode: standalone){.m-app{padding-top:env(safe-area-inset-top,0px)}.m-top{top:0}}
+
+.team-name{background:none;border:none;padding:0 0 0 4px;min-height:0!important;font:inherit;font-size:12px!important;color:var(--amber);font-weight:600;cursor:pointer}
+.team-head{display:flex;flex-direction:column;gap:2px}
+.team-head b{font-size:20px}
+.teams{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:12px}
+.tm-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tm{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:none;border-bottom:1px solid var(--line);border-radius:0!important;background:var(--panel);text-align:left;min-height:56px!important}
+.tm:last-child{border-bottom:none}
+.tm span:first-child{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tm small{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.tm.cur{background:color-mix(in srgb,var(--teal) 10%,var(--panel))}
+.tm-tag{font-size:12px;font-weight:600;color:var(--teal)}
+.tm-go{font-size:14px;color:var(--amber);font-weight:600;white-space:nowrap}
+.sync-box.sub{border:1px dashed var(--line);border-radius:10px;padding:12px}
+.ev.team .ev-x{color:var(--teal);font-weight:600}
+#sync-msg{color:var(--fg)}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span> <em>mobile</em></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.2</span></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.3</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div></div>
 </header>
@@ -382,8 +398,8 @@ body.wz-on{overflow:hidden}
   </div>
   <div class="panel welcome" id="welcome" hidden>
     <h2>Benvenuto in CollegAuto</h2>
-    <p class="hint" style="margin:0">Se un collega ti ha mandato il codice del gruppo, entra e troverai subito viaggi e punti di tutti.</p>
-    <button class="primary wide" id="welcome-join">Ho un codice di gruppo</button>
+    <p class="hint" style="margin:0">Se un collega ti ha mandato il codice della squadra, entra e troverai subito viaggi e punti di tutti.</p>
+    <button class="primary wide" id="welcome-join">Ho il codice della squadra</button>
     <button class="wide" id="welcome-new">Inizio da zero: aggiungo i viaggiatori</button>
   </div>
   <div class="hero">
@@ -455,7 +471,7 @@ body.wz-on{overflow:hidden}
   </div>
   <div class="panel" id="pane-modifiche" hidden>
     <div class="row between"><h2>Registro delle modifiche</h2><span class="hint" id="ev-sum"></span></div>
-    <p class="hint" style="margin:0">Ogni modifica fatta da chiunque nel gruppo finisce qui, con chi l'ha fatta e quando. Nel gruppo condiviso non si può cancellare né modificare.</p>
+    <p class="hint" style="margin:0">Ogni modifica fatta da chiunque nella squadra finisce qui, con chi l'ha fatta e quando. Nella squadra condivisa non si può cancellare né modificare.</p>
     <label class="f inline"><input type="checkbox" id="ev-only-start"> Solo punti di partenza</label>
     <div id="events"></div>
   </div>
@@ -484,23 +500,42 @@ body.wz-on{overflow:hidden}
 <!-- DATI -->
 <section class="view" data-view="dati" aria-labelledby="t-data" hidden>
   <div class="panel" id="sync-panel">
-    <div class="row between"><h2>Condivisione con i colleghi</h2><span class="sync-pill off" id="sync-status">Non condiviso</span></div>
-    <p id="sync-na" class="hint" style="margin:0" hidden>La condivisione funziona nell'app Android e nel file HTML aperto dal browser, non in questa anteprima di claude.ai.</p>
+    <div class="row between"><h2>La tua squadra</h2><span class="sync-pill off" id="sync-status">Non condiviso</span></div>
+    <p id="sync-na" class="hint" style="margin:0" hidden>La condivisione funziona nella versione web pubblicata e nel file HTML aperto dal browser, non in questa anteprima di claude.ai.</p>
     <div id="sync-off" class="sync-box">
-      <p class="hint" style="margin:0">Collega l'app a un gruppo condiviso: i viaggi registrati da chiunque compaiono su tutti i telefoni, anche quando sei in ferie.</p>
-      <label class="f">Il tuo nome<select id="sync-me"></select></label>
-      <button class="primary wide" id="sync-create">Crea un gruppo con i miei dati</button>
-      <div class="sync-or">oppure</div>
+      <p class="hint" style="margin:0">Collega l'app a una squadra: i viaggi registrati da chiunque compaiono su tutti i telefoni, anche quando sei in ferie.</p>
       <label class="f">Codice ricevuto da un collega<input type="text" id="sync-join-code" placeholder="COL-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
-      <button class="wide" id="sync-join">Entra nel gruppo</button>
+      <button class="primary wide" id="sync-join">Entra nella squadra</button>
+      <div class="sync-or">oppure crea una squadra con i dati di questo telefono</div>
+      <label class="f">Nome della squadra<input type="text" id="team-name-new" placeholder="es. Ufficio Napoli" maxlength="40"></label>
+      <label class="f">Il tuo nome<select id="sync-me"></select></label>
+      <button class="wide" id="sync-create">Crea una squadra con i miei dati</button>
     </div>
     <div id="sync-on" class="sync-box" hidden>
-      <span class="lbl">Codice del gruppo</span>
+      <div class="team-head"><span class="lbl">Squadra aperta</span><b id="team-title"></b></div>
+      <label class="f" id="team-rename-box">Nome della squadra<input type="text" id="team-rename" maxlength="40" placeholder="es. Ufficio Napoli"></label>
+      <span class="lbl">Codice della squadra</span>
       <div class="sync-code" id="sync-code"></div>
       <div class="m-grid2"><button id="sync-copy">Copia codice</button><button class="primary" id="sync-share">Invia ai colleghi</button></div>
-      <label class="f">Il tuo nome<select id="sync-me2"></select></label>
-      <p class="hint" style="margin:0">Chi ha il codice può vedere e modificare i dati del gruppo: mandalo solo ai colleghi.</p>
-      <button class="ghost wide" id="sync-leave">Esci dal gruppo</button>
+      <label class="f">Il tuo nome in questa squadra<select id="sync-me2"></select></label>
+      <p class="hint" style="margin:0">Chi ha il codice può vedere e modificare i dati della squadra: mandalo solo ai colleghi.</p>
+      <div class="teams">
+        <span class="lbl">Le mie squadre</span>
+        <div id="teams-list" class="tm-list"></div>
+        <p class="hint" id="teams-hint" style="margin:0">Fai parte di una sola squadra. Puoi crearne un'altra o entrare in quella di altri colleghi: l'app le ricorda e passi dall'una all'altra con un tocco.</p>
+        <div class="m-grid2"><button id="team-new">+ Nuova squadra vuota</button><button id="team-join-toggle">Entra in un'altra</button></div>
+        <div id="team-new-box" class="sync-box sub" hidden>
+          <label class="f">Nome della nuova squadra<input type="text" id="team-new-name" maxlength="40" placeholder="es. Turno di notte"></label>
+          <label class="f">Il tuo nome<input type="text" id="team-new-me" maxlength="40" placeholder="es. Mario" autocomplete="given-name"></label>
+          <button class="primary wide" id="team-new-ok">Crea la squadra</button>
+          <p class="hint" style="margin:0">Parte vuota: ci sei solo tu, poi aggiungi i colleghi nella scheda Persone. La squadra attuale resta com'è.</p>
+        </div>
+        <div id="team-join-box" class="sync-box sub" hidden>
+          <label class="f">Codice della squadra<input type="text" id="team-join-code" placeholder="COL-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+          <button class="primary wide" id="team-join">Entra</button>
+        </div>
+      </div>
+      <button class="ghost wide" id="sync-leave">Esci da questa squadra</button>
     </div>
     <span class="msg" id="sync-msg" role="status"></span>
   </div>
@@ -566,7 +601,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='2.2';
+const APP_VERSION='2.3';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -785,8 +820,8 @@ function personPanel(p,c){
     h+=`<div class="pdel"><b>Eliminare ${esc(p.name)}?</b>
       <span>Sparisce da elenchi, classifica e scelte del guidatore.</span>
       <span>I viaggi già registrati restano com'erano, quindi <b>i punti degli altri non cambiano</b>.</span>
-      ${p.v?`<span>I suoi ${fmt(p.v)} punti restano nel totale del gruppo, così la somma resta zero.</span>`:''}
-      ${typeof sync!=='undefined'&&sync.code?'<span>La modifica vale per tutto il gruppo condiviso.</span>':''}</div>
+      ${p.v?`<span>I suoi ${fmt(p.v)} punti restano nel totale della squadra, così la somma resta zero.</span>`:''}
+      ${typeof sync!=='undefined'&&sync.code?'<span>La modifica vale per tutta la squadra.</span>':''}</div>
       <div class="m-grid2"><button data-act="back" data-id="${p.id}">Annulla</button><button class="danger solid" data-act="del" data-id="${p.id}">Elimina</button></div>`;
   }
   return h+'</div>';
@@ -919,7 +954,7 @@ function stageImport(text,label){
   const nArch=pending.people.filter(p=>p.archived).length;
   $('import-summary').textContent=`${label}: ${pending.people.length} persone${nArch?` (${nArch} archiviate)`:''}, ${pending.trips.length} viaggi${pending.start?', punti di partenza incluso':''}.`;
   $('import-confirm').hidden=false;dmsg('');
-  if(typeof sync!=='undefined'&&sync.code)$('import-summary').textContent+=' Attenzione: sei in un gruppo condiviso, i dati verranno sostituiti anche per i colleghi.';
+  if(typeof sync!=='undefined'&&sync.code)$('import-summary').textContent+=' Attenzione: sei in una squadra condivisa, i dati verranno sostituiti anche per i colleghi.';
 }
 $('import-ok').onclick=()=>{if(!pending)return;state=pending;pending=null;persist();fresh();$('import-confirm').hidden=true;render();dmsg('Dati importati')};
 $('import-cancel').onclick=()=>{pending=null;$('import-confirm').hidden=true;dmsg('')};
@@ -939,11 +974,9 @@ function copyJSON(){const s=JSON.stringify(exportData(),null,1);$('json').value=
   return w.then(()=>dmsg('JSON copiato negli appunti'),()=>{$('json').select();dmsg('JSON selezionato: copialo con Ctrl+C')})}
 // fuori dal visualizzatore di Claude (file aperto in locale) si salva direttamente dal browser
 const inViewer=!!(window.claude&&claude.use);
-// dentro l'app Android il salvataggio e la condivisione passano dal ponte nativo AndroidBridge
 const blobToB64=blob=>new Promise((ok,ko)=>{const r=new FileReader();r.onload=()=>ok(String(r.result).split(',')[1]);r.onerror=ko;r.readAsDataURL(blob)});
 async function saveLocal(name,text,mime='application/json',ext='.json',desc='JSON'){
   const blob=text instanceof Blob?text:new Blob([text],{type:mime});
-  if(window.AndroidBridge){AndroidBridge.saveFile(name,await blobToB64(blob),mime);return 'saved'}
   if(window.showSaveFilePicker){
     try{const h=await showSaveFilePicker({suggestedName:name,types:[{description:desc,accept:{[mime]:[ext]}}]});
       const w=await h.createWritable();await w.write(blob);await w.close();return 'saved'}
@@ -1032,7 +1065,6 @@ $('share-img').onclick=async()=>{
   const name=`collegauto-punti-${new Date().toISOString().slice(0,10)}.jpg`;
   let blob;try{blob=await buildImage()}catch(e){}
   if(!blob){im('Impossibile creare l\'immagine.');return}
-  if(window.AndroidBridge){AndroidBridge.shareFile(name,await blobToB64(blob),'image/jpeg','Punti CollegAuto al '+new Date().toLocaleDateString('it-IT'));im('');return}
   const file=new File([blob],name,{type:'image/jpeg'});
   if(!inViewer&&navigator.canShare&&navigator.canShare({files:[file]})){
     try{await navigator.share({files:[file],title:'CollegAuto · Punti',text:'Punti CollegAuto al '+new Date().toLocaleDateString('it-IT')});im('')}
@@ -1057,7 +1089,7 @@ function renderStart(){
   const st=state.start;
   const locked=!!window.__startLocked;if(locked)spEdit=false;
   $('start-edit').hidden=spEdit||locked;$('start-actions').hidden=!spEdit;$('start-box').classList.toggle('editing',spEdit);
-  $('start-note').textContent=st?`Punti con cui ognuno è partito il ${new Date(st.date+'T12:00').toLocaleDateString('it-IT')}, prima dei viaggi registrati qui. I viaggi si sommano a questi valori.${locked?' Solo chi ha creato il gruppo può modificarli.':''} Ogni modifica compare nel Registro → Modifiche.`:'Nessun punto di partenza: tutti partono da 0.';
+  $('start-note').textContent=st?`Punti con cui ognuno è partito il ${new Date(st.date+'T12:00').toLocaleDateString('it-IT')}, prima dei viaggi registrati qui. I viaggi si sommano a questi valori.${locked?' Solo chi ha creato la squadra può modificarli.':''} Ogni modifica compare nel Registro → Modifiche.`:'Nessun punto di partenza: tutti partono da 0.';
   const ppl=listed().map(p=>({...p,v:(st&&st.points[p.id])||0})).sort((a,c)=>a.v-c.v||tie(a.id)-tie(c.id)||a.name.localeCompare(c.name));
   if(!spEdit){
     $('start-box').innerHTML=(st?ppl:[]).map(p=>`<div class="sp${p.archived?' off':''}"><span>${esc(p.name)}</span><b class="${p.v>0?'pos':p.v<0?'neg':''}">${fmt(p.v)||'0'}</b></div>`).join('');
@@ -1200,7 +1232,7 @@ sync.pendingDel=sync.pendingDel||[];sync.dirty=sync.dirty||[];
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 const syncSupported=()=>!inViewer&&!!window.firebase;
 let fsdb=null,remoteTrips=null,remoteMeta,applying=false,unsubs=[],lastMeta='',pushing=false,pushAgain=false,syncState='off';
-const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null});
+const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null,teamName:state.teamName||''});
 const clean=o=>JSON.parse(JSON.stringify(o));
 const core=t=>JSON.stringify({date:t.date,weight:t.weight||1,note:t.note||'',cars:t.cars||[],hist:!!t.hist});
 const gref=()=>fsdb.collection('gruppi').doc(sync.code);
@@ -1232,7 +1264,8 @@ async function syncStart(){
 function syncMerge(fromCache){
   if(remoteTrips===null||remoteMeta===undefined)return;
   applying=true;
-  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];state.start=remoteMeta.start||null}
+  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';
+    const tt=sync.teams&&sync.teams.find(x=>x.code===sync.code);if(tt&&tt.name!==state.teamName){tt.name=state.teamName;saveSync()}}
   const del=new Set(sync.pendingDel),dirty=new Set(sync.dirty),localById=new Map(state.trips.map(t=>[t.id,t])),out=[];
   remoteTrips.forEach((d,id)=>{if(dirty.has(id)&&localById.has(id)){out.push(localById.get(id));return}
     if(!d.deleted&&!del.has(id)){const t={id,date:d.date,weight:d.weight||1,note:d.note||'',cars:d.cars||[]};if(d.hist)t.hist=true;if(d.by)t.by=d.by;out.push(t)}});
@@ -1243,7 +1276,7 @@ function syncMerge(fromCache){
   render();applying=false;
   setSync(fromCache?'pending':'ok');
   if(!fromCache&&/…$/.test($('sync-msg').textContent))smsg('Dati sincronizzati.');
-  if(!fromCache&&remoteMeta===null&&!sync.creator&&!remoteTrips.size)smsg('Nessun gruppo trovato con questo codice: controllalo, oppure esci dal gruppo.');
+  if(!fromCache&&remoteMeta===null&&!sync.creator&&!remoteTrips.size)smsg('Nessuna squadra trovata con questo codice: controllalo, oppure esci dalla squadra.');
   syncPush();
 }
 async function syncPush(){
@@ -1344,43 +1377,104 @@ persist=function(){persistLocal();
     state.trips.forEach(t=>{const d=remoteTrips.get(t.id);if(d&&!d.deleted&&core(t)!==core(d)&&!sync.dirty.includes(t.id))sync.dirty.push(t.id)})}
   saveSync();syncPush()};
 
-// --- pannello Condivisione
+// --- squadre: l'app ricorda più squadre e si passa dall'una all'altra; ognuna ha codice, nome e il tuo nome
+sync.teams=sync.teams||[];
+if(sync.code&&!sync.teams.some(t=>t.code===sync.code))sync.teams.push({code:sync.code,name:'',me:sync.me||'',creator:!!sync.creator});
+saveSync();
+const CACHE_PREFIX='ca-cache:';
+const curTeam=()=>sync.teams.find(t=>t.code===sync.code);
+const teamLabel=t=>t&&t.name?t.name:'Squadra senza nome';
+function rememberTeam(){const t=curTeam();if(!t)return;t.me=sync.me||'';t.creator=!!sync.creator;if(state.teamName)t.name=state.teamName;
+  try{localStorage.setItem(CACHE_PREFIX+sync.code,JSON.stringify(state))}catch(e){}saveSync()}
+const hasPending=()=>sync.pendingEv.length||sync.pendingDel.length||sync.dirty.length||sync.metaDirty;
+function stopSync(){unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteEvents=null}
+// passa a un'altra squadra (già nota o nuova); i dati arrivano da Firebase, nel frattempo si mostra la copia salvata
+function openTeam(code,{me='',creator=false,name='',fresh:newState=null}={}){
+  if(sync.code){if(hasPending()){smsg('Ci sono modifiche non ancora inviate: aspetta che il pallino diventi verde e riprova.');return false}rememberTeam()}
+  stopSync();
+  let t=sync.teams.find(x=>x.code===code);
+  if(!t){t={code,name,me,creator};sync.teams.push(t)}
+  sync.code=code;sync.me=t.me||me;sync.creator=!!(t.creator||creator);sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];sync.metaDirty=!!newState;
+  let cached=null;try{cached=JSON.parse(localStorage.getItem(CACHE_PREFIX+code))}catch(e){}
+  applying=true;state=newState||cached||{people:[],trips:[],groups:[],start:null};state.groups=state.groups||[];persistLocal();applying=false;
+  lastSnap=snapOf();lastMeta=newState?'':JSON.stringify(metaOf());
+  saveSync();fresh();pMenu=null;render();syncStart();return true;
+}
 function renderSync(){
   window.__startLocked=!!(sync.code&&!sync.creator);
-  const on=!!sync.code,sup=syncSupported();
+  const on=!!sync.code,sup=syncSupported(),t=curTeam();
   $('sync-off').hidden=on||!sup;$('sync-on').hidden=!on;$('sync-na').hidden=sup;
   const opts=active().map(p=>p.name).sort((a,b)=>a.localeCompare(b));
   ['sync-me','sync-me2'].forEach(id=>{$(id).innerHTML='<option value="">— scegli il tuo nome —</option>'+opts.map(n=>`<option ${n===sync.me?'selected':''}>${esc(n)}</option>`).join('')});
-  if(on)$('sync-code').textContent=sync.code;
+  $('team-name').textContent=on?' · '+teamLabel(t):'';
+  if(on){
+    $('sync-code').textContent=sync.code;
+    if(document.activeElement!==$('team-rename'))$('team-rename').value=t&&t.name||'';
+    $('team-title').textContent=teamLabel(t);
+    $('team-rename-box').hidden=!sync.creator;
+    const others=sync.teams.filter(x=>x.code!==sync.code);
+    $('teams-list').innerHTML=sync.teams.map(x=>x.code===sync.code
+      ?`<div class="tm cur"><span><b>${esc(teamLabel(x))}</b><small>${esc(x.code)}</small></span><span class="tm-tag">aperta</span></div>`
+      :`<button class="tm" data-team="${esc(x.code)}"><span><b>${esc(teamLabel(x))}</b><small>${esc(x.code)}</small></span><span class="tm-go">Apri ›</span></button>`).join('');
+    $('teams-hint').hidden=others.length>0;
+  }
   setSync(syncState);
 }
 const smsg=t=>{$('sync-msg').textContent=t};
-$('sync-me').onchange=$('sync-me2').onchange=e=>{sync.me=e.target.value;saveSync();renderSync()};
+$('sync-me').onchange=$('sync-me2').onchange=e=>{sync.me=e.target.value;const t=curTeam();if(t)t.me=sync.me;saveSync();renderSync()};
+// nome della squadra: lo decide chi l'ha creata, viaggia con i dati condivisi
+$('team-rename').onchange=()=>{const n=$('team-rename').value.trim().slice(0,40);if(!n||!sync.creator)return;state.teamName=n;const t=curTeam();if(t)t.name=n;persist();render();smsg('Nome della squadra aggiornato.')};
+$('team-rename').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
+// dal telefono non collegato: i dati attuali diventano una squadra
 $('sync-create').onclick=()=>{
   if(!sync.me){smsg('Scegli prima il tuo nome.');return}
-  sync.code=newCode();sync.creator=true;sync.metaDirty=true;sync.pendingDel=[];saveSync();renderSync();smsg('Gruppo creato: sto caricando i tuoi dati…');syncStart()};
-$('sync-join').onclick=e=>{
-  const c=normCode($('sync-join-code').value);
+  const n=$('team-name-new').value.trim().slice(0,40)||'La mia squadra';
+  state.teamName=n;persistLocal();
+  sync.code=newCode();sync.creator=true;sync.metaDirty=true;sync.pendingDel=[];sync.teams.push({code:sync.code,name:n,me:sync.me,creator:true});
+  saveSync();renderSync();smsg('Squadra creata: sto caricando i tuoi dati…');syncStart()};
+$('sync-join').onclick=e=>joinTeam($('sync-join-code').value,e.target,true);
+$('team-join').onclick=e=>joinTeam($('team-join-code').value,e.target,false);
+function joinTeam(raw,btn,replacesLocal){
+  const c=normCode(raw);
   if(!/^(BLA|COL)(-[A-Z0-9]{4}){4}$/.test(c)){smsg('Il codice deve avere la forma COL-XXXX-XXXX-XXXX-XXXX.');return}
-  if(!e.target.dataset.c){e.target.dataset.c=1;e.target.textContent='Conferma: sostituisci i miei dati';smsg('I dati di questo telefono verranno sostituiti da quelli del gruppo.');return}
-  delete e.target.dataset.c;e.target.textContent='Entra nel gruppo';
-  applying=true;state={people:[],trips:[],groups:[],start:null};persistLocal();applying=false;lastSnap=snapOf();
-  sync.code=c;sync.metaDirty=false;sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];saveSync();fresh();render();renderSync();smsg('Collegamento al gruppo…');syncStart()};
+  if(sync.teams.some(t=>t.code===c)){openTeam(c);smsg('Squadra aperta.');return}
+  if(replacesLocal&&!btn.dataset.c){btn.dataset.c=1;btn.textContent='Conferma: sostituisci i miei dati';smsg('I dati di questo telefono verranno sostituiti da quelli della squadra.');return}
+  delete btn.dataset.c;btn.textContent=replacesLocal?'Entra nella squadra':'Entra';
+  if(!sync.code){applying=true;state={people:[],trips:[],groups:[],start:null};persistLocal();applying=false}
+  if(openTeam(c,{fresh:null}))smsg('Collegamento alla squadra…');
+}
+// nuova squadra vuota: parte da zero, con te come primo viaggiatore
+$('team-new').onclick=()=>{$('team-new-box').hidden=!$('team-new-box').hidden;if(!$('team-new-box').hidden)$('team-new-name').focus()};
+$('team-new-ok').onclick=()=>{
+  const n=$('team-new-name').value.trim().slice(0,40),me=$('team-new-me').value.trim().slice(0,40);
+  if(!n){smsg('Dai un nome alla nuova squadra.');return}
+  if(!me){smsg('Scrivi il tuo nome: sarai il primo viaggiatore.');return}
+  const st={people:[{id:uid(),name:me}],trips:[],groups:[],start:null,teamName:n};
+  if(openTeam(newCode(),{me,creator:true,name:n,fresh:st})){
+    $('team-new-box').hidden=true;$('team-new-name').value='';$('team-new-me').value='';
+    addEvents([['team',`Creata la squadra ${n}`]]);syncPush();smsg(`Squadra "${n}" creata: manda il codice ai colleghi.`)}};
+$('teams-list').onclick=e=>{const b=e.target.closest('[data-team]');if(!b)return;if(openTeam(b.dataset.team)){smsg(`Aperta "${teamLabel(curTeam())}".`);window.scrollTo(0,0)}};
 $('sync-copy').onclick=()=>{const t=sync.code;
   const ok=()=>smsg('Codice copiato'),ko=()=>{const r=document.createRange();r.selectNodeContents($('sync-code'));const s=getSelection();s.removeAllRanges();s.addRange(r);smsg('Codice selezionato: copialo')};
   try{navigator.clipboard?navigator.clipboard.writeText(t).then(ok,ko):ko()}catch(e){ko()}};
-$('sync-share').onclick=()=>{const txt=`Entra nel gruppo CollegAuto con questo codice:\n${sync.code}\n(App → Dati → Entra in un gruppo)`;
-  if(window.AndroidBridge&&AndroidBridge.shareText){AndroidBridge.shareText(txt);return}
+$('sync-share').onclick=()=>{const txt=`Entra nella squadra "${teamLabel(curTeam())}" su CollegAuto con questo codice:\n${sync.code}\n\nApri ${location.protocol==='https:'?location.origin+location.pathname:'CollegAuto'} → Dati → Entra nella squadra`;
   if(navigator.share){navigator.share({text:txt}).catch(()=>{});return}
   $('sync-copy').click()};
-$('sync-leave').onclick=e=>{if(!e.target.dataset.c){e.target.dataset.c=1;e.target.textContent='Conferma: smetti di sincronizzare';return}
-  delete e.target.dataset.c;e.target.textContent='Esci dal gruppo';
-  unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteEvents=null;sync={pendingDel:[],dirty:[],pendingEv:[],me:sync.me};saveSync();renderSync();setSync('off');smsg('Non sei più collegato: i dati restano su questo telefono.')};
+// esci da questa squadra: se ne hai altre passi a quella, altrimenti resti con la copia sul telefono
+$('sync-leave').onclick=e=>{if(!e.target.dataset.c){e.target.dataset.c=1;e.target.textContent='Conferma: esci da questa squadra';return}
+  delete e.target.dataset.c;e.target.textContent='Esci da questa squadra';
+  if(hasPending()){smsg('Ci sono modifiche non ancora inviate: aspetta che il pallino diventi verde e riprova.');return}
+  const old=sync.code,name=teamLabel(curTeam());sync.teams=sync.teams.filter(t=>t.code!==old);try{localStorage.removeItem(CACHE_PREFIX+old)}catch(x){}
+  const next=sync.teams[0];
+  if(next){sync.code='';openTeam(next.code);smsg(`Sei uscito da "${name}". Ora sei in "${teamLabel(next)}".`);return}
+  stopSync();sync={pendingDel:[],dirty:[],pendingEv:[],me:sync.me,teams:[]};saveSync();renderSync();setSync('off');smsg(`Sei uscito da "${name}": i dati restano su questo telefono.`)};
+$('team-name').onclick=()=>{if(sync.code)location.hash='dati'};
+$('team-join-toggle').onclick=()=>{$('team-join-box').hidden=!$('team-join-box').hidden;if(!$('team-join-box').hidden)$('team-join-code').focus()};
 const _render2=render;render=function(){renderSync();_render2();renderEvents()};
 renderSync();syncStart();
 
 // --- installazione come app (iPhone: "Aggiungi alla schermata Home"; Android/PC: pulsante Installa) e benvenuto
-const isWeb=location.protocol==='https:'&&!inViewer&&!window.AndroidBridge;
+const isWeb=location.protocol==='https:'&&!inViewer;
 const isStandalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 let installEvt=null,installOff=false;try{installOff=localStorage.getItem('ca-install-off')==='1'}catch(e){}
