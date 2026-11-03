@@ -374,7 +374,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span> <em>mobile</em></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.3</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.4</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div></div>
 </header>
@@ -601,7 +601,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='2.3';
+const APP_VERSION='2.4';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -858,7 +858,8 @@ function renderBalances(){
   $('bars').innerHTML=arr.map(x=>{const pct=Math.abs(x.v)/max*50;
     const st=x.v>=0?`left:50%;width:${pct}%;background:var(--teal)`:`left:${50-pct}%;width:${pct}%;background:var(--neg)`;
     return `<div class="bar"><span class="n" title="${esc(x.name)}">${esc(x.name)}</span><div class="track"><div class="fill" style="${st}"></div></div><span class="gp">${cnt[x.id].g}G·${cnt[x.id].p}P</span><span class="v ${x.v>0?'pos':x.v<0?'neg':''}">${fmt(x.v)}</span></div>`}).join('');
-  const total=all.reduce((s,x)=>s+x.v,0);
+  const startSum=Object.values((state.start&&state.start.points)||{}).reduce((a,v)=>a+(+v||0),0);
+  const total=all.reduce((s,x)=>s+x.v,0)-startSum;
   $('zero').className='zero'+(total?' bad':'');$('zero').innerHTML=`Σ punti <b>${fmt(total)||'0'}</b>`;
   const pool=draft.who.size?arr.filter(x=>draft.who.has(x.id)):arr;
   $('next').innerHTML=pool.length?`<span class="hint">Prossimo a guidare${draft.who.size?' tra chi viaggia':''}</span> <b>${esc(pool[0].name)}</b> <span class="hint">${fmt(pool[0].v)||'0'}${pool[1]?` · poi ${esc(pool[1].name)} (${fmt(pool[1].v)||'0'})`:''}</span>`:'<span class="hint">Nessuna persona</span>';
@@ -943,7 +944,7 @@ function parseImport(text){
     t.cars.forEach(c=>{if(!ids.has(c.driver)||!Array.isArray(c.passengers)||c.passengers.some(x=>!ids.has(x)))throw `Viaggio del ${t.date}: compare una persona che non è nell'elenco.`});
   });
   if(s.start){const pts=s.start.points||{};for(const k in pts)pts[k]=Math.round(+pts[k]||0);
-    if(Object.values(pts).reduce((a,v)=>a+v,0)!==0)throw 'I punti di partenza non sommano a zero.'}
+  }
   const groups=Array.isArray(s.groups)?s.groups.filter(g=>g&&g.id&&g.name):[];
   s.people.forEach(p=>{if(p.group&&!groups.some(g=>g.id===p.group))delete p.group});
   return {people:s.people,groups,start:s.start||null,trips:s.trips.sort((a,b)=>a.date.localeCompare(b.date))};
@@ -1083,7 +1084,7 @@ $('export-img').onclick=async()=>{
   try{await downloads.save({filename:name,data:blob});im('Salvata '+name)}
   catch(e){im(e&&e.code==='declined'?'':'Salvataggio non riuscito.')}
 };
-// --- punti di partenza: sezione dedicata, modificabile (interi, somma zero)
+// --- punti di partenza: sezione dedicata, modificabile (numeri interi; la somma può non essere zero: chi non c'è più ha portato via i suoi punti)
 let spEdit=false;
 function renderStart(){
   const st=state.start;
@@ -1099,9 +1100,9 @@ function renderStart(){
 }
 function spCheck(){const vals=[...document.querySelectorAll('[data-sp]')].map(i=>i.value===''?0:+i.value);
   const bad=vals.some(v=>!Number.isInteger(v)),sum=vals.reduce((a,v)=>a+v,0);
-  $('start-msg').textContent=bad?'Solo numeri interi.':sum?`Somma ${fmt(sum)}: deve essere 0.`:'Somma 0 ✓';
-  $('start-msg').style.color=(bad||sum)?'var(--neg)':'var(--teal)';
-  $('start-save').disabled=bad||!!sum;return !(bad||sum)}
+  $('start-msg').textContent=bad?'Solo numeri interi.':`Totale ${fmt(sum)||'0'}`;
+  $('start-msg').style.color=bad?'var(--neg)':'var(--muted)';
+  $('start-save').disabled=bad;return !bad}
 $('start-edit').onclick=()=>{spEdit=true;renderStart();const f=document.querySelector('[data-sp]');if(f)f.focus()};
 $('start-cancel').onclick=()=>{spEdit=false;renderStart()};
 $('start-box').oninput=spCheck;
