@@ -604,6 +604,17 @@ body.wz-on{overflow:hidden}
 .ask3 button{min-height:60px!important;font-size:18px!important;font-weight:700;border-radius:12px!important}
 .ask-other{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ask-other[hidden]{display:none}
 .seat{cursor:default}
+.cmp{display:flex;flex-direction:column;gap:10px}
+.cmp-car{display:flex;flex-direction:column;gap:6px}
+.cmp-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.cmp-drv{background:color-mix(in srgb,var(--amber) 10%,var(--panel))!important}
+.cmp-drv .ul-s{background:color-mix(in srgb,var(--amber) 22%,transparent);color:var(--amber)}
+.cmp-pax .ul-s{background:color-mix(in srgb,var(--teal) 16%,transparent);color:var(--teal)}
+.cmp-wait .ul-s{background:color-mix(in srgb,var(--neg) 14%,transparent);color:var(--neg)}
+.cmp-act{display:grid;grid-template-columns:1fr 2fr;gap:8px}.cmp-act[hidden]{display:none}
+.cmp-act button{min-height:52px!important;font-weight:700}
+#bk-add.armed{background:var(--amber)!important;border-color:var(--amber)!important;color:#16120a!important}
+#bk-add:disabled{opacity:.55}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -611,7 +622,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.4</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.5</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -649,27 +660,14 @@ body.wz-on{overflow:hidden}
     </div>
   </div>
   <div class="panel hm-rs">
-    <div class="row between"><h2>Prossimo viaggio</h2><a class="more-link" href="#prenotazioni">Posti ›</a></div>
+    <div class="row between"><h2>Prossimo viaggio</h2><span class="hint" id="bk-sum"></span></div>
     <p class="hint" style="margin:0" id="hm-day"></p>
-    <div class="bk-rs" id="bk-abs"></div>
-  </div>
-  <div class="panel">
-    <div class="row between"><h2>Ultimi viaggi</h2><a class="more-link" href="#registro">Registro ›</a></div>
-    <div id="recent"></div>
-  </div>
-</section>
-
-<!-- PRENOTAZIONI -->
-<section class="view" data-view="prenotazioni" aria-labelledby="t-bk" hidden>
-  <div class="panel bk">
-    <div class="row between"><h2 id="t-bk">Prenotazioni</h2><span class="hint" id="bk-sum"></span></div>
-    <div class="bk-win"><b id="bk-day"></b><p class="hint" style="margin:0" id="bk-rule"></p></div>
     <div id="bk-tips" class="bk-tips"></div>
-    <div id="bk-days-view" class="bk-cars"></div>
-    <button class="wide bk-main" id="bk-add">Registra il viaggio</button>
+    <div id="bk-days-view" class="cmp"></div>
+    <div class="cmp-act" id="cmp-act"><button class="ghost" id="bk-edit">Modifica</button><button class="bk-main" id="bk-add">Conferma e registra</button></div>
   </div>
   <details class="adv" id="plan">
-    <summary>Organizza le auto · distribuzione automatica in base ai punti e ai gruppi</summary>
+    <summary>Modifica la composizione · auto, guidatori e passeggeri a mano</summary>
   <div class="panel">
     <div class="row between"><h2 id="t-new">Nuovo viaggio</h2><span class="hint" id="step-hint"></span></div>
     <div class="m-fields">
@@ -690,6 +688,14 @@ body.wz-on{overflow:hidden}
     <button class="ghost" id="clear">Svuota</button><button class="primary" id="save">Registra viaggio</button>
   </div>
   </details>
+  <div class="panel">
+    <div class="row between"><h2>Assenti e senza risposta</h2><span class="hint" id="abs-sum"></span></div>
+    <div class="bk-rs" id="bk-abs"></div>
+  </div>
+  <div class="panel">
+    <div class="row between"><h2>Ultimi viaggi</h2><a class="more-link" href="#registro">Registro ›</a></div>
+    <div id="recent"></div>
+  </div>
 </section>
 
 <!-- PUNTI -->
@@ -879,7 +885,6 @@ body.wz-on{overflow:hidden}
 
 <nav class="m-tabs" aria-label="Sezioni">
   <a href="#viaggio" data-tab="viaggio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2M19 16v2M3 11h18"/><circle cx="8" cy="13.5" r=".6"/><circle cx="16" cy="13.5" r=".6"/></svg>Viaggio</a>
-  <a href="#prenotazioni" data-tab="prenotazioni"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>Prenota</a>
   <a href="#punti" data-tab="punti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M12 7H6M12 11h8M12 15H8M12 19h5"/></svg>Punti</a>
   <a href="#registro" data-tab="registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>Registro</a>
   <a href="#gruppi" data-tab="gruppi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2 20c.5-3 2.5-5 5-5s4.5 2 5 5M12 20c.5-3 2.5-5 5-5s4.5 2 5 5"/></svg>Gruppi</a>
@@ -952,7 +957,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.4';
+const APP_VERSION='4.5';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1585,12 +1590,12 @@ function renderRecent(){
 const _render=render;render=function(){_render();renderRecent()};
 renderRecent();
 
-const VIEWS=['viaggio','prenotazioni','punti','registro','gruppi','squadra','membri','condividi','backup','suggerimenti','info'];
-const ALIAS={persone:'membri',dati:'squadra'};
+const VIEWS=['viaggio','punti','registro','gruppi','squadra','membri','condividi','backup','suggerimenti','info'];
+const ALIAS={persone:'membri',dati:'squadra',prenotazioni:'viaggio'};
 const TAB_OF={membri:'squadra'};
 function showView(){const h=location.hash.slice(1);
   if(h==='nuovo'){wzShow();return}
-  if(h==='prenota'){bkShow();return}
+  if(h==='prenota'){location.replace('#viaggio');return}
   if(!$('wz').hidden){$('wz').hidden=true;document.body.classList.remove('wz-on')}
   if(ALIAS[h]){location.replace('#'+ALIAS[h]);return}
   const v=VIEWS.includes(h)?h:'viaggio';
@@ -1946,15 +1951,19 @@ const seatLbl=(i,n)=>i===0?'Davanti':n>4&&i>3?'Terza fila':'Dietro';
 function bkSeat(c,s){const who=s==='d'?c.driver:c.pax[s-1]||'',me=who&&who===myPid();
   const lbl=s==='d'?'Guidatore':seatLbl(s-1,c.seats);
   return `<div class="seat${s==='d'?' drv':''}${who?' taken':''}${me?' me':''}"><small>${lbl}</small>${who?`<b>${esc(name(who))}</b>${s==='d'?`<span class="seat-x">+${c.pax.length} punti</span>`:''}`:'<b class="free">Libero</b>'}</div>`}
+let bkArm=false,bkArmT;
 function renderBookings(){
   const d=tripDay(),L=bkLayout(d),me=myPid(),edit=id=>isAdmin()||id===me,cn=id=>L.cars.findIndex(c=>c.driver===id)+1;
-  $('bk-days-view').innerHTML=L.cars.length?L.cars.map((c,i)=>{const k=i+1,n=c.pax.length;
-    const back=Array.from({length:Math.max(0,c.seats-1)},(_,j)=>bkSeat(c,j+2)),cols=Math.min(3,back.length)||1;
-    return `<div class="bkcar"><div class="car-h"><b>Auto ${k}</b><span class="hint">${n}/${c.seats} posti</span>
+  // composizione suggerita: per ogni auto prima il guidatore, poi i passeggeri
+  const bal0=balances(),pts=id=>{const v=bal0[id]||0;return `<span class="ul-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span>`};
+  const crow=(id,role,extra)=>`<button class="ul-row cmp-${role}${(bal0[id]||0)<0?' ul-neg':''}${id===me?' me':''}" data-rsp="${id}">
+      <span class="ul-n"><b>${esc(name(id))}</b>${extra?`<small>${esc(extra)}</small>`:''}</span>${pts(id)}<span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></button>`;
+  const dt={};L.list.forEach(b=>dt[b.pid]=bkDrive(b));
+  $('bk-days-view').innerHTML=L.cars.length||L.wait.length?L.cars.map((c,i)=>`<div class="cmp-car"><div class="car-h"><b>Auto ${i+1}</b><span class="hint">${c.pax.length}/${c.seats} posti</span>
       ${edit(c.driver)?`<span class="seats-ed"><button class="sd" data-sd="${c.driver}" data-dir="-1" aria-label="Un posto in meno" ${c.seats<=1?'disabled':''}>−</button><span>${c.seats} posti</span><button class="sd" data-sd="${c.driver}" data-dir="1" aria-label="Un posto in più" ${c.seats>=SEATS_MAX?'disabled':''}>+</button></span>`:''}</div>
-      <div class="car-row" style="grid-template-columns:1fr 1fr">${bkSeat(c,'d')}${bkSeat(c,1)}</div>
-      ${back.length?`<div class="car-row" style="grid-template-columns:repeat(${cols},1fr)">${back.join('')}</div>`:''}</div>`}).join('')
-    :`<p class="hint" style="margin:0">${L.list.length?'Nessuno dei presenti ha detto di poter guidare.':'Ancora nessun presente: le auto si compongono da sole quando i colleghi toccano "Presente".'}</p>`;
+      <div class="cmp-list">${crow(c.driver,'drv',`+${c.pax.length} punti${c.maybe?' · aveva detto "non so"':''}`)}${c.pax.map(x=>crow(x,'pax',dt[x]==='si'?'poteva guidare':'')).join('')}</div></div>`).join('')
+    +(L.wait.length?`<div class="cmp-car"><div class="car-h"><b>Senza posto</b></div><div class="cmp-list">${L.wait.map(x=>crow(x,'wait','')).join('')}</div></div>`:'')
+    :`<p class="hint" style="margin:0">${L.list.length?'Nessuno dei presenti ha detto di poter guidare.':'Ancora nessun presente: la composizione delle auto compare qui quando i colleghi toccano "Presente".'}</p>`;
   // suggerimenti
   const tips=[];
   if(me&&L.cars.some(c=>c.driver===me))tips.push(['me',`Guidi tu: Auto ${cn(me)}, con ${L.cars.find(c=>c.driver===me).pax.map(name).join(', ')||'nessun passeggero per ora'}.`]);
@@ -1965,10 +1974,10 @@ function renderBookings(){
   $('bk-tips').innerHTML=tips.map(([t,x])=>`<div class="tip tip-${t}">${esc(x)}</div>`).join('');
   const pres=L.list.length,abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
   $('bk-sum').textContent=pres?`${pres} ${pres===1?'presente':'presenti'} · ${L.cars.length} auto`:'';
-  $('bk-day').textContent='Viaggio di '+bkLong(d);
-  const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);const m=Math.max(0,Math.round((end-new Date())/60000));
-  $('bk-rule').textContent=`Le auto si compongono da sole con le presenze: guida prima chi ha risposto "sì", poi chi ha risposto "non so", partendo da chi ha meno punti. Vale fino alle ${BK_CUTOFF}:00 di ${bkLong(d)} (tra ${m>=60?Math.floor(m/60)+' h ':''}${m%60} min).`;
-  $('bk-add').disabled=!L.cars.some(c=>c.pax.length);
+  const done1=state.trips.some(t=>!t.hist&&t.date===d),can=L.cars.some(c=>c.pax.length);
+  $('cmp-act').hidden=!L.cars.length;$('bk-add').disabled=!can||done1;
+  $('bk-add').textContent=done1?'Viaggio già registrato ✓':bkArm?'Tocca di nuovo per registrare':'Conferma e registra';
+  $('bk-add').classList.toggle('armed',bkArm&&!done1);
   // elenco unico nella pagina principale: presenti, assenti, senza risposta; in ogni gruppo prima chi ha meno punti
   const bal=balances(),sub={};
   L.cars.forEach((c,i)=>{sub[c.driver]=`Guida l'Auto ${i+1}`;c.pax.forEach(x=>{sub[x]=`Passeggero Auto ${i+1}`})});
@@ -1980,9 +1989,12 @@ function renderBookings(){
   const row=(id,st)=>{const v=bal[id]||0;return `<button class="ul-row ul-${st}${v<0?' ul-neg':''}${id===me?' me':''}" data-rsp="${id}">
       <span class="ul-n"><b>${esc(name(id))}</b>${st==='pres'?`<small>${esc(sub[id]||DRIVE_TXT[dr[id]])}</small>`:''}</span>
       <span class="ul-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span><span class="ul-s">${ST[st]}</span></button>`};
-  $('bk-abs').innerHTML=active().length?presIds.map(id=>row(id,'pres')).join('')+absIds.map(id=>row(id,'abs')).join('')+missIds.map(id=>row(id,'miss')).join('')
-    :'<p class="hint" style="margin:0">Aggiungi i partecipanti della squadra per vedere l\'elenco.</p>';
-  $('hm-day').textContent=`${bkLong(d)} · ${pres} ${pres===1?'presente':'presenti'}, ${abs.length} ${abs.length===1?'assente':'assenti'}, ${missP.length} senza risposta`;
+  $('bk-abs').innerHTML=!active().length?'<p class="hint" style="margin:0">Aggiungi i partecipanti della squadra per vedere l\'elenco.</p>'
+    :absIds.length||missIds.length?absIds.map(id=>row(id,'abs')).join('')+missIds.map(id=>row(id,'miss')).join('')
+    :'<p class="hint" style="margin:0">Hanno risposto tutti e nessuno è assente.</p>';
+  $('abs-sum').textContent=`${abs.length} ${abs.length===1?'assente':'assenti'} · ${missP.length} senza risposta`;
+  const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);
+  $('hm-day').textContent=`${bkLong(d)} · composizione suggerita in base ai presenti: guida prima chi ha detto "sì", poi chi ha detto "non so", da chi ha meno punti. Si azzera alle ${BK_CUTOFF}:00.`;
   // i due tasti della pagina principale
   const mineB=me&&L.list.find(b=>b.pid===me),meAbs=me&&abs.some(b=>b.pid===me);
   $('bk-open-t').textContent=mineB?'Presente ✓':'Presente';
@@ -2015,14 +2027,16 @@ $('bk-abs').onclick=e=>{const b=e.target.closest('[data-rsp]');if(b)askDrive(b.d
 $('bk-days-view').onclick=e=>{const sd=e.target.closest('[data-sd]');if(!sd)return;
   const d=tripDay(),b=(state.bookings||[]).find(x=>x.id===d+'_'+sd.dataset.sd);if(!b)return;
   const v=Math.max(1,Math.min(SEATS_MAX,(+b.seats||SEATS_DEF)+(+sd.dataset.dir)));bkWrite({...b,seats:v});render()};
-$('bk-add').onclick=()=>planDay();
-function bkOpen(){location.hash='prenotazioni'}
-function bkShow(){location.replace('#prenotazioni')}
+$('bk-add').onclick=()=>{if(!bkArm){bkArm=true;renderBookings();clearTimeout(bkArmT);bkArmT=setTimeout(()=>{bkArm=false;renderBookings()},4000);return}
+  bkArm=false;clearTimeout(bkArmT);fillDraft();const v=validate();if(v){$('plan').open=true;render();setMsg(v);$('plan').scrollIntoView({block:'start',behavior:'smooth'});return}
+  $('save').click();$('plan').open=false;snack(`Viaggio di ${bkLong(tripDay())} registrato`)};
+$('bk-edit').onclick=()=>planDay();
 // dalle auto composte al viaggio da registrare (si può ancora modificare a mano)
-function planDay(){const d=tripDay(),L=bkLayout(d);
+function fillDraft(){const d=tripDay(),L=bkLayout(d);
   const cars=L.cars.map(c=>({driver:c.driver,passengers:[...c.pax]}));
   draft={who:new Set(L.list.map(b=>b.pid).filter(id=>active().some(p=>p.id===id))),cars:cars.length?cars:[{driver:'',passengers:[]}]};
-  $('trip-date').value=d;$('dist-note').textContent='Auto prese dalle prenotazioni: controlla e tocca Registra viaggio.';
+  $('trip-date').value=d}
+function planDay(){fillDraft();$('dist-note').textContent='Composizione suggerita: modifica auto, guidatori e passeggeri, poi tocca Registra viaggio.';
   const adv=$('plan');adv.open=true;render();
   setTimeout(()=>adv.scrollIntoView({block:'start',behavior:'smooth'}),60)}
 const dayGroup=id=>groupOf(id);
@@ -4407,6 +4421,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['4.5','La composizione suggerita delle auto per il prossimo viaggio è nella pagina principale: per ogni auto prima il guidatore, poi i passeggeri. Si può confermare e registrare oppure modificare. Assenti e senza risposta in una tabella sotto. Eliminata la pagina Prenota.'],
  ['4.4','Nuova prenotazione: "Presente" chiede "Sarai guidatore?" (sì, no, non so); toccandolo di nuovo si annulla. Le auto nella pagina Prenota si compongono da sole: guida prima chi ha detto sì, poi chi ha detto non so, partendo da chi ha meno punti. Toccando un nome nell\'elenco si risponde per un collega.'],
  ['4.3','Pagina principale: un unico elenco con nome, punteggio e stato (presente, assente, nessuna risposta), ordinato per stato e poi dal punteggio più basso. "Presente" chiede se si vuole prenotare il posto. Tolti il riquadro "Prossimo a guidare" e il tasto "Non ci sono" nella pagina Prenota.'],
  ['4.2','Nella pagina principale c\'è anche l\'elenco dei presenti al prossimo viaggio, con auto, ruolo e punteggio.'],
