@@ -402,15 +402,63 @@ body.wz-on{overflow:hidden}
 .sh-link{font-size:14px;text-align:center;color:var(--muted);word-break:break-all;user-select:all;background:var(--chip);border-radius:8px;padding:8px}
 .sh-ext{display:flex;align-items:center;justify-content:center;min-height:46px;border-radius:8px;font-weight:700;text-decoration:none;color:#fff}
 .sh-ext.wa{background:#1fa855}.sh-ext.tg{background:#2a9bd8}
+
+/* v3.0: menu, prenota, pagine */
+.hdr-menu{width:40px;height:40px;min-height:40px!important;padding:0!important;display:flex;align-items:center;justify-content:center;border-radius:10px!important;background:var(--chip)}
+.hdr-menu svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.cta2{min-height:58px!important;font-size:18px!important;font-weight:700;border-radius:14px!important;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:var(--teal);border-color:var(--teal);color:var(--bg)}
+.cta2 svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bk-main{background:var(--teal)!important;border-color:var(--teal)!important;color:var(--bg)!important;font-weight:700}
+.more-link{font-size:14px;color:var(--amber);text-decoration:none;font-weight:600}
+.bk-daysview{display:flex;flex-direction:column;gap:16px}
+.bkd{display:flex;flex-direction:column;gap:8px}
+.bkd-head{display:flex;align-items:baseline;gap:8px}
+.bkd-head b{font-size:18px}
+.bkd-head .hint{flex:1}
+.bkd-head .hint::first-letter{text-transform:uppercase}
+.bkd .bk-n{background:var(--teal);color:var(--bg)}
+.bk-plan{border-color:var(--teal)!important;color:var(--teal)!important;background:none!important;font-weight:600}
+.bk-dayswz{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bkq{display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:84px!important}
+.bkq small{font-size:12.5px;font-weight:500;color:var(--muted)}
+.bkq.sel{border-color:var(--teal)!important;background:color-mix(in srgb,var(--teal) 16%,var(--panel))!important}
+.bkq:disabled{opacity:.45}
+#bks .wz-head{grid-template-columns:44px 1fr 44px}
+.drawer-bg{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.5)}
+.drawer{position:fixed;top:0;bottom:0;right:0;z-index:81;width:min(320px,86vw);background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;gap:4px;
+  padding:calc(14px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) 14px;box-shadow:-20px 0 40px -20px #000}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 12px;font-size:20px}
+.drawer-head b span,.info-name span{color:var(--amber)}
+.dm{display:flex;align-items:center;gap:14px;padding:14px 10px;border-radius:12px;color:var(--fg);text-decoration:none}
+.dm:hover,.dm:focus-visible{background:var(--chip)}
+.dm svg{width:24px;height:24px;flex:none;fill:none;stroke:var(--amber);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.dm span{display:flex;flex-direction:column;gap:2px;font-size:16.5px;font-weight:600}
+.dm small{font-size:13px;font-weight:400;color:var(--muted)}
+.info-head{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:12px}
+.info-head p{grid-column:1/-1}
+.ins-ico.big{width:64px;height:64px;border-radius:16px}
+.info-name{display:block;font-size:24px}
+.info-rows{display:flex;flex-direction:column}
+.info-rows div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.info-rows div span{color:var(--muted)}
+.notes{display:flex;flex-direction:column;gap:10px}
+.note{display:grid;grid-template-columns:52px 1fr;gap:8px;font-size:14.5px;line-height:1.4}
+.note b{color:var(--amber)}
+.sug{padding:10px 0;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:4px}
+.sug-t{font-size:15.5px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+#sug-text{min-height:110px;font-family:inherit}
+#whoami .sheet-card{gap:12px}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
-    <h1>Colleg<span>Auto</span> <em>mobile</em></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.7</span><button class="team-name" id="team-name" type="button"></button></small>
+    <h1>Colleg<span>Auto</span></h1>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.0</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
-  <div class="row" style="gap:8px;flex-wrap:nowrap"><button class="hdr-share" id="share-app" type="button" aria-label="Condividi l'app" title="Condividi l'app"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/></svg></button><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div></div>
+  <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
+    <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
 </header>
 
 <div class="m-alerts">
@@ -423,7 +471,7 @@ body.wz-on{overflow:hidden}
 
 <main class="m-main">
 <!-- VIAGGIO -->
-<section class="view" data-view="viaggio" aria-labelledby="t-new">
+<section class="view" data-view="viaggio" aria-label="Viaggio">
   <div class="install" id="install" hidden>
     <div class="ins-ico" aria-hidden="true"></div>
     <div class="ins-txt"><b>Installa CollegAuto</b><span id="install-how"></span></div>
@@ -439,30 +487,24 @@ body.wz-on{overflow:hidden}
   <div class="hero">
     <div class="m-next" id="next-mini"></div>
     <button class="cta" id="wz-open"><span class="plus" aria-hidden="true">+</span> Inserisci viaggio</button>
-  </div>
-  <div class="panel bk" id="bk-panel">
-    <div class="row between"><h2>Chi c'è</h2><span class="hint" id="bk-date"></span></div>
-    <div class="seg" role="tablist" aria-label="Giorno">
-      <button role="tab" data-bkday="oggi" aria-selected="true">Oggi</button>
-      <button role="tab" data-bkday="domani" aria-selected="false">Domani</button>
-    </div>
-    <div id="bk-list" class="bk-list"></div>
-    <button class="primary wide" id="bk-add">Ci sono anch'io</button>
-    <div id="bk-form" class="sync-box sub" hidden>
-      <label class="f">Chi<select id="bk-person"></select></label>
-      <span class="lbl">Ci sono</span><div class="chips" id="bk-days"></div>
-      <span class="lbl">Gruppo di preferenza</span><div class="chips" id="bk-groups"></div>
-      <label class="f">Note<input type="text" id="bk-note" maxlength="120" placeholder="es. esco alle 17, arrivo alle 9:30"></label>
-      <div class="m-grid2"><button id="bk-cancel">Annulla</button><button class="primary" id="bk-save">Conferma</button></div>
-      <button class="ghost wide danger" id="bk-del" hidden>Non ci sono più</button>
-    </div>
-    <button class="wide" id="bk-plan" hidden></button>
+    <button class="cta2" id="bk-open"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg> Prenota viaggio</button>
   </div>
   <div class="panel">
-    <h2>Ultimi viaggi</h2>
+    <div class="row between"><h2>Ultimi viaggi</h2><a class="more-link" href="#registro">Registro ›</a></div>
     <div id="recent"></div>
   </div>
-  <details class="adv"><summary>Inserimento avanzato · distribuzione automatica e gruppi</summary>
+</section>
+
+<!-- PRENOTAZIONI -->
+<section class="view" data-view="prenotazioni" aria-labelledby="t-bk" hidden>
+  <div class="panel bk">
+    <div class="row between"><h2 id="t-bk">Prenotazioni</h2><span class="hint" id="bk-sum"></span></div>
+    <p class="hint" style="margin:0" id="bk-rule"></p>
+    <div id="bk-days-view" class="bk-daysview"></div>
+    <button class="wide bk-main" id="bk-add">Prenota viaggio</button>
+  </div>
+  <details class="adv" id="plan">
+    <summary>Organizza le auto · distribuzione automatica in base ai punti e ai gruppi</summary>
   <div class="panel">
     <div class="row between"><h2 id="t-new">Nuovo viaggio</h2><span class="hint" id="step-hint"></span></div>
     <div class="m-fields">
@@ -529,35 +571,10 @@ body.wz-on{overflow:hidden}
   </div>
 </section>
 
-<!-- PERSONE -->
-<section class="view" data-view="persone" aria-labelledby="t-people" hidden>
-  <div class="panel">
-    <div class="row between"><h2 id="t-people">Viaggiatori</h2><span class="hint" id="people-count"></span></div>
-    <div class="m-add"><input type="text" id="new-person" placeholder="Nuovo viaggiatore" aria-label="Nuovo viaggiatore"><button id="add-person">Aggiungi</button></div>
-    <span class="msg" id="pmsg" role="status"></span>
-    <div class="ptable" id="people"></div>
-    <span class="hint">Tocca un nome o ⋯ per gruppo, archiviazione, nuovo nome o eliminazione.</span>
-  </div>
-</section>
-
-<!-- GRUPPI -->
-<section class="view" data-view="gruppi" aria-labelledby="t-groups" hidden>
-  <div class="panel">
-    <div class="row between"><h2 id="t-groups">Gruppi</h2><button id="add-group">+ Nuovo gruppo</button></div>
-    <p class="hint" style="margin:0">Chi è nello stesso gruppo viaggia insieme quando usi la distribuzione automatica, se c'è posto. Nell'inserimento guidato i compagni di gruppo del guidatore compaiono per primi.</p>
-  </div>
-  <div id="groups" class="gstack"></div>
-</section>
-
-<!-- DATI -->
-<section class="view" data-view="dati" aria-labelledby="t-data" hidden>
-  <div class="panel share-panel">
-    <div class="row between"><h2>Condividi CollegAuto</h2></div>
-    <p class="hint" style="margin:0">Fai conoscere l'app ad altri colleghi: link, QR code, WhatsApp o Telegram. Puoi anche invitarli direttamente nella tua squadra.</p>
-    <button class="wide share-btn" id="share-app2"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/></svg> Condividi l'app</button>
-  </div>
+<!-- SQUADRA -->
+<section class="view" data-view="squadra" aria-label="Squadra e gruppi" hidden>
   <div class="panel" id="sync-panel">
-    <div class="row between"><h2>La tua squadra</h2><span class="sync-pill off" id="sync-status">Non condiviso</span></div>
+    <div class="row between"><h2>Squadra</h2><span class="sync-pill off" id="sync-status">Non condiviso</span></div>
     <p id="sync-na" class="hint" style="margin:0" hidden>La condivisione funziona nella versione web pubblicata e nel file HTML aperto dal browser, non in questa anteprima di claude.ai.</p>
     <div id="sync-off" class="sync-box">
       <p class="hint" style="margin:0">Collega l'app a una squadra: i viaggi registrati da chiunque compaiono su tutti i telefoni, anche quando sei in ferie.</p>
@@ -585,7 +602,7 @@ body.wz-on{overflow:hidden}
           <label class="f">Nome della nuova squadra<input type="text" id="team-new-name" maxlength="40" placeholder="es. Turno di notte"></label>
           <label class="f">Il tuo nome<input type="text" id="team-new-me" maxlength="40" placeholder="es. Mario" autocomplete="given-name"></label>
           <button class="primary wide" id="team-new-ok">Crea la squadra</button>
-          <p class="hint" style="margin:0">Parte vuota: ci sei solo tu, poi aggiungi i colleghi nella scheda Persone. La squadra attuale resta com'è.</p>
+          <p class="hint" style="margin:0">Parte vuota: ci sei solo tu, poi aggiungi i componenti qui sotto. La squadra attuale resta com'è.</p>
         </div>
         <div id="team-join-box" class="sync-box sub" hidden>
           <label class="f">Codice della squadra<input type="text" id="team-join-code" placeholder="COL-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
@@ -597,7 +614,38 @@ body.wz-on{overflow:hidden}
     <span class="msg" id="sync-msg" role="status"></span>
   </div>
   <div class="panel">
-    <h2 id="t-data">Dati</h2>
+    <div class="row between"><h2 id="t-people">Componenti</h2><span class="hint" id="people-count"></span></div>
+    <div class="m-add"><input type="text" id="new-person" placeholder="Nome del nuovo componente" aria-label="Nuovo componente"><button id="add-person">Aggiungi</button></div>
+    <span class="msg" id="pmsg" role="status"></span>
+    <div class="ptable" id="people"></div>
+    <span class="hint" id="people-hint"></span>
+  </div>
+  <div class="panel">
+    <div class="row between"><h2 id="t-groups">Gruppi</h2><button id="add-group">+ Nuovo gruppo</button></div>
+    <p class="hint" style="margin:0">Chi è nello stesso gruppo viaggia insieme quando organizzi le auto, se c'è posto. Nell'inserimento guidato i compagni di gruppo del guidatore compaiono per primi.</p>
+  </div>
+  <div id="groups" class="gstack"></div>
+</section>
+
+<!-- MENU: CONDIVIDI -->
+<section class="view" data-view="condividi" aria-labelledby="t-share" hidden>
+  <div class="panel">
+    <div class="row between"><h2 id="t-share">Condividi l'app</h2><a class="more-link" href="#viaggio">Chiudi</a></div>
+    <div class="qr" id="sh-qr" aria-label="QR code del link"></div>
+    <p class="hint" style="margin:0;text-align:center">Fai inquadrare il codice con la fotocamera, oppure manda il link.</p>
+    <div class="sh-link" id="sh-link"></div>
+    <label class="f inline" id="sh-team-box"><input type="checkbox" id="sh-team" checked> <span id="sh-team-lbl"></span></label>
+    <button class="primary wide" id="sh-native">Condividi…</button>
+    <div class="m-grid2"><a class="sh-ext wa" id="sh-wa" target="_blank" rel="noopener">WhatsApp</a><a class="sh-ext tg" id="sh-tg" target="_blank" rel="noopener">Telegram</a></div>
+    <button class="wide" id="sh-copy">Copia link</button>
+    <span class="msg" id="sh-msg" role="status" style="color:var(--fg)"></span>
+  </div>
+</section>
+
+<!-- MENU: DATI E BACKUP -->
+<section class="view" data-view="backup" aria-label="Dati e backup" hidden>
+  <div class="panel">
+    <h2 id="t-data">Dati e backup</h2>
     <p class="hint" style="margin:0">Il file JSON contiene persone, gruppi, punti di partenza e tutti i viaggi. È lo stesso formato della versione desktop: esporta da una e importa nell'altra.</p>
     <button class="primary wide" id="export">Esporta JSON</button>
     <label class="filebtn wide" for="import-file">Importa JSON</label>
@@ -610,16 +658,51 @@ body.wz-on{overflow:hidden}
     </details>
   </div>
 </section>
+
+<!-- MENU: SUGGERIMENTI -->
+<section class="view" data-view="suggerimenti" aria-labelledby="t-sug" hidden>
+  <div class="panel">
+    <h2 id="t-sug">Suggerimenti</h2>
+    <p class="hint" style="margin:0">Hai un'idea per migliorare CollegAuto o hai trovato qualcosa che non va? Scrivila qui: la leggono tutti i componenti della squadra e chi l'ha creata.</p>
+    <textarea id="sug-text" maxlength="600" placeholder="es. Sarebbe utile un promemoria la sera prima per prenotare"></textarea>
+    <button class="primary wide" id="sug-send">Invia suggerimento</button>
+    <span class="msg" id="sug-msg" role="status"></span>
+  </div>
+  <div class="panel">
+    <div class="row between"><h2>Suggerimenti della squadra</h2><span class="hint" id="sug-count"></span></div>
+    <div id="sug-list"></div>
+  </div>
+</section>
+
+<!-- MENU: INFO -->
+<section class="view" data-view="info" aria-label="Info sull'app" hidden>
+  <div class="panel info-head">
+    <div class="ins-ico big" aria-hidden="true"></div>
+    <div><b class="info-name">Colleg<span>Auto</span></b><span class="hint" id="info-ver"></span></div>
+    <p class="hint" style="margin:0">Car sharing tra colleghi: chi guida, chi viaggia, a chi tocca. Ogni auto fa somma zero: +1 al guidatore per ogni passeggero, −1 a ciascun passeggero.</p>
+  </div>
+  <div class="panel"><h2>Stato</h2><div id="info-state" class="info-rows"></div></div>
+  <div class="panel"><h2>Note di rilascio</h2><div id="info-notes" class="notes"></div></div>
+  <div class="panel"><h2>Crediti</h2><p class="hint" style="margin:0">Ideata da M.T. · Dati condivisi con Firebase (Google) · QR code: qrcode-generator di Kazuhiko Arase (licenza MIT) · Carattere: Google Sans Flex.</p></div>
+</section>
 </main>
 
 <nav class="m-tabs" aria-label="Sezioni">
   <a href="#viaggio" data-tab="viaggio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2M19 16v2M3 11h18"/><circle cx="8" cy="13.5" r=".6"/><circle cx="16" cy="13.5" r=".6"/></svg>Viaggio</a>
+  <a href="#prenotazioni" data-tab="prenotazioni"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>Prenota</a>
   <a href="#punti" data-tab="punti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M12 7H6M12 11h8M12 15H8M12 19h5"/></svg>Punti</a>
   <a href="#registro" data-tab="registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>Registro</a>
-  <a href="#persone" data-tab="persone"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3"/><path d="M4 19c0-3 2.5-5 5-5s5 2 5 5M16 7a2.5 2.5 0 0 1 0 5M17 14c2 .5 3 2.3 3 5"/></svg>Persone</a>
-  <a href="#gruppi" data-tab="gruppi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><circle cx="12" cy="15" r="2.5"/><path d="M4 21c.5-2 2-3 4-3M20 21c-.5-2-2-3-4-3"/></svg>Gruppi</a>
-  <a href="#dati" data-tab="dati"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 19h14"/></svg>Dati</a>
+  <a href="#squadra" data-tab="squadra"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><circle cx="12" cy="15" r="2.5"/><path d="M4 21c.5-2 2-3 4-3M20 21c-.5-2-2-3-4-3"/></svg>Squadra</a>
 </nav>
+
+<div class="drawer-bg" id="drawer-bg" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-label="Menu">
+  <div class="drawer-head"><b>Colleg<span>Auto</span></b><button class="x" id="menu-close" aria-label="Chiudi menu">✕</button></div>
+  <a href="#condividi" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/></svg><span>Condividi l'app<small>Link, QR code, WhatsApp, Telegram</small></span></a>
+  <a href="#backup" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 19h14"/></svg><span>Dati e backup<small>Esporta e importa i dati</small></span></a>
+  <a href="#suggerimenti" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Suggerimenti<small>Idee e segnalazioni</small></span></a>
+  <a href="#info" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><span>Info sull'app<small>Versione e note di rilascio</small></span></a>
+</aside>
 
 <div class="wz" id="wz" hidden role="dialog" aria-modal="true" aria-labelledby="wz-title">
   <div class="wz-head">
@@ -631,17 +714,28 @@ body.wz-on{overflow:hidden}
   <div class="wz-body" id="wz-body"></div>
   <div class="wz-foot"><button class="primary wide" id="wz-next">Avanti</button></div>
 </div>
-<div class="sheet" id="sh" hidden role="dialog" aria-modal="true" aria-labelledby="sh-t">
+
+<div class="wz" id="bks" hidden role="dialog" aria-modal="true" aria-labelledby="bks-title">
+  <div class="wz-head"><span></span><div class="wz-prog"><span>Prenotazione</span></div><button class="x" id="bk-cancel" aria-label="Chiudi">✕</button></div>
+  <h2 class="wz-title" id="bks-title">Quando ci sei?</h2>
+  <div class="wz-body">
+    <div class="bk-dayswz" id="bk-days"></div>
+    <p class="hint" style="margin:0" id="bk-lockmsg"></p>
+    <label class="f">Chi<select id="bk-person"></select></label>
+    <span class="lbl">Gruppo di preferenza</span><div class="chips" id="bk-groups"></div>
+    <label class="f">Note<input type="text" id="bk-note" maxlength="120" placeholder="es. esco alle 17, arrivo alle 9:30"></label>
+    <button class="ghost wide danger" id="bk-del" hidden>Non ci sono più</button>
+  </div>
+  <div class="wz-foot"><button class="wide bk-main" id="bk-save">Conferma prenotazione</button></div>
+</div>
+<div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
   <div class="sheet-card">
-    <div class="row between"><h2 id="sh-t">Condividi CollegAuto</h2><button class="x" id="sh-x" aria-label="Chiudi">✕</button></div>
-    <div class="qr" id="sh-qr" aria-label="QR code del link"></div>
-    <p class="hint" style="margin:0;text-align:center">Fai inquadrare il codice con la fotocamera, oppure manda il link.</p>
-    <div class="sh-link" id="sh-link"></div>
-    <label class="f inline" id="sh-team-box"><input type="checkbox" id="sh-team" checked> <span id="sh-team-lbl"></span></label>
-    <button class="primary wide" id="sh-native">Condividi…</button>
-    <div class="m-grid2"><a class="sh-ext wa" id="sh-wa" target="_blank" rel="noopener">WhatsApp</a><a class="sh-ext tg" id="sh-tg" target="_blank" rel="noopener">Telegram</a></div>
-    <button class="wide" id="sh-copy">Copia link</button>
-    <span class="msg" id="sh-msg" role="status" style="color:var(--fg)"></span>
+    <h2 id="who-t">Chi sei in questa squadra?</h2>
+    <p class="hint" style="margin:0" id="who-team"></p>
+    <div class="pmenu" id="who-list"></div>
+    <span class="lbl">Non sei in elenco?</span>
+    <div class="m-add"><input type="text" id="who-new" maxlength="40" placeholder="Il tuo nome" aria-label="Il tuo nome"><button class="primary" id="who-add">Aggiungimi</button></div>
+    <button class="ghost" id="who-later">Più tardi</button>
   </div>
 </div>
 <div class="snack" id="snack" hidden></div>
@@ -671,7 +765,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='2.7';
+const APP_VERSION='3.0';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -690,6 +784,8 @@ if(!state.start&&state.people.some(p=>p.id==='p1')){state.start=JSON.parse(JSON.
   state.people.forEach(p=>{const q=IMPORTED.people.find(x=>x.id===p.id);if(q&&q.archived)p.archived=true})}
 state.trips.forEach(t=>t.weight=Math.max(1,Math.round(+t.weight||1)));
 const active=()=>state.people.filter(p=>!p.archived&&!p.deleted);
+// chi gestisce i componenti: chi ha creato la squadra (o chiunque, se l'app non è collegata a una squadra)
+const isAdmin=()=>!window.__startLocked;
 // persone visibili (attive + archiviate); chi è eliminato resta solo nei viaggi già registrati
 const listed=()=>state.people.filter(p=>!p.deleted);
 persist();
@@ -730,18 +826,19 @@ $('all-off').onclick=()=>{draft.who.clear();draft.cars=draft.cars.map(()=>({driv
 // Distribuisci: i saldi più bassi guidano, passeggeri a rotazione partendo dai punti più alti
 // --- gruppi
 function renderGroups(){
+  $('add-group').hidden=!isAdmin();
   const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
   $('groups').innerHTML=state.groups.length?state.groups.map(g=>{
     const mem=ppl.filter(p=>p.group===g.id);
     return `<div class="panel gcard">
-      <div class="gc-h">${gDot(g.id)}<input id="gn-${g.id}" data-gname="${g.id}" value="${esc(g.name)}" aria-label="Nome del gruppo"><span class="hint">${mem.length} ${mem.length===1?'membro':'membri'}</span></div>
+      <div class="gc-h">${gDot(g.id)}<input id="gn-${g.id}" data-gname="${g.id}" value="${esc(g.name)}" aria-label="Nome del gruppo" ${isAdmin()?'':'readonly'}><span class="hint">${mem.length} ${mem.length===1?'membro':'membri'}</span></div>
       <div class="chips">${ppl.map(p=>{const other=p.group&&p.group!==g.id&&groupOf(p.id);
         return `<button class="chip gm" data-gm="${g.id}" data-id="${p.id}" aria-pressed="${p.group===g.id}">${esc(p.name)}${other?`<span class="bal">${esc(state.groups[gIndex(p.group)].name)}</span>`:''}</button>`}).join('')}</div>
-      <div class="row between"><span class="hint">Tocca un nome per aggiungerlo o toglierlo</span><button class="x" data-gdel="${g.id}">elimina gruppo</button></div>
+      <div class="row between"><span class="hint">Tocca un nome per aggiungerlo o toglierlo</span>${isAdmin()?`<button class="x" data-gdel="${g.id}">elimina gruppo</button>`:''}</div>
     </div>`}).join('')
     :'<div class="panel"><p class="hint" style="margin:0">Nessun gruppo. Tocca "+ Nuovo gruppo" per crearne uno.</p></div>';
 }
-$('add-group').onclick=()=>{let k=state.groups.length+1;while(state.groups.some(g=>g.name==='Gruppo '+k))k++;
+$('add-group').onclick=()=>{if(!isAdmin())return;let k=state.groups.length+1;while(state.groups.some(g=>g.name==='Gruppo '+k))k++;
   const g={id:uid(),name:'Gruppo '+k};state.groups.push(g);persist();render();const i=$('gn-'+g.id);if(i){i.focus();i.select()}};
 $('groups').onchange=e=>{const i=e.target.closest('[data-gname]');if(!i)return;const g=state.groups.find(x=>x.id===i.dataset.gname);const n=i.value.trim();
   if(!n){i.value=g.name;return}g.name=n;persist();render()};
@@ -850,7 +947,7 @@ $('save').onclick=()=>{const v=validate();if(v){setMsg(v);return}
 $('clear').onclick=()=>{$('dist-note').textContent='';draft={who:new Set(),cars:[{driver:'',passengers:[]}]};render()};
 
 // --- persone
-$('add-person').onclick=()=>{const n=$('new-person').value.trim();if(!n)return;
+$('add-person').onclick=()=>{if(!isAdmin())return;const n=$('new-person').value.trim();if(!n)return;
   if(listed().some(p=>p.name.toLowerCase()===n.toLowerCase())){$('new-person').select();return}
   state.people.push({id:uid(),name:n});$('new-person').value='';persist();render()};
 $('new-person').onkeydown=e=>{if(e.key==='Enter')$('add-person').click()};
@@ -871,10 +968,10 @@ function personPanel(p,c){
   if(!pMode){
     h+=`<div class="pmenu">
       <button data-act="m-group" data-id="${p.id}"><span>Aggiungi a un gruppo</span><span class="pm-val">${g?gDot(g)+esc(state.groups[gIndex(g)].name):'nessuno'}</span></button>
-      ${p.archived?`<button data-act="rest" data-id="${p.id}"><span>Ripristina</span><span class="pm-val">torna tra gli attivi</span></button>`
-                 :`<button data-act="arch" data-id="${p.id}"><span>Archivia</span><span class="pm-val">nasconde, i punti restano</span></button>`}
+      ${!isAdmin()?'':(p.archived?`<button data-act="rest" data-id="${p.id}"><span>Ripristina</span><span class="pm-val">torna tra gli attivi</span></button>`
+                 :`<button data-act="arch" data-id="${p.id}"><span>Archivia</span><span class="pm-val">nasconde, i punti restano</span></button>`)+`
       <button data-act="m-rename" data-id="${p.id}"><span>Rinomina</span><span class="pm-val">›</span></button>
-      <button class="danger" data-act="m-del" data-id="${p.id}"><span>Elimina</span><span class="pm-val">›</span></button>
+      <button class="danger" data-act="m-del" data-id="${p.id}"><span>${window.__inTeam?'Espelli dalla squadra':'Elimina'}</span><span class="pm-val">›</span></button>`}
     </div>`;
   }else if(pMode==='group'){
     h+=`<b>Gruppo di ${esc(p.name)}</b><div class="pmenu">
@@ -887,12 +984,12 @@ function personPanel(p,c){
       <span class="msg" id="pren-msg"></span>
       <div class="m-grid2"><button data-act="back" data-id="${p.id}">Annulla</button><button class="primary" data-act="ren" data-id="${p.id}">Salva</button></div>`;
   }else{
-    h+=`<div class="pdel"><b>Eliminare ${esc(p.name)}?</b>
+    h+=`<div class="pdel"><b>${window.__inTeam?'Espellere':'Eliminare'} ${esc(p.name)}${window.__inTeam?' dalla squadra':''}?</b>
       <span>Sparisce da elenchi, classifica e scelte del guidatore.</span>
       <span>I viaggi già registrati restano com'erano, quindi <b>i punti degli altri non cambiano</b>.</span>
       ${p.v?`<span>I suoi ${fmt(p.v)} punti restano nel totale della squadra, così la somma resta zero.</span>`:''}
       ${typeof sync!=='undefined'&&sync.code?'<span>La modifica vale per tutta la squadra.</span>':''}</div>
-      <div class="m-grid2"><button data-act="back" data-id="${p.id}">Annulla</button><button class="danger solid" data-act="del" data-id="${p.id}">Elimina</button></div>`;
+      <div class="m-grid2"><button data-act="back" data-id="${p.id}">Annulla</button><button class="danger solid" data-act="del" data-id="${p.id}">${window.__inTeam?'Espelli':'Elimina'}</button></div>`;
   }
   return h+'</div>';
 }
@@ -907,6 +1004,7 @@ $('people').onclick=e=>{const b=e.target.closest('[data-act]');if(!b)return;cons
   const done=msg=>{pMenu=null;pMode='';persist();render();if(msg)snack(msg)};
   const reveal=()=>{const el=document.querySelector('.pact');if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'})};
   if(a==='menu'){pMenu=pMenu===id?null:id;pMode='';render();reveal();return}
+  if(['arch','rest','m-rename','m-del','del','ren'].includes(a)&&!isAdmin())return;
   if(a==='m-group'){pMode='group';render();reveal();return}
   if(a==='m-rename'){pMode='rename';render();const i=$('pren-'+id);if(i){i.focus();i.select()}return}
   if(a==='m-del'){pMode='del';render();reveal();return}
@@ -941,6 +1039,8 @@ function renderBalances(){
   const focused=document.activeElement&&document.activeElement.dataset.name;
   $('people').innerHTML=[...act,...arch].map(p=>`<div class="pcell ${p.archived?'off':'on'}"><button class="pname" data-act="menu" data-id="${p.id}" aria-expanded="${pMenu===p.id}">${esc(p.name)}</button>${!p.archived?gDot(groupOf(p.id)):''}${p.archived?'<span class="tag">archiviato</span>':''}<button class="x pmore" data-act="menu" data-id="${p.id}" aria-expanded="${pMenu===p.id}" aria-label="Azioni per ${esc(p.name)}">⋯</button></div>${pMenu===p.id?personPanel(p,cnt[p.id]):''}`).join('');
   if(focused&&$('pn-'+focused))$('pn-'+focused).focus();
+  $('new-person').closest('.m-add').hidden=!isAdmin();
+  $('people-hint').textContent=isAdmin()?'Tocca un nome per assegnarlo a un gruppo, archiviarlo, rinominarlo o espellerlo.':'Solo chi ha creato la squadra può aggiungere, rinominare o espellere i componenti. Tu puoi assegnarli ai gruppi.';
   $('people-count').textContent=`${act.length} attivi${arch.length?` · ${arch.length} archiviati`:''}`;
 }
 
@@ -1271,22 +1371,29 @@ $('wz-next').onclick=()=>{const steps=wzSteps();
 let snackT;function snack(t){$('snack').textContent=t;$('snack').hidden=false;clearTimeout(snackT);snackT=setTimeout(()=>$('snack').hidden=true,3200)}
 // ultimi viaggi nella schermata iniziale
 function renderRecent(){
-  const list=[...state.trips].sort((a,c)=>a.date.localeCompare(c.date)).slice(-3).reverse();
+  const list=[...state.trips].sort((a,c)=>a.date.localeCompare(c.date)).slice(-5).reverse();
   $('recent').innerHTML=list.length?list.map(t=>`<div class="rc"><span class="d">${new Date(t.date+'T12:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</span><span class="who">${t.cars.map(c=>`<b>${esc(name(c.driver))}</b> con ${c.passengers.length}`).join(' · ')}</span>${t.hist?'<span class="tag">storico</span>':''}</div>`).join(''):'<p class="hint">Ancora nessun viaggio.</p>';
 }
 const _render=render;render=function(){_render();renderRecent()};
 renderRecent();
 
-const VIEWS=['viaggio','punti','registro','persone','gruppi','dati'];
+const VIEWS=['viaggio','prenotazioni','punti','registro','squadra','condividi','backup','suggerimenti','info'];
+const ALIAS={persone:'squadra',gruppi:'squadra',dati:'squadra'};
 function showView(){const h=location.hash.slice(1);
   if(h==='nuovo'){wzShow();return}
+  if(h==='prenota'){bkShow();return}
   if(!$('wz').hidden){$('wz').hidden=true;document.body.classList.remove('wz-on')}
+  if(!$('bks').hidden)bkHide();
+  if(ALIAS[h]){location.replace('#'+ALIAS[h]);return}
   const v=VIEWS.includes(h)?h:'viaggio';
   document.querySelectorAll('.view').forEach(s=>s.hidden=s.dataset.view!==v);
   document.querySelectorAll('[data-tab]').forEach(a=>{if(a.dataset.tab===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
-  window.scrollTo(0,0)}
+  if(!$('drawer').hidden)closeMenu();
+  window.scrollTo(0,0);
+  setTimeout(()=>{if(v==='condividi')renderShare();if(v==='info')renderInfo();if(v==='suggerimenti')renderSug()},0)}
 window.addEventListener('hashchange',showView);
 document.querySelectorAll('[data-tab]').forEach(a=>a.addEventListener('click',e=>{if(location.hash==='#'+a.dataset.tab){e.preventDefault();window.scrollTo(0,0)}}));
+if(['#nuovo','#prenota'].includes(location.hash))history.replaceState(null,'','#viaggio');
 showView();
 // prossimo guidatore anche in cima alla scheda Viaggio
 new MutationObserver(()=>{$('next-mini').innerHTML=$('next').innerHTML}).observe($('next'),{childList:true,subtree:true,characterData:true});
@@ -1330,6 +1437,7 @@ async function syncStart(){
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
   unsubs.push(gref().collection('prenotazioni').onSnapshot(snap=>{const today=todayISO(),list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted&&b.date>=today)list.push({...b,id:d.id})});
     state.bookings=list;persistLocal();if(typeof renderBookings==='function')renderBookings()},()=>{}));
+  unsubs.push(gref().collection('suggerimenti').onSnapshot(snap=>{sugRemote=[];snap.forEach(d=>sugRemote.push({...d.data(),id:d.id}));if(!$('sug-list').closest('.view').hidden)renderSug()},()=>{}));
   unsubs.push(gref().collection('eventi').orderBy('t','desc').limit(200).onSnapshot(snap=>{remoteEvents=[];snap.forEach(d=>remoteEvents.push(d.data()));renderEvents()},()=>{}));
   unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
 }
@@ -1348,6 +1456,7 @@ function syncMerge(fromCache){
   persistLocal();lastMeta=JSON.stringify(metaOf());lastSnap=snapOf();
   render();applying=false;
   setSync(fromCache?'pending':'ok');
+  if(!fromCache)setTimeout(maybeAskWho,0);
   if(!fromCache&&/…$/.test($('sync-msg').textContent))smsg('Dati sincronizzati.');
   if(!fromCache&&remoteMeta===null&&!sync.creator&&!remoteTrips.size)smsg('Nessuna squadra trovata con questo codice: controllalo, oppure esci dalla squadra.');
   syncPush();
@@ -1474,7 +1583,7 @@ function openTeam(code,{me='',creator=false,name='',fresh:newState=null}={}){
   saveSync();fresh();pMenu=null;render();syncStart();return true;
 }
 function renderSync(){
-  window.__startLocked=!!(sync.code&&!sync.creator);
+  window.__startLocked=!!(sync.code&&!sync.creator);window.__inTeam=!!sync.code;
   const on=!!sync.code,sup=syncSupported(),t=curTeam();
   $('sync-off').hidden=on||!sup;$('sync-on').hidden=!on;$('sync-na').hidden=sup;
   const opts=active().map(p=>p.name).sort((a,b)=>a.localeCompare(b));
@@ -1541,7 +1650,7 @@ $('sync-leave').onclick=e=>{if(!e.target.dataset.c){e.target.dataset.c=1;e.targe
   const next=sync.teams[0];
   if(next){sync.code='';openTeam(next.code);smsg(`Sei uscito da "${name}". Ora sei in "${teamLabel(next)}".`);return}
   stopSync();sync={pendingDel:[],dirty:[],pendingEv:[],me:sync.me,teams:[]};saveSync();renderSync();setSync('off');smsg(`Sei uscito da "${name}": i dati restano su questo telefono.`)};
-$('team-name').onclick=()=>{if(sync.code)location.hash='dati'};
+$('team-name').onclick=()=>{if(sync.code)location.hash='squadra'};
 $('team-join-toggle').onclick=()=>{$('team-join-box').hidden=!$('team-join-box').hidden;if(!$('team-join-box').hidden)$('team-join-code').focus()};
 const _render2=render;render=function(){renderSync();_render2();renderEvents()};
 renderSync();syncStart();
@@ -1563,82 +1672,103 @@ addEventListener('appinstalled',()=>{installEvt=null;installOff=true;renderInsta
 $('install-go').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{await installEvt.userChoice}catch(e){}installEvt=null;renderInstall()};
 $('install-x').onclick=()=>{installOff=true;try{localStorage.setItem('ca-install-off','1')}catch(e){}renderInstall()};
 function renderWelcome(){$('welcome').hidden=!(state.people.length===0&&!sync.code)}
-$('welcome-join').onclick=()=>{location.hash='dati';setTimeout(()=>{const i=$('sync-join-code');i.scrollIntoView({block:'center'});i.focus()},120)};
-$('welcome-new').onclick=()=>{location.hash='persone';setTimeout(()=>$('new-person').focus(),120)};
+$('welcome-join').onclick=()=>{location.hash='squadra';setTimeout(()=>{const i=$('sync-join-code');i.scrollIntoView({block:'center'});i.focus()},120)};
+$('welcome-new').onclick=()=>{location.hash='squadra';setTimeout(()=>$('new-person').focus(),120)};
 const _render3=render;render=function(){_render3();renderWelcome()};
 renderInstall();renderWelcome();
 if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-// ===================== Prenotazioni: chi c'è oggi e domani =====================
+// ===================== Prenotazioni: oggi (fino alle 8:00) e domani =====================
 // state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, group, note, by, t}]  · su Firebase: gruppi/{codice}/prenotazioni/{id}
-let bkDay='oggi',bkEdit=null;   // bkEdit: {pid, days:Set, group, note} mentre il modulo è aperto
+const BK_CUTOFF=8;
+const todayLocked=()=>new Date().getHours()>=BK_CUTOFF;
+let bkEdit=null;
 const bkDate=k=>k==='oggi'?todayISO():isoShift(todayISO(),1);
 const bkList=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
 const myPid=()=>{const p=active().find(x=>x.name===sync.me);return p?p.id:''};
+const bkLong=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
 function bkWrite(b,del){
   state.bookings=(state.bookings||[]).filter(x=>x.id!==b.id);if(!del)state.bookings.push(b);
   persistLocal();
   if(fsdb&&sync.code){const ref=gref().collection('prenotazioni').doc(b.id);(del?ref.set({deleted:true,date:b.date,pid:b.pid,t:new Date().toISOString()}):ref.set(b)).catch(()=>{})}
 }
 function renderBookings(){
-  const d=bkDate(bkDay),list=bkList(d).sort((a,c)=>name(a.pid).localeCompare(name(c.pid)));
-  ['oggi','domani'].forEach(k=>{const n=bkList(bkDate(k)).length;const b=document.querySelector(`[data-bkday="${k}"]`);
-    b.setAttribute('aria-selected',String(k===bkDay));b.innerHTML=`${k==='oggi'?'Oggi':'Domani'} <span class="bk-n">${n}</span>`});
-  $('bk-date').textContent=new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
-  const me=myPid();
-  $('bk-list').innerHTML=list.length?list.map(b=>{const g=b.group&&state.groups.some(x=>x.id===b.group)?b.group:'';
-    return `<button class="bk-row${b.pid===me?' mine':''}" data-bk="${esc(b.pid)}"><span class="bk-who"><b>${esc(name(b.pid))}</b>${g?`<span class="bk-g">${gDot(g)}${esc(state.groups[gIndex(g)].name)}</span>`:''}</span>${b.note?`<span class="bk-note">${esc(b.note)}</span>`:''}</button>`}).join('')
-    :`<p class="hint" style="margin:0">Nessuno ha ancora detto se c'è ${bkDay==='oggi'?'oggi':'domani'}.</p>`;
-  const mine=list.some(b=>b.pid===me);
-  $('bk-add').textContent=mine?'Modifica la mia prenotazione':(me?'Ci sono anch\'io':'Prenota');
-  $('bk-plan').hidden=list.length<2;
-  $('bk-plan').textContent=`Organizza le auto di ${bkDay} (${list.length} persone)`;
-  renderBkForm();
+  const me=myPid();let tot=0;
+  $('bk-days-view').innerHTML=['oggi','domani'].map(k=>{
+    const d=bkDate(k),list=bkList(d).sort((a,c)=>name(a.pid).localeCompare(name(c.pid)));tot+=list.length;
+    const rows=list.length?`<div class="bk-list">${list.map(b=>{const g=b.group&&state.groups.some(x=>x.id===b.group)?b.group:'';
+      return `<button class="bk-row${b.pid===me?' mine':''}" data-bk="${esc(b.pid)}"><span class="bk-who"><b>${esc(name(b.pid))}</b>${g?`<span class="bk-g">${gDot(g)}${esc(state.groups[gIndex(g)].name)}</span>`:''}</span>${b.note?`<span class="bk-note">${esc(b.note)}</span>`:''}</button>`}).join('')}</div>`
+      :`<p class="hint" style="margin:0">Nessuna prenotazione${k==='oggi'&&todayLocked()?' (chiuse alle 8:00)':''}.</p>`;
+    return `<div class="bkd"><div class="bkd-head"><b>${k==='oggi'?'Oggi':'Domani'}</b><span class="hint">${bkLong(d)}</span><span class="bk-n">${list.length}</span></div>${rows}
+      ${list.length>=2?`<button class="wide bk-plan" data-plan="${k}">Organizza le auto di ${k} · ${list.length} persone</button>`:''}</div>`}).join('');
+  $('bk-sum').textContent=tot?`${tot} ${tot===1?'prenotazione':'prenotazioni'}`:'';
+  $('bk-rule').textContent=todayLocked()?`Le prenotazioni per oggi si sono chiuse alle ${BK_CUTOFF}:00: puoi prenotare per domani.`:`Per oggi puoi prenotare fino alle ${BK_CUTOFF}:00, per domani quando vuoi.`;
+  const mine=['oggi','domani'].some(k=>bkList(bkDate(k)).some(b=>b.pid===me));
+  $('bk-add').textContent=mine?'Modifica la mia prenotazione':'Prenota viaggio';
+  $('bk-open').lastChild.textContent=mine?' La mia prenotazione':' Prenota viaggio';
+  if(!$('bks').hidden)renderBkForm();
 }
-function openBk(pid){
-  const p=pid||myPid()||(active()[0]||{}).id;if(!p){location.hash='persone';return}
-  const days=new Set(),src=(state.bookings||[]).find(b=>b.pid===p&&b.date===bkDate(bkDay));
-  ['oggi','domani'].forEach(k=>{if((state.bookings||[]).some(b=>b.pid===p&&b.date===bkDate(k)))days.add(k)});
-  if(!days.size)days.add(bkDay);
-  bkEdit={pid:p,days,group:src?src.group||'':(groupOf(p)||''),note:src?src.note||'':'',existing:days.size&&!!src};
-  renderBkForm();$('bk-form').scrollIntoView({block:'nearest',behavior:'smooth'});
+function bkInit(pid){
+  const p=pid||myPid()||(active()[0]||{}).id;if(!p)return null;
+  const days=new Set(),bs=state.bookings||[];
+  ['oggi','domani'].forEach(k=>{if(bs.some(b=>b.pid===p&&b.date===bkDate(k)))days.add(k)});
+  const src=bs.find(b=>b.pid===p&&(b.date===bkDate('oggi')||b.date===bkDate('domani')));
+  if(!days.size)days.add(todayLocked()?'domani':'oggi');
+  return {pid:p,days,group:src?src.group||'':(groupOf(p)||''),note:src?src.note||'':''};
 }
+function bkOpen(pid){bkEdit=bkInit(pid);
+  if(!bkEdit){location.hash='squadra';setTimeout(()=>snack('Aggiungi prima i componenti della squadra'),100);return}
+  if(location.hash!=='#prenota')location.hash='prenota';else bkShow()}
+function bkShow(){if(!bkEdit)bkEdit=bkInit();if(!bkEdit){location.replace('#squadra');return}
+  $('bks').hidden=false;document.body.classList.add('wz-on');renderBkForm()}
+function bkHide(){$('bks').hidden=true;if($('wz').hidden)document.body.classList.remove('wz-on')}
+function bkClose(){bkEdit=null;if(location.hash==='#prenota')history.back();else bkHide()}
 function renderBkForm(){
-  const f=$('bk-form');f.hidden=!bkEdit;if(!bkEdit)return;
-  const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
-  $('bk-person').innerHTML=ppl.map(p=>`<option value="${p.id}" ${p.id===bkEdit.pid?'selected':''}>${esc(p.name)}</option>`).join('');
-  $('bk-days').innerHTML=['oggi','domani'].map(k=>`<button class="chip" data-bkd="${k}" aria-pressed="${bkEdit.days.has(k)}">${k==='oggi'?'Oggi':'Domani'} <span class="bal">${new Date(bkDate(k)+'T12:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric'})}</span></button>`).join('');
+  if(!bkEdit)return;
+  const lock=todayLocked(),bookedToday=(state.bookings||[]).some(b=>b.pid===bkEdit.pid&&b.date===bkDate('oggi'));
+  if(lock&&!bookedToday)bkEdit.days.delete('oggi');
+  $('bk-person').innerHTML=active().sort((a,c)=>a.name.localeCompare(c.name)).map(p=>`<option value="${p.id}" ${p.id===bkEdit.pid?'selected':''}>${esc(p.name)}</option>`).join('');
+  $('bk-days').innerHTML=['oggi','domani'].map(k=>{const off=k==='oggi'&&lock;
+    return `<button class="wz-q bkq${bkEdit.days.has(k)?' sel':''}" data-bkd="${k}" aria-pressed="${bkEdit.days.has(k)}" ${off?'disabled':''}>
+      <span>${k==='oggi'?'Oggi':'Domani'}${bkEdit.days.has(k)?' ✓':''}</span><small>${off?(bookedToday?'prenotato · chiuso alle 8:00':'chiuso alle 8:00'):bkLong(bkDate(k))}</small></button>`}).join('');
+  $('bk-lockmsg').textContent=lock?`Oggi non è più prenotabile: le prenotazioni per il giorno stesso chiudono alle ${BK_CUTOFF}:00.`:'Puoi scegliere oggi, domani o entrambi.';
   $('bk-groups').innerHTML=`<button class="chip" data-bkg="" aria-pressed="${!bkEdit.group}">Nessuna preferenza</button>`+state.groups.map(g=>`<button class="chip" data-bkg="${g.id}" aria-pressed="${bkEdit.group===g.id}">${gDot(g.id)}${esc(g.name)}</button>`).join('');
   if(document.activeElement!==$('bk-note'))$('bk-note').value=bkEdit.note;
   const has=['oggi','domani'].some(k=>(state.bookings||[]).some(b=>b.pid===bkEdit.pid&&b.date===bkDate(k)));
-  $('bk-del').hidden=!has;$('bk-save').disabled=!bkEdit.days.size;
+  $('bk-del').hidden=!has;
+  const editable=[...bkEdit.days].filter(k=>!(k==='oggi'&&lock));
+  $('bk-save').disabled=!editable.length&&!(has&&!lock);
+  $('bks-title').textContent=bkEdit.pid===myPid()?'Quando ci sei?':`Quando c'è ${name(bkEdit.pid)}?`;
 }
-document.querySelectorAll('[data-bkday]').forEach(b=>b.onclick=()=>{bkDay=b.dataset.bkday;renderBookings()});
-$('bk-add').onclick=()=>openBk();
-$('bk-list').onclick=e=>{const r=e.target.closest('[data-bk]');if(r)openBk(r.dataset.bk)};
-$('bk-person').onchange=e=>openBk(e.target.value);
-$('bk-days').onclick=e=>{const b=e.target.closest('[data-bkd]');if(!b)return;const k=b.dataset.bkd;bkEdit.days.has(k)?bkEdit.days.delete(k):bkEdit.days.add(k);renderBkForm()};
+$('bk-open').onclick=()=>bkOpen();
+$('bk-add').onclick=()=>bkOpen();
+$('bk-days-view').onclick=e=>{const r=e.target.closest('[data-bk]');if(r){bkOpen(r.dataset.bk);return}
+  const pl=e.target.closest('[data-plan]');if(pl)planDay(pl.dataset.plan)};
+$('bk-person').onchange=e=>{bkEdit=bkInit(e.target.value);renderBkForm()};
+$('bk-days').onclick=e=>{const b=e.target.closest('[data-bkd]');if(!b||b.disabled)return;const k=b.dataset.bkd;bkEdit.days.has(k)?bkEdit.days.delete(k):bkEdit.days.add(k);renderBkForm()};
 $('bk-groups').onclick=e=>{const b=e.target.closest('[data-bkg]');if(!b)return;bkEdit.group=b.dataset.bkg;renderBkForm()};
 $('bk-note').oninput=e=>{bkEdit.note=e.target.value};
-$('bk-cancel').onclick=()=>{bkEdit=null;renderBookings()};
-$('bk-save').onclick=()=>{const e=bkEdit;if(!e||!e.days.size)return;
-  ['oggi','domani'].forEach(k=>{const date=bkDate(k),id=date+'_'+e.pid;
+$('bk-cancel').onclick=bkClose;
+$('bk-save').onclick=()=>{const e=bkEdit;if(!e)return;const lock=todayLocked();
+  ['oggi','domani'].forEach(k=>{if(k==='oggi'&&lock)return;const date=bkDate(k),id=date+'_'+e.pid;
     if(e.days.has(k))bkWrite({id,date,pid:e.pid,group:e.group||'',note:(e.note||'').trim().slice(0,120),by:sync.me||'',t:new Date().toISOString()});
     else if((state.bookings||[]).some(b=>b.id===id))bkWrite({id,date,pid:e.pid},true)});
-  const nm=name(e.pid),dd=[...e.days].map(k=>k).join(' e ');bkEdit=null;render();snack(`${nm} c'è ${dd}`)};
+  const nm=name(e.pid),dd=[...e.days].filter(k=>!(k==='oggi'&&lock)).join(' e ');
+  bkClose();render();snack(dd?`${nm} c'è ${dd}`:`Prenotazione di ${nm} aggiornata`)};
 $('bk-del').onclick=()=>{const e=bkEdit;if(!e)return;
   ['oggi','domani'].forEach(k=>{const date=bkDate(k),id=date+'_'+e.pid;if((state.bookings||[]).some(b=>b.id===id))bkWrite({id,date,pid:e.pid},true)});
-  const nm=name(e.pid);bkEdit=null;render();snack(`Prenotazione di ${nm} annullata`)};
-// dalle prenotazioni all'inserimento: chi c'è è già selezionato, la data è quella giusta
-$('bk-plan').onclick=()=>{const d=bkDate(bkDay);
+  const nm=name(e.pid);bkClose();render();snack(`Prenotazione di ${nm} annullata`)};
+// dalle prenotazioni all'organizzazione delle auto: chi c'è è già selezionato
+function planDay(k){const d=bkDate(k);
   draft={who:new Set(bkList(d).map(b=>b.pid).filter(id=>active().some(p=>p.id===id))),cars:[{driver:'',passengers:[]}]};
   $('trip-date').value=d;const n=draft.who.size;while(draft.cars.length<Math.ceil(n/(POSTI+1)))draft.cars.push({driver:'',passengers:[]});
-  const adv=document.querySelector('details.adv');adv.open=true;render();$('auto').click();
-  setTimeout(()=>adv.scrollIntoView({block:'start',behavior:'smooth'}),60)};
-// gruppo da usare nella distribuzione: quello scelto nella prenotazione del giorno, altrimenti quello abituale
+  const adv=$('plan');adv.open=true;render();$('auto').click();
+  setTimeout(()=>adv.scrollIntoView({block:'start',behavior:'smooth'}),60)}
+// gruppo da usare nella distribuzione: quello della prenotazione del giorno, altrimenti quello abituale
 function dayGroup(id){const day=$('trip-date').value,b=(state.bookings||[]).find(x=>x.date===day&&x.pid===id);
   return b&&b.group&&state.groups.some(g=>g.id===b.group)?b.group:groupOf(id)}
 const _render4=render;render=function(){_render4();renderBookings()};
 renderBookings();
+setInterval(()=>{if(!document.hidden)renderBookings()},60000);   // alle 8:00 il tasto "Oggi" si chiude da solo
 
 // --- libreria QR code (qrcode-generator 1.4.4, Kazuhiko Arase, licenza MIT)
 //---------------------------------------------------------------------
@@ -3960,21 +4090,82 @@ function renderShare(){
   $('sh-tg').href='https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(text);
   $('sh-native').hidden=!navigator.share;
 }
-function openShare(){$('sh-msg').textContent='';$('sh').hidden=false;document.body.classList.add('wz-on');renderShare()}
-function closeShare(){$('sh').hidden=true;document.body.classList.remove('wz-on')}
-$('share-app').onclick=openShare;$('share-app2').onclick=openShare;
-$('sh-x').onclick=closeShare;$('sh').onclick=e=>{if(e.target.id==='sh')closeShare()};
+function openShare(){location.hash='condividi'}
 $('sh-team').onchange=renderShare;
 $('sh-native').onclick=()=>{const {url,text}=shareData();navigator.share({title:'CollegAuto',text,url}).catch(()=>{})};
 $('sh-copy').onclick=()=>{const {url}=shareData();const ok=()=>{$('sh-msg').textContent='Link copiato'},ko=()=>{const r=document.createRange();r.selectNodeContents($('sh-link'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('sh-msg').textContent='Link selezionato: copialo'};
   try{navigator.clipboard?navigator.clipboard.writeText(url).then(ok,ko):ko()}catch(e){ko()}};
-addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('sh').hidden)closeShare()});
 // chi arriva da un invito (?squadra=COL-...) trova il codice già pronto
 (function(){let inv='';try{inv=normCode(new URLSearchParams(location.search).get('squadra')||'')}catch(e){}
   if(!/^(BLA|COL)(-[A-Z0-9]{4}){4}$/.test(inv))return;
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}
   if(sync.teams.some(t=>t.code===inv)){if(sync.code!==inv)openTeam(inv);return}
-  location.hash='dati';
+  location.hash='squadra';
   setTimeout(()=>{if(sync.code){$('team-join-box').hidden=false;$('team-join-code').value=inv}else $('sync-join-code').value=inv;
     smsg('Hai ricevuto un invito: scegli il tuo nome se te lo chiede e tocca "Entra".');$('sync-panel').scrollIntoView({block:'start'})},150)})();
+// ===================== Menu a panino =====================
+function openMenu(){$('drawer').hidden=false;$('drawer-bg').hidden=false;$('menu-open').setAttribute('aria-expanded','true')}
+function closeMenu(){$('drawer').hidden=true;$('drawer-bg').hidden=true;$('menu-open').setAttribute('aria-expanded','false')}
+$('menu-open').onclick=openMenu;$('menu-close').onclick=closeMenu;$('drawer-bg').onclick=closeMenu;
+document.querySelectorAll('.dm').forEach(a=>a.addEventListener('click',closeMenu));
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('drawer').hidden)closeMenu()});
+
+// ===================== Chi sei? (chi entra con codice o invito) =====================
+let whoLater=false;
+function maybeAskWho(){
+  if(!sync.code||whoLater||remoteMeta===undefined||myPid()){$('whoami').hidden=true;return}
+  $('who-team').textContent=`Squadra "${teamLabel(curTeam())}". Scegli il tuo nome dall'elenco, oppure aggiungilo se non c'è.`;
+  const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
+  $('who-list').innerHTML=ppl.length?ppl.map(p=>`<button data-who="${esc(p.name)}"><span>${gDot(groupOf(p.id))} ${esc(p.name)}</span><span class="pm-val">sono io ›</span></button>`).join(''):'<p class="hint" style="margin:10px">La squadra è ancora vuota.</p>';
+  $('whoami').hidden=false;
+}
+function setMe(n){sync.me=n;const t=curTeam();if(t)t.me=n;saveSync();$('whoami').hidden=true;render();snack(`Ciao ${n}!`)}
+$('who-list').onclick=e=>{const b=e.target.closest('[data-who]');if(b)setMe(b.dataset.who)};
+$('who-add').onclick=()=>{const n=$('who-new').value.trim().slice(0,40);if(!n)return;
+  const ex=listed().find(p=>p.name.toLowerCase()===n.toLowerCase());
+  if(ex){if(ex.archived){delete ex.archived;persist()}setMe(ex.name);return}
+  state.people.push({id:uid(),name:n});persist();setMe(n)};
+$('who-new').onkeydown=e=>{if(e.key==='Enter')$('who-add').click()};
+$('who-later').onclick=()=>{whoLater=true;$('whoami').hidden=true};
+
+// ===================== Suggerimenti =====================
+let sugRemote=null;
+function renderSug(){
+  const on=!!sync.code;
+  $('sug-send').disabled=!on;
+  if(!on)$('sug-msg').textContent='Entra in una squadra per inviare suggerimenti.';
+  const list=(sugRemote||[]).filter(x=>x.text).sort((a,c)=>String(c.t).localeCompare(String(a.t)));
+  $('sug-count').textContent=list.length?String(list.length):'';
+  $('sug-list').innerHTML=list.length?list.map(x=>`<div class="sug"><div class="sug-t">${esc(x.text)}</div><div class="ev-who">${x.by?esc(x.by):'nome non indicato'} · ${new Date(x.t).toLocaleDateString('it-IT',{day:'numeric',month:'short'})} ${new Date(x.t).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</div></div>`).join('')
+    :'<p class="hint" style="margin:0">Ancora nessun suggerimento.</p>';
+}
+$('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
+  if(!fsdb||!sync.code){$('sug-msg').textContent='Serve la connessione alla squadra: riprova tra poco.';return}
+  const id=uid(),d={text:t.slice(0,600),by:sync.me||'',t:new Date().toISOString()};
+  gref().collection('suggerimenti').doc(id).set(d).catch(()=>{});
+  sugRemote=[...(sugRemote||[]),{...d,id}];$('sug-text').value='';$('sug-msg').textContent='Grazie! Il suggerimento è stato inviato.';renderSug()};
+
+// ===================== Info sull'app =====================
+const NOTES=[
+ ['3.0','Nuova organizzazione: scheda Squadra con componenti e gruppi, pagina Prenotazioni, menu con Condividi, Dati e backup, Suggerimenti e Info. Solo chi crea la squadra aggiunge o espelle componenti. Chi entra sceglie il suo nome o si aggiunge. Prenotazioni per oggi fino alle 8:00.'],
+ ['2.7','Condividi l\'app con link, QR code, WhatsApp e Telegram, anche con invito diretto alla squadra.'],
+ ['2.5','Prenotazioni per oggi e domani con gruppo di preferenza e note.'],
+ ['2.4','Punti di partenza liberi, anche se la somma non è zero.'],
+ ['2.3','Più squadre: elenco, cambio rapido e nuova squadra vuota.'],
+ ['2.2','Versione web installabile su iPhone e Android, funziona anche senza rete.'],
+ ['2.1','Nuovo nome: CollegAuto.'],
+ ['2.0','Registro delle modifiche e punti di partenza protetti.'],
+ ['1.8','Eliminare una persona non cambia più i punti degli altri.'],
+ ['1.6','Condivisione in tempo reale tra colleghi.'],
+ ['1.4','Inserimento guidato di un viaggio.'],
+ ['1.0','Prima versione: punti a somma zero per ogni auto.']];
+function renderInfo(){
+  $('info-ver').textContent=` versione ${APP_VERSION}`;
+  const rows=[['Squadra',sync.code?teamLabel(curTeam()):'nessuna (dati solo su questo dispositivo)'],['Il tuo nome',sync.me||'—'],
+    ['Sincronizzazione',{off:'non attiva',wait:'connessione…',ok:'attiva',pending:'in attesa di rete',bad:'errore'}[syncState]||syncState],
+    ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist).length)],
+    ['Installata come app',(matchMedia('(display-mode: standalone)').matches||navigator.standalone)?'sì':'no']];
+  $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+  $('info-notes').innerHTML=NOTES.map(([v,t])=>`<div class="note"><b>v${v}</b><span>${esc(t)}</span></div>`).join('');
+}
 </script>
