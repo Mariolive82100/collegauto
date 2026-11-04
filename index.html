@@ -459,13 +459,15 @@ body.wz-on{overflow:hidden}
 .tm.cur{background:color-mix(in srgb,var(--teal) 10%,var(--panel))}
 .team-head b{font-size:22px}
 .share-code{border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+.admin-box summary{cursor:pointer;color:var(--muted);font-size:14.5px}
+#admin-claim-toggle{color:var(--amber)}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.1</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.2</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -613,6 +615,23 @@ body.wz-on{overflow:hidden}
     <div class="team-head"><b id="team-title"></b><span class="hint" id="team-sub"></span></div>
     <label class="f" id="team-rename-box">Nome della squadra<input type="text" id="team-rename" maxlength="40" placeholder="es. Ufficio Napoli"></label>
     <label class="f" id="me-box">Il tuo nome in questa squadra<select id="sync-me2"></select></label>
+    <div id="admin-claim" class="admin-box" hidden>
+      <button class="ghost wide" id="admin-claim-toggle">Hai creato tu questa squadra? Recupera i permessi</button>
+      <div id="admin-claim-form" class="sync-box sub" hidden>
+        <p class="hint" style="margin:0" id="admin-claim-hint"></p>
+        <label class="f">Password amministratore<input type="password" id="admin-pw" autocomplete="current-password" minlength="6"></label>
+        <button class="primary wide" id="admin-claim-go">Recupera i permessi</button>
+        <span class="msg" id="admin-msg" role="status"></span>
+      </div>
+    </div>
+    <details id="admin-set" class="admin-box" hidden><summary id="admin-set-sum">Password amministratore</summary>
+      <div class="sync-box" style="margin-top:10px">
+        <p class="hint" style="margin:0">Serve a riavere i permessi da creatore se cambi telefono, reinstalli l'app o la apri da un altro dispositivo. Tienila per te.</p>
+        <label class="f">Nuova password (almeno 6 caratteri)<input type="password" id="admin-pw-new" autocomplete="new-password" minlength="6"></label>
+        <button class="wide" id="admin-pw-save">Salva password</button>
+        <span class="msg" id="admin-set-msg" role="status"></span>
+      </div>
+    </details>
   </div>
   <div class="panel">
     <div class="row between"><h2 id="t-people">Partecipanti</h2><span class="hint" id="people-count"></span></div>
@@ -784,7 +803,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='3.1';
+const APP_VERSION='3.2';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1435,7 +1454,7 @@ sync.pendingDel=sync.pendingDel||[];sync.dirty=sync.dirty||[];
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 const syncSupported=()=>!inViewer&&!!window.firebase;
 let fsdb=null,remoteTrips=null,remoteMeta,applying=false,unsubs=[],lastMeta='',pushing=false,pushAgain=false,syncState='off';
-const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null,teamName:state.teamName||''});
+const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null,teamName:state.teamName||'',adminHash:state.adminHash||''});
 const clean=o=>JSON.parse(JSON.stringify(o));
 const core=t=>JSON.stringify({date:t.date,weight:t.weight||1,note:t.note||'',cars:t.cars||[],hist:!!t.hist});
 const gref=()=>fsdb.collection('gruppi').doc(sync.code);
@@ -1470,7 +1489,7 @@ async function syncStart(){
 function syncMerge(fromCache){
   if(remoteTrips===null||remoteMeta===undefined)return;
   applying=true;
-  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];migrateGroups(state);state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';
+  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];migrateGroups(state);state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';state.adminHash=remoteMeta.adminHash||'';
     const tt=sync.teams&&sync.teams.find(x=>x.code===sync.code);if(tt&&tt.name!==state.teamName){tt.name=state.teamName;saveSync()}}
   const del=new Set(sync.pendingDel),dirty=new Set(sync.dirty),localById=new Map(state.trips.map(t=>[t.id,t])),out=[];
   remoteTrips.forEach((d,id)=>{if(dirty.has(id)&&localById.has(id)){out.push(localById.get(id));return}
@@ -1629,6 +1648,11 @@ function renderSync(){
   $('team-title').textContent=on?teamLabel(t):'Su questo telefono';
   $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".';
   $('team-rename-box').hidden=!on||!sync.creator;$('me-box').hidden=!on;
+  $('admin-claim').hidden=!on||!!sync.creator;$('admin-set').hidden=!on||!sync.creator;
+  if(on){$('admin-set-sum').textContent=state.adminHash?'Password amministratore · impostata':'Password amministratore · non ancora impostata';
+    $('admin-claim-hint').textContent=state.adminHash?'Inserisci la password amministratore che hai scelto quando hai creato o gestito la squadra.'
+      :'Questa squadra non ha ancora una password amministratore: chi la imposta per primo diventa amministratore. Fallo solo se sei tu il creatore, la cosa resta scritta nel registro.';
+    $('admin-claim-go').textContent=state.adminHash?'Recupera i permessi':'Imposta la password e recupera i permessi'}
   if(on){$('sync-code').textContent=sync.code;if(document.activeElement!==$('team-rename'))$('team-rename').value=t&&t.name||''}
   setSync(syncState);
 }
@@ -4178,6 +4202,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['3.2','Password amministratore: chi ha creato la squadra può riavere i permessi da qualsiasi dispositivo.'],
  ['3.1','Pagina Squadre riorganizzata: elenco delle squadre con il numero di iscritti, partecipanti e codice di condivisione. Gruppi in una pagina dedicata, modificabili da tutti, con la possibilità di stare in più gruppi.'],
  ['3.0','Nuova organizzazione: scheda Squadra con componenti e gruppi, pagina Prenotazioni, menu con Condividi, Dati e backup, Suggerimenti e Info. Solo chi crea la squadra aggiunge o espelle componenti. Chi entra sceglie il suo nome o si aggiunge. Prenotazioni per oggi fino alle 8:00.'],
  ['2.7','Condividi l\'app con link, QR code, WhatsApp e Telegram, anche con invito diretto alla squadra.'],
@@ -4200,4 +4225,22 @@ function renderInfo(){
   $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
   $('info-notes').innerHTML=NOTES.map(([v,t])=>`<div class="note"><b>v${v}</b><span>${esc(t)}</span></div>`).join('');
 }
+
+// ===================== Permessi da creatore su più dispositivi: password amministratore =====================
+async function hashPw(pw){const data=new TextEncoder().encode('collegauto|'+sync.code+'|'+pw);
+  try{if(crypto&&crypto.subtle){const h=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}}catch(e){}
+  let a=0x811c9dc5,b=0;for(const c of data){a=Math.imul(a^c,16777619)>>>0;b=(b*31+c)>>>0}return 'f'+a.toString(16)+b.toString(16)}
+function becomeAdmin(how){sync.creator=true;const t=curTeam();if(t)t.creator=true;saveSync();
+  addEvents([['team',`${sync.me||'Un partecipante'} ${how}`]]);persist();render();snack('Ora hai i permessi da creatore')}
+$('admin-claim-toggle').onclick=()=>{$('admin-claim-form').hidden=!$('admin-claim-form').hidden;if(!$('admin-claim-form').hidden)$('admin-pw').focus()};
+$('admin-claim-go').onclick=async()=>{const pw=$('admin-pw').value,m=t=>{$('admin-msg').textContent=t};
+  if(!sync.code)return;
+  if(!state.adminHash){if(pw.length<6){m('Scegli una password di almeno 6 caratteri.');return}
+    state.adminHash=await hashPw(pw);$('admin-pw').value='';becomeAdmin('ha impostato la password amministratore e recuperato i permessi da creatore');return}
+  if(await hashPw(pw)===state.adminHash){$('admin-pw').value='';becomeAdmin('ha recuperato i permessi da creatore con la password')}
+  else m('Password non corretta.')};
+$('admin-pw').onkeydown=e=>{if(e.key==='Enter')$('admin-claim-go').click()};
+$('admin-pw-save').onclick=async()=>{const pw=$('admin-pw-new').value,m=t=>{$('admin-set-msg').textContent=t};
+  if(!sync.creator||!sync.code)return;if(pw.length<6){m('Almeno 6 caratteri.');return}
+  state.adminHash=await hashPw(pw);$('admin-pw-new').value='';addEvents([['team','Password amministratore aggiornata']]);persist();render();m('Password salvata.')};
 </script>
