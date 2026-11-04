@@ -580,6 +580,10 @@ body.wz-on{overflow:hidden}
 .rs-pos .rs-v{color:var(--teal)}
 .rs-neg{background:color-mix(in srgb,var(--neg) 16%,transparent)!important;box-shadow:inset 3px 0 0 var(--neg)}
 .rs-neg .rs-n{color:var(--neg)}.rs-neg .rs-v{color:var(--neg)}
+.bk-rs .rs-pres{grid-column:1/-1;border-color:color-mix(in srgb,var(--teal) 55%,var(--line));background:color-mix(in srgb,var(--teal) 7%,var(--panel))}
+.rs-pres .rs-h{color:var(--teal)}.rs-pres .rs-h b{background:var(--teal)}
+.rs-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.rs-n{display:flex;flex-direction:column}.rs-n small{font-size:12px;font-weight:500;color:var(--muted)}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -587,7 +591,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.1</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.2</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -922,7 +926,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.1';
+const APP_VERSION='4.2';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1927,8 +1931,8 @@ function bkSeat(c,s,k,pid,sug){
     :`<b class="free">${s==='d'?(c.pax.some(Boolean)?'Serve un guidatore':'Libero'):'Libero'}</b>${isS?'<span class="seat-x">consigliato</span>':''}`;
   return `<button class="${cls}" data-car="${c.id}" data-seat="${s}" aria-label="Auto ${k}, ${lbl}: ${who?esc(name(who)):'libero'}"><small>${lbl}</small>${body}</button>`}
 // nome con il suo punteggio; chi è in negativo è evidenziato
-function rsBtn(id){const v=balances()[id]||0,cls=v<0?'neg':v>0?'pos':'zero';
-  return `<button class="rs-p rs-${cls}${id===myPid()?' me':''}" data-rsp="${id}"><span class="rs-n">${esc(name(id))}</span><span class="rs-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span></button>`}
+function rsBtn(id,sub){const v=balances()[id]||0,cls=v<0?'neg':v>0?'pos':'zero';
+  return `<button class="rs-p rs-${cls}${id===myPid()?' me':''}" data-rsp="${id}"><span class="rs-n">${esc(name(id))}${sub?`<small>${esc(sub)}</small>`:''}</span><span class="rs-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span></button>`}
 function renderBookings(){
   const d=tripDay();if(bkSeenDay&&bkSeenDay!==d)bkExtra=0;bkSeenDay=d;
   const pid=bkWho(),L=bkLayout(d),sug=bkSuggest(L,pid),edit=id=>isAdmin()||id===pid;
@@ -1957,7 +1961,11 @@ function renderBookings(){
   // due colonne affiancate: chi non ha ancora risposto | chi non c'è (tocca un nome per prenotare al suo posto)
   const missP=active().filter(p=>!done.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
   const absS=abs.sort((a,b)=>name(a.pid).localeCompare(name(b.pid)));
-  $('bk-abs').innerHTML=`<div class="rs-col rs-miss"><div class="rs-h"><span>Non hanno risposto</span><b>${missP.length}</b></div>
+  const presP=[];L.cars.forEach((c,i)=>{if(c.driver)presP.push([c.driver,`Auto ${i+1} · guida`]);c.pax.forEach(x=>{if(x)presP.push([x,`Auto ${i+1}`+(c.driver?'':' · senza guidatore')])})});
+  L.wait.forEach(x=>presP.push([x,'senza posto']));
+  $('bk-abs').innerHTML=`<div class="rs-col rs-pres"><div class="rs-h"><span>Presenti</span><b>${presP.length}</b></div>
+      ${presP.length?`<div class="rs-grid">${presP.map(([id,sub])=>rsBtn(id,sub)).join('')}</div>`:'<span class="rs-none">Ancora nessuno</span>'}</div>
+    <div class="rs-col rs-miss"><div class="rs-h"><span>Non hanno risposto</span><b>${missP.length}</b></div>
       ${missP.length?missP.map(p=>rsBtn(p.id)).join(''):'<span class="rs-none">Hanno risposto tutti</span>'}</div>
     <div class="rs-col rs-abs"><div class="rs-h"><span>Assenti</span><b>${absS.length}</b></div>
       ${absS.length?absS.map(b=>rsBtn(b.pid)).join(''):'<span class="rs-none">Nessuno</span>'}</div>`;
@@ -4395,6 +4403,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['4.2','Nella pagina principale c\'è anche l\'elenco dei presenti al prossimo viaggio, con auto, ruolo e punteggio.'],
  ['4.1','Negli elenchi "Non hanno risposto" e "Assenti" compare il punteggio accanto a ogni nome; chi è in negativo è evidenziato in rosso.'],
  ['4.0','Pagina principale: due tasti "Presente al prossimo viaggio" (porta alla scelta del posto) e "Assente al prossimo viaggio", e gli elenchi di chi non ha risposto e degli assenti. L\'assenza vale sempre solo per il prossimo viaggio.'],
  ['3.9','Nella pagina Prenota due colonne affiancate ben visibili: chi non ha ancora risposto e chi è assente, con il conteggio. Toccando un nome si prenota al suo posto.'],
