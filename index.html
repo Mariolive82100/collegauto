@@ -449,13 +449,23 @@ body.wz-on{overflow:hidden}
 .sug-t{font-size:15.5px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
 #sug-text{min-height:110px;font-family:inherit}
 #whoami .sheet-card{gap:12px}
+
+/* v3.1: squadre e gruppi */
+.back{font-size:14.5px;font-weight:600;color:var(--amber);text-decoration:none}
+.tm{display:grid!important;grid-template-columns:1fr auto auto;gap:12px}
+.tm-n{display:flex;flex-direction:column;align-items:flex-end;font-size:20px;font-weight:700;line-height:1.1}
+.tm-n small{font-size:11.5px;font-weight:500;color:var(--muted)}
+.tm-go{font-size:20px;color:var(--muted)}
+.tm.cur{background:color-mix(in srgb,var(--teal) 10%,var(--panel))}
+.team-head b{font-size:22px}
+.share-code{border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.0</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.1</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -538,12 +548,6 @@ body.wz-on{overflow:hidden}
     <button class="wide" id="export-img">Salva immagine JPEG</button>
     <span class="msg" id="imsg" role="status"></span>
   </div>
-  <div class="panel" id="start-panel">
-    <div class="row between"><h2>Punti di partenza</h2><button id="start-edit">Modifica</button></div>
-    <p class="hint" style="margin:0" id="start-note"></p>
-    <div id="start-box" class="sp-grid"></div>
-    <div class="sp-actions" id="start-actions" hidden><span class="msg" id="start-msg" role="status"></span><button class="ghost" id="start-cancel">Annulla</button><button class="primary" id="start-save">Salva</button></div>
-  </div>
 </section>
 
 <!-- REGISTRO -->
@@ -571,12 +575,25 @@ body.wz-on{overflow:hidden}
   </div>
 </section>
 
-<!-- SQUADRA -->
-<section class="view" data-view="squadra" aria-label="Squadra e gruppi" hidden>
-  <div class="panel" id="sync-panel">
-    <div class="row between"><h2>Squadra</h2><span class="sync-pill off" id="sync-status">Non condiviso</span></div>
+<!-- SQUADRE: elenco -->
+<section class="view" data-view="squadra" aria-labelledby="t-teams" hidden>
+  <div class="panel">
+    <div class="row between"><h2 id="t-teams">Le mie squadre</h2><span class="sync-pill off" id="sync-status">Non condiviso</span></div>
     <p id="sync-na" class="hint" style="margin:0" hidden>La condivisione funziona nella versione web pubblicata e nel file HTML aperto dal browser, non in questa anteprima di claude.ai.</p>
-    <div id="sync-off" class="sync-box">
+    <div id="teams-list" class="tm-list"></div>
+    <p class="hint" id="teams-hint" style="margin:0"></p>
+    <div class="m-grid2"><button id="team-new">+ Nuova squadra</button><button id="team-join-toggle">Entra con un codice</button></div>
+        <div id="team-new-box" class="sync-box sub" hidden>
+          <label class="f">Nome della nuova squadra<input type="text" id="team-new-name" maxlength="40" placeholder="es. Turno di notte"></label>
+          <label class="f">Il tuo nome<input type="text" id="team-new-me" maxlength="40" placeholder="es. Mario" autocomplete="given-name"></label>
+          <button class="primary wide" id="team-new-ok">Crea la squadra</button>
+          <p class="hint" style="margin:0">Parte vuota: ci sei solo tu, poi aggiungi i partecipanti. La squadra attuale resta com'è.</p>
+        </div>
+        <div id="team-join-box" class="sync-box sub" hidden>
+          <label class="f">Codice della squadra<input type="text" id="team-join-code" placeholder="COL-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
+          <button class="primary wide" id="team-join">Entra</button>
+        </div>
+    <div id="sync-off" class="sync-box sub">
       <p class="hint" style="margin:0">Collega l'app a una squadra: i viaggi registrati da chiunque compaiono su tutti i telefoni, anche quando sei in ferie.</p>
       <label class="f">Codice ricevuto da un collega<input type="text" id="sync-join-code" placeholder="COL-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
       <button class="primary wide" id="sync-join">Entra nella squadra</button>
@@ -585,44 +602,45 @@ body.wz-on{overflow:hidden}
       <label class="f">Il tuo nome<select id="sync-me"></select></label>
       <button class="wide" id="sync-create">Crea una squadra con i miei dati</button>
     </div>
-    <div id="sync-on" class="sync-box" hidden>
-      <div class="team-head"><span class="lbl">Squadra aperta</span><b id="team-title"></b></div>
-      <label class="f" id="team-rename-box">Nome della squadra<input type="text" id="team-rename" maxlength="40" placeholder="es. Ufficio Napoli"></label>
-      <span class="lbl">Codice della squadra</span>
-      <div class="sync-code" id="sync-code"></div>
-      <div class="m-grid2"><button id="sync-copy">Copia codice</button><button class="primary" id="sync-share">Invia ai colleghi</button></div>
-      <label class="f">Il tuo nome in questa squadra<select id="sync-me2"></select></label>
-      <p class="hint" style="margin:0">Chi ha il codice può vedere e modificare i dati della squadra: mandalo solo ai colleghi.</p>
-      <div class="teams">
-        <span class="lbl">Le mie squadre</span>
-        <div id="teams-list" class="tm-list"></div>
-        <p class="hint" id="teams-hint" style="margin:0">Fai parte di una sola squadra. Puoi crearne un'altra o entrare in quella di altri colleghi: l'app le ricorda e passi dall'una all'altra con un tocco.</p>
-        <div class="m-grid2"><button id="team-new">+ Nuova squadra vuota</button><button id="team-join-toggle">Entra in un'altra</button></div>
-        <div id="team-new-box" class="sync-box sub" hidden>
-          <label class="f">Nome della nuova squadra<input type="text" id="team-new-name" maxlength="40" placeholder="es. Turno di notte"></label>
-          <label class="f">Il tuo nome<input type="text" id="team-new-me" maxlength="40" placeholder="es. Mario" autocomplete="given-name"></label>
-          <button class="primary wide" id="team-new-ok">Crea la squadra</button>
-          <p class="hint" style="margin:0">Parte vuota: ci sei solo tu, poi aggiungi i componenti qui sotto. La squadra attuale resta com'è.</p>
-        </div>
-        <div id="team-join-box" class="sync-box sub" hidden>
-          <label class="f">Codice della squadra<input type="text" id="team-join-code" placeholder="COL-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
-          <button class="primary wide" id="team-join">Entra</button>
-        </div>
-      </div>
-      <button class="ghost wide" id="sync-leave">Esci da questa squadra</button>
-    </div>
     <span class="msg" id="sync-msg" role="status"></span>
   </div>
+</section>
+
+<!-- SQUADRA: partecipanti -->
+<section class="view" data-view="membri" aria-labelledby="team-title" hidden>
   <div class="panel">
-    <div class="row between"><h2 id="t-people">Componenti</h2><span class="hint" id="people-count"></span></div>
-    <div class="m-add"><input type="text" id="new-person" placeholder="Nome del nuovo componente" aria-label="Nuovo componente"><button id="add-person">Aggiungi</button></div>
+    <a class="back" href="#squadra">‹ Le mie squadre</a>
+    <div class="team-head"><b id="team-title"></b><span class="hint" id="team-sub"></span></div>
+    <label class="f" id="team-rename-box">Nome della squadra<input type="text" id="team-rename" maxlength="40" placeholder="es. Ufficio Napoli"></label>
+    <label class="f" id="me-box">Il tuo nome in questa squadra<select id="sync-me2"></select></label>
+  </div>
+  <div class="panel">
+    <div class="row between"><h2 id="t-people">Partecipanti</h2><span class="hint" id="people-count"></span></div>
+    <div class="m-add"><input type="text" id="new-person" placeholder="Nome del nuovo partecipante" aria-label="Nuovo partecipante"><button id="add-person">Aggiungi</button></div>
     <span class="msg" id="pmsg" role="status"></span>
     <div class="ptable" id="people"></div>
     <span class="hint" id="people-hint"></span>
   </div>
+  <div class="panel" id="start-panel">
+    <div class="row between"><h2>Punti di partenza</h2><button id="start-edit">Modifica</button></div>
+    <p class="hint" style="margin:0" id="start-note"></p>
+    <div id="start-box" class="sp-grid"></div>
+    <div class="sp-actions" id="start-actions" hidden><span class="msg" id="start-msg" role="status"></span><button class="ghost" id="start-cancel">Annulla</button><button class="primary" id="start-save">Salva</button></div>
+  </div>
+  <div class="panel share-code" id="sync-on" hidden>
+    <h2>Codice di condivisione</h2>
+    <div class="sync-code" id="sync-code"></div>
+    <div class="m-grid2"><button id="sync-copy">Copia codice</button><button class="primary" id="sync-share">Invia ai colleghi</button></div>
+    <p class="hint" style="margin:0">Chi ha il codice entra nella squadra e vede tutti i dati: mandalo solo ai colleghi.</p>
+    <button class="ghost wide" id="sync-leave">Esci da questa squadra</button>
+  </div>
+</section>
+
+<!-- GRUPPI -->
+<section class="view" data-view="gruppi" aria-labelledby="t-groups" hidden>
   <div class="panel">
     <div class="row between"><h2 id="t-groups">Gruppi</h2><button id="add-group">+ Nuovo gruppo</button></div>
-    <p class="hint" style="margin:0">Chi è nello stesso gruppo viaggia insieme quando organizzi le auto, se c'è posto. Nell'inserimento guidato i compagni di gruppo del guidatore compaiono per primi.</p>
+    <p class="hint" style="margin:0">Chi è nello stesso gruppo viaggia insieme quando organizzi le auto, se c'è posto. Non è obbligatorio far parte di un gruppo e si può stare in più gruppi. Tutti possono modificarli.</p>
   </div>
   <div id="groups" class="gstack"></div>
 </section>
@@ -692,6 +710,7 @@ body.wz-on{overflow:hidden}
   <a href="#prenotazioni" data-tab="prenotazioni"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg>Prenota</a>
   <a href="#punti" data-tab="punti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M12 7H6M12 11h8M12 15H8M12 19h5"/></svg>Punti</a>
   <a href="#registro" data-tab="registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>Registro</a>
+  <a href="#gruppi" data-tab="gruppi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2 20c.5-3 2.5-5 5-5s4.5 2 5 5M12 20c.5-3 2.5-5 5-5s4.5 2 5 5"/></svg>Gruppi</a>
   <a href="#squadra" data-tab="squadra"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><circle cx="12" cy="15" r="2.5"/><path d="M4 21c.5-2 2-3 4-3M20 21c-.5-2-2-3-4-3"/></svg>Squadra</a>
 </nav>
 
@@ -765,7 +784,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='3.0';
+const APP_VERSION='3.1';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -778,6 +797,7 @@ try{state=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!state||!Array.isArray(state.people))state=JSON.parse(JSON.stringify(IMPORTED));
 // migrazione: niente riporti, pesi interi
 delete state.opening;delete state.openingNote;
+migrateGroups(state);
 state.groups=Array.isArray(state.groups)?state.groups:[];
 if(!state.start&&state.people.some(p=>p.id==='p1')){state.start=JSON.parse(JSON.stringify(IMPORTED.start));
   state.trips.forEach(t=>{if(t.date<=IMPORTED.start.date&&/^t\d+$/.test(t.id))t.hist=true});
@@ -801,7 +821,13 @@ function balances(){
 // parità: a pari punti guida prima chi era più indietro nella graduatoria originale
 const tie=id=>((state.start&&state.start.rank)||{})[id]??0;
 // gruppi: ogni persona appartiene al massimo a un gruppo
-const groupOf=id=>{const p=state.people.find(x=>x.id===id);return p&&p.group&&state.groups.some(g=>g.id===p.group)?p.group:null};
+// gruppi: ogni gruppo ha i suoi membri; si può stare in nessuno, in uno o in più gruppi
+function migrateGroups(st){if(!st)return;st.groups=st.groups||[];st.groups.forEach(g=>{g.members=Array.isArray(g.members)?g.members:[]});
+  (st.people||[]).forEach(p=>{if(p.group){const g=st.groups.find(x=>x.id===p.group);if(g&&!g.members.includes(p.id))g.members.push(p.id);delete p.group}})}
+const groupsOf=id=>state.groups.filter(g=>(g.members||[]).includes(id)).map(g=>g.id);
+const groupOf=id=>groupsOf(id)[0]||null;
+const sameGroup=(a,b)=>{const ga=groupsOf(a);return ga.length&&groupsOf(b).some(x=>ga.includes(x))};
+const dotsOf=id=>groupsOf(id).map(gDot).join('');
 const gIndex=gid=>state.groups.findIndex(g=>g.id===gid);
 const gColor=gid=>`var(--g${gIndex(gid)%6+1})`;
 const gDot=gid=>gid?`<span class="gdot" style="background:${gColor(gid)}" title="${esc(state.groups[gIndex(gid)].name)}"></span>`:'';
@@ -813,7 +839,7 @@ $('trip-date').value=new Date().toISOString().slice(0,10);
 
 function renderWho(){
   const b=balances();
-  $('who').innerHTML=active().map(p=>`<button class="chip" data-id="${p.id}" aria-pressed="${draft.who.has(p.id)}">${gDot(groupOf(p.id))}${esc(p.name)}<span class="bal">${fmt(b[p.id])}</span></button>`).join('')||'<span class="hint">Aggiungi prima delle persone.</span>';
+  $('who').innerHTML=active().map(p=>`<button class="chip" data-id="${p.id}" aria-pressed="${draft.who.has(p.id)}">${dotsOf(p.id)}${esc(p.name)}<span class="bal">${fmt(b[p.id])}</span></button>`).join('')||'<span class="hint">Aggiungi prima delle persone.</span>';
 }
 $('who').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;const id=c.dataset.id;
   if(draft.who.has(id)){draft.who.delete(id);draft.cars.forEach(car=>{if(car.driver===id)car.driver='';car.passengers=car.passengers.filter(x=>x!==id)})}
@@ -826,28 +852,27 @@ $('all-off').onclick=()=>{draft.who.clear();draft.cars=draft.cars.map(()=>({driv
 // Distribuisci: i saldi più bassi guidano, passeggeri a rotazione partendo dai punti più alti
 // --- gruppi
 function renderGroups(){
-  $('add-group').hidden=!isAdmin();
   const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
   $('groups').innerHTML=state.groups.length?state.groups.map(g=>{
-    const mem=ppl.filter(p=>p.group===g.id);
+    const mem=ppl.filter(p=>(g.members||[]).includes(p.id));
     return `<div class="panel gcard">
-      <div class="gc-h">${gDot(g.id)}<input id="gn-${g.id}" data-gname="${g.id}" value="${esc(g.name)}" aria-label="Nome del gruppo" ${isAdmin()?'':'readonly'}><span class="hint">${mem.length} ${mem.length===1?'membro':'membri'}</span></div>
-      <div class="chips">${ppl.map(p=>{const other=p.group&&p.group!==g.id&&groupOf(p.id);
-        return `<button class="chip gm" data-gm="${g.id}" data-id="${p.id}" aria-pressed="${p.group===g.id}">${esc(p.name)}${other?`<span class="bal">${esc(state.groups[gIndex(p.group)].name)}</span>`:''}</button>`}).join('')}</div>
-      <div class="row between"><span class="hint">Tocca un nome per aggiungerlo o toglierlo</span>${isAdmin()?`<button class="x" data-gdel="${g.id}">elimina gruppo</button>`:''}</div>
+      <div class="gc-h">${gDot(g.id)}<input id="gn-${g.id}" data-gname="${g.id}" value="${esc(g.name)}" aria-label="Nome del gruppo"><span class="hint">${mem.length} ${mem.length===1?'membro':'membri'}</span></div>
+      <div class="chips">${ppl.map(p=>`<button class="chip gm" data-gm="${g.id}" data-id="${p.id}" aria-pressed="${(g.members||[]).includes(p.id)}">${esc(p.name)}</button>`).join('')}</div>
+      <div class="row between"><span class="hint">Tocca un nome per aggiungerlo o toglierlo</span><button class="x" data-gdel="${g.id}">elimina gruppo</button></div>
     </div>`}).join('')
-    :'<div class="panel"><p class="hint" style="margin:0">Nessun gruppo. Tocca "+ Nuovo gruppo" per crearne uno.</p></div>';
+    :'<div class="panel"><p class="hint" style="margin:0">Questa squadra non ha ancora gruppi. Tocca "+ Nuovo gruppo" per crearne uno.</p></div>';
 }
-$('add-group').onclick=()=>{if(!isAdmin())return;let k=state.groups.length+1;while(state.groups.some(g=>g.name==='Gruppo '+k))k++;
-  const g={id:uid(),name:'Gruppo '+k};state.groups.push(g);persist();render();const i=$('gn-'+g.id);if(i){i.focus();i.select()}};
+$('add-group').onclick=()=>{let k=state.groups.length+1;while(state.groups.some(g=>g.name==='Gruppo '+k))k++;
+  const g={id:uid(),name:'Gruppo '+k,members:[]};state.groups.push(g);persist();render();const i=$('gn-'+g.id);if(i){i.focus();i.select()}};
 $('groups').onchange=e=>{const i=e.target.closest('[data-gname]');if(!i)return;const g=state.groups.find(x=>x.id===i.dataset.gname);const n=i.value.trim();
   if(!n){i.value=g.name;return}g.name=n;persist();render()};
 $('groups').onkeydown=e=>{if(e.key==='Enter'&&e.target.dataset.gname)e.target.blur()};
 $('groups').onclick=e=>{
-  const m=e.target.closest('[data-gm]');if(m){const p=state.people.find(x=>x.id===m.dataset.id);if(p.group===m.dataset.gm)delete p.group;else p.group=m.dataset.gm;persist();render();return}
+  const m=e.target.closest('[data-gm]');if(m){const g=state.groups.find(x=>x.id===m.dataset.gm),id=m.dataset.id;g.members=g.members||[];
+    g.members=g.members.includes(id)?g.members.filter(x=>x!==id):[...g.members,id];persist();render();return}
   const b=e.target.closest('[data-gdel]');if(!b)return;const id=b.dataset.gdel;
   if(!b.dataset.confirm){b.dataset.confirm=1;b.textContent='conferma?';b.style.color='var(--neg)';return}
-  state.groups=state.groups.filter(g=>g.id!==id);state.people.forEach(p=>{if(p.group===id)delete p.group});persist();render()};
+  state.groups=state.groups.filter(g=>g.id!==id);persist();render()};
 
 // --- distribuzione automatica
 // guidano gli n saldi più bassi; poi i gruppi presenti si siedono insieme (prima nell'auto di un loro guidatore),
@@ -967,7 +992,6 @@ function personPanel(p,c){
   let h=`<div class="pact"><p class="hint" style="margin:0">${nN?`${nN} ${nN===1?'viaggio':'viaggi'}`:'Nessun viaggio registrato'}${nH?` (più ${nH} dello storico)`:''} · punti ${fmt(p.v)||'0'}</p>`;
   if(!pMode){
     h+=`<div class="pmenu">
-      <button data-act="m-group" data-id="${p.id}"><span>Aggiungi a un gruppo</span><span class="pm-val">${g?gDot(g)+esc(state.groups[gIndex(g)].name):'nessuno'}</span></button>
       ${!isAdmin()?'':(p.archived?`<button data-act="rest" data-id="${p.id}"><span>Ripristina</span><span class="pm-val">torna tra gli attivi</span></button>`
                  :`<button data-act="arch" data-id="${p.id}"><span>Archivia</span><span class="pm-val">nasconde, i punti restano</span></button>`)+`
       <button data-act="m-rename" data-id="${p.id}"><span>Rinomina</span><span class="pm-val">›</span></button>
@@ -1003,7 +1027,7 @@ $('people').onclick=e=>{const b=e.target.closest('[data-act]');if(!b)return;cons
   const unDraft=()=>{draft.who.delete(id);draft.cars.forEach(c=>{if(c.driver===id)c.driver='';c.passengers=c.passengers.filter(x=>x!==id)})};
   const done=msg=>{pMenu=null;pMode='';persist();render();if(msg)snack(msg)};
   const reveal=()=>{const el=document.querySelector('.pact');if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'})};
-  if(a==='menu'){pMenu=pMenu===id?null:id;pMode='';render();reveal();return}
+  if(a==='menu'){if(!isAdmin())return;pMenu=pMenu===id?null:id;pMode='';render();reveal();return}
   if(['arch','rest','m-rename','m-del','del','ren'].includes(a)&&!isAdmin())return;
   if(a==='m-group'){pMode='group';render();reveal();return}
   if(a==='m-rename'){pMode='rename';render();const i=$('pren-'+id);if(i){i.focus();i.select()}return}
@@ -1014,7 +1038,7 @@ $('people').onclick=e=>{const b=e.target.closest('[data-act]');if(!b)return;cons
   if(a==='newg'){let k=state.groups.length+1;while(state.groups.some(x=>x.name==='Gruppo '+k))k++;const g={id:uid(),name:'Gruppo '+k};state.groups.push(g);p.group=g.id;done(`Creato ${g.name} con ${p.name}`);return}
   if(a==='arch'){p.archived=true;unDraft();done(p.name+' archiviato');return}
   if(a==='rest'){delete p.archived;done(p.name+' ripristinato');return}
-  if(a==='del'){p.deleted=true;delete p.archived;delete p.group;unDraft();done(p.name+' eliminato');return}
+  if(a==='del'){p.deleted=true;delete p.archived;state.groups.forEach(g=>{g.members=(g.members||[]).filter(x=>x!==id)});unDraft();done(p.name+(window.__inTeam?' espulso dalla squadra':' eliminato'));return}
 };
 
 // --- saldi
@@ -1037,10 +1061,10 @@ function renderBalances(){
   const act=all.filter(x=>!x.archived&&!x.deleted).sort((a,c)=>a.name.localeCompare(c.name));
   const arch=all.filter(x=>x.archived&&!x.deleted).sort((a,c)=>a.name.localeCompare(c.name));
   const focused=document.activeElement&&document.activeElement.dataset.name;
-  $('people').innerHTML=[...act,...arch].map(p=>`<div class="pcell ${p.archived?'off':'on'}"><button class="pname" data-act="menu" data-id="${p.id}" aria-expanded="${pMenu===p.id}">${esc(p.name)}</button>${!p.archived?gDot(groupOf(p.id)):''}${p.archived?'<span class="tag">archiviato</span>':''}<button class="x pmore" data-act="menu" data-id="${p.id}" aria-expanded="${pMenu===p.id}" aria-label="Azioni per ${esc(p.name)}">⋯</button></div>${pMenu===p.id?personPanel(p,cnt[p.id]):''}`).join('');
+  $('people').innerHTML=[...act,...arch].map(p=>`<div class="pcell ${p.archived?'off':'on'}"><button class="pname" data-act="menu" data-id="${p.id}" aria-expanded="${pMenu===p.id}">${esc(p.name)}</button>${!p.archived?dotsOf(p.id):''}${p.archived?'<span class="tag">archiviato</span>':''}${isAdmin()?'':'<!--'}<button class="x pmore" data-act="menu" data-id="${p.id}" aria-expanded="${pMenu===p.id}" aria-label="Azioni per ${esc(p.name)}">⋯</button>${isAdmin()?'':'-->'}</div>${pMenu===p.id?personPanel(p,cnt[p.id]):''}`).join('');
   if(focused&&$('pn-'+focused))$('pn-'+focused).focus();
   $('new-person').closest('.m-add').hidden=!isAdmin();
-  $('people-hint').textContent=isAdmin()?'Tocca un nome per assegnarlo a un gruppo, archiviarlo, rinominarlo o espellerlo.':'Solo chi ha creato la squadra può aggiungere, rinominare o espellere i componenti. Tu puoi assegnarli ai gruppi.';
+  $('people-hint').textContent=isAdmin()?'Tocca un nome per archiviarlo, rinominarlo o espellerlo dalla squadra.':'Solo chi ha creato la squadra può aggiungere, archiviare o espellere i partecipanti.';
   $('people-count').textContent=`${act.length} attivi${arch.length?` · ${arch.length} archiviati`:''}`;
 }
 
@@ -1116,7 +1140,7 @@ function parseImport(text){
   if(s.start){const pts=s.start.points||{};for(const k in pts)pts[k]=Math.round(+pts[k]||0);
   }
   const groups=Array.isArray(s.groups)?s.groups.filter(g=>g&&g.id&&g.name):[];
-  s.people.forEach(p=>{if(p.group&&!groups.some(g=>g.id===p.group))delete p.group});
+  migrateGroups({people:s.people,groups});
   return {people:s.people,groups,start:s.start||null,trips:s.trips.sort((a,b)=>a.date.localeCompare(b.date))};
 }
 let pending=null;
@@ -1298,7 +1322,7 @@ function wzShow(){if(!wz){wz={k:0,date:todayISO(),n:1,cars:[{driver:'',passenger
 function wzSetCars(n){wz.n=n;while(wz.cars.length<n)wz.cars.push({driver:'',passengers:[]});wz.cars.length=n}
 const takenElsewhere=(id,ci)=>wz.cars.some((c,i)=>i!==ci&&(c.driver===id||c.passengers.includes(id)));
 function wzPeople(){const b=balances();return active().map(p=>({...p,v:b[p.id]})).sort((a,c)=>a.v-c.v||tie(a.id)-tie(c.id)||a.name.localeCompare(c.name))}
-const pBtn=(p,sel,extra='')=>`<button class="wz-p${sel?' sel':''}" data-p="${p.id}" aria-pressed="${sel}">${gDot(groupOf(p.id))}<span class="nm">${esc(p.name)}</span>${extra}<span class="pt ${p.v>0?'pos':p.v<0?'neg':''}">${fmt(p.v)||'0'}</span></button>`;
+const pBtn=(p,sel,extra='')=>`<button class="wz-p${sel?' sel':''}" data-p="${p.id}" aria-pressed="${sel}">${dotsOf(p.id)}<span class="nm">${esc(p.name)}</span>${extra}<span class="pt ${p.v>0?'pos':p.v<0?'neg':''}">${fmt(p.v)||'0'}</span></button>`;
 function wzRender(){
   const steps=wzSteps(),st=steps[wz.k];
   $('wz-step').textContent=`Passo ${wz.k+1} di ${steps.length}`;
@@ -1325,10 +1349,10 @@ function wzRender(){
       :'<p class="hint">Non c\'è nessun altro disponibile: torna indietro e riduci il numero di auto.</p>';
     ok=!!car.driver;
   }else if(st.startsWith('pax')){
-    const ci=+st.slice(3),car=wz.cars[ci],g=groupOf(car.driver);
+    const ci=+st.slice(3),car=wz.cars[ci];
     title=`Chi viaggia con ${esc(name(car.driver))}?`;
     const list=wzPeople().filter(p=>p.id!==car.driver&&!takenElsewhere(p.id,ci))
-      .sort((a,c)=>((g&&groupOf(c.id)===g)?1:0)-((g&&groupOf(a.id)===g)?1:0));
+      .sort((a,c)=>(sameGroup(car.driver,c.id)?1:0)-(sameGroup(car.driver,a.id)?1:0));
     body=list.length?`<p class="hint">Tocca tutti i passeggeri di quest'auto.</p><div class="wz-list" data-role="pax" data-car="${ci}">${list.map(p=>pBtn(p,car.passengers.includes(p.id))).join('')}</div>`
       :'<p class="hint">Non c\'è nessun passeggero disponibile: torna indietro e riduci il numero di auto.</p>';
     ok=car.passengers.length>0;
@@ -1377,8 +1401,9 @@ function renderRecent(){
 const _render=render;render=function(){_render();renderRecent()};
 renderRecent();
 
-const VIEWS=['viaggio','prenotazioni','punti','registro','squadra','condividi','backup','suggerimenti','info'];
-const ALIAS={persone:'squadra',gruppi:'squadra',dati:'squadra'};
+const VIEWS=['viaggio','prenotazioni','punti','registro','gruppi','squadra','membri','condividi','backup','suggerimenti','info'];
+const ALIAS={persone:'membri',dati:'squadra'};
+const TAB_OF={membri:'squadra'};
 function showView(){const h=location.hash.slice(1);
   if(h==='nuovo'){wzShow();return}
   if(h==='prenota'){bkShow();return}
@@ -1387,7 +1412,7 @@ function showView(){const h=location.hash.slice(1);
   if(ALIAS[h]){location.replace('#'+ALIAS[h]);return}
   const v=VIEWS.includes(h)?h:'viaggio';
   document.querySelectorAll('.view').forEach(s=>s.hidden=s.dataset.view!==v);
-  document.querySelectorAll('[data-tab]').forEach(a=>{if(a.dataset.tab===v)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  const tv=TAB_OF[v]||v;document.querySelectorAll('[data-tab]').forEach(a=>{if(a.dataset.tab===tv)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   if(!$('drawer').hidden)closeMenu();
   window.scrollTo(0,0);
   setTimeout(()=>{if(v==='condividi')renderShare();if(v==='info')renderInfo();if(v==='suggerimenti')renderSug()},0)}
@@ -1445,7 +1470,7 @@ async function syncStart(){
 function syncMerge(fromCache){
   if(remoteTrips===null||remoteMeta===undefined)return;
   applying=true;
-  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';
+  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];migrateGroups(state);state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';
     const tt=sync.teams&&sync.teams.find(x=>x.code===sync.code);if(tt&&tt.name!==state.teamName){tt.name=state.teamName;saveSync()}}
   const del=new Set(sync.pendingDel),dirty=new Set(sync.dirty),localById=new Map(state.trips.map(t=>[t.id,t])),out=[];
   remoteTrips.forEach((d,id)=>{if(dirty.has(id)&&localById.has(id)){out.push(localById.get(id));return}
@@ -1510,10 +1535,13 @@ function diffEvents(a,b){
     if(!o.deleted&&p.deleted)ev.push(['del',`Eliminato viaggiatore ${p.name}`]);
     else if(!o.archived&&p.archived)ev.push(['person',`Archiviato ${p.name}`]);
     else if(o.archived&&!p.archived&&!p.deleted)ev.push(['person',`Ripristinato ${p.name}`]);
-    if(!p.deleted&&(o.group||'')!==(p.group||'')){if(p.group)ev.push(['group',`${p.name} aggiunto a ${gN(b,p.group)}`]);else ev.push(['group',`${p.name} tolto da ${gN(a,o.group)}`])}});
+  });
   a.people.forEach(p=>{if(!b.people.some(x=>x.id===p.id))ev.push(['del',`Rimosso viaggiatore ${p.name}`])});
   const GA=new Map(a.groups.map(g=>[g.id,g]));
-  b.groups.forEach(g=>{const o=GA.get(g.id);if(!o)ev.push(['group',`Creato gruppo ${g.name}`]);else if(o.name!==g.name)ev.push(['group',`Gruppo rinominato ${o.name} → ${g.name}`])});
+  b.groups.forEach(g=>{const o=GA.get(g.id);if(!o)ev.push(['group',`Creato gruppo ${g.name}`]);else if(o.name!==g.name)ev.push(['group',`Gruppo rinominato ${o.name} → ${g.name}`]);
+    const was=new Set((o&&o.members)||[]),now=new Set(g.members||[]);
+    now.forEach(id=>{if(!was.has(id))ev.push(['group',`${nmB(id)} aggiunto a ${g.name}`])});
+    was.forEach(id=>{if(!now.has(id)&&b.people.some(p=>p.id===id&&!p.deleted))ev.push(['group',`${nmB(id)} tolto da ${g.name}`])})});
   a.groups.forEach(g=>{if(!b.groups.some(x=>x.id===g.id))ev.push(['group',`Eliminato gruppo ${g.name}`])});
   const sa=(a.start&&a.start.points)||{},sb=(b.start&&b.start.points)||{},ch=[];
   new Set([...Object.keys(sa),...Object.keys(sb)]).forEach(id=>{const x=sa[id]||0,y=sb[id]||0;if(x!==y)ch.push(`${nmB(id)} ${fmt(x)||'0'} → ${fmt(y)||'0'}`)});
@@ -1578,7 +1606,7 @@ function openTeam(code,{me='',creator=false,name='',fresh:newState=null}={}){
   if(!t){t={code,name,me,creator};sync.teams.push(t)}
   sync.code=code;sync.me=t.me||me;sync.creator=!!(t.creator||creator);sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];sync.metaDirty=!!newState;
   let cached=null;try{cached=JSON.parse(localStorage.getItem(CACHE_PREFIX+code))}catch(e){}
-  applying=true;state=newState||cached||{people:[],trips:[],groups:[],start:null};state.groups=state.groups||[];persistLocal();applying=false;
+  applying=true;state=newState||cached||{people:[],trips:[],groups:[],start:null};migrateGroups(state);persistLocal();applying=false;
   lastSnap=snapOf();lastMeta=newState?'':JSON.stringify(metaOf());
   saveSync();fresh();pMenu=null;render();syncStart();return true;
 }
@@ -1589,17 +1617,19 @@ function renderSync(){
   const opts=active().map(p=>p.name).sort((a,b)=>a.localeCompare(b));
   ['sync-me','sync-me2'].forEach(id=>{$(id).innerHTML='<option value="">— scegli il tuo nome —</option>'+opts.map(n=>`<option ${n===sync.me?'selected':''}>${esc(n)}</option>`).join('')});
   $('team-name').textContent=on?' · '+teamLabel(t):'';
-  if(on){
-    $('sync-code').textContent=sync.code;
-    if(document.activeElement!==$('team-rename'))$('team-rename').value=t&&t.name||'';
-    $('team-title').textContent=teamLabel(t);
-    $('team-rename-box').hidden=!sync.creator;
-    const others=sync.teams.filter(x=>x.code!==sync.code);
-    $('teams-list').innerHTML=sync.teams.map(x=>x.code===sync.code
-      ?`<div class="tm cur"><span><b>${esc(teamLabel(x))}</b><small>${esc(x.code)}</small></span><span class="tm-tag">aperta</span></div>`
-      :`<button class="tm" data-team="${esc(x.code)}"><span><b>${esc(teamLabel(x))}</b><small>${esc(x.code)}</small></span><span class="tm-go">Apri ›</span></button>`).join('');
-    $('teams-hint').hidden=others.length>0;
-  }
+  // elenco delle squadre, con il numero di iscritti
+  const cnt=code=>{if(code===sync.code)return active().length;
+    try{const c=JSON.parse(localStorage.getItem(CACHE_PREFIX+code));return c?(c.people||[]).filter(p=>!p.archived&&!p.deleted).length:null}catch(e){return null}};
+  let rows=sync.teams.map(x=>{const n=cnt(x.code);
+    return `<button class="tm${x.code===sync.code?' cur':''}" data-team="${esc(x.code)}"><span><b>${esc(teamLabel(x))}</b><small>${x.creator?'creata da te':'creata da un collega'}${x.code===sync.code?' · aperta':''}</small></span><span class="tm-n">${n==null?'—':n}<small>${n===1?'iscritto':'iscritti'}</small></span><span class="tm-go">›</span></button>`}).join('');
+  if(!on)rows=`<button class="tm cur" data-team=""><span><b>Su questo telefono</b><small>non condivisa</small></span><span class="tm-n">${active().length}<small>persone</small></span><span class="tm-go">›</span></button>`+rows;
+  $('teams-list').innerHTML=rows;
+  $('teams-hint').textContent=on?'Tocca una squadra per vedere i partecipanti e il codice di condivisione.':'Non sei ancora in una squadra condivisa: entra con un codice ricevuto o creane una.';
+  // pagina della squadra aperta
+  $('team-title').textContent=on?teamLabel(t):'Su questo telefono';
+  $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".';
+  $('team-rename-box').hidden=!on||!sync.creator;$('me-box').hidden=!on;
+  if(on){$('sync-code').textContent=sync.code;if(document.activeElement!==$('team-rename'))$('team-rename').value=t&&t.name||''}
   setSync(syncState);
 }
 const smsg=t=>{$('sync-msg').textContent=t};
@@ -1635,7 +1665,8 @@ $('team-new-ok').onclick=()=>{
   if(openTeam(newCode(),{me,creator:true,name:n,fresh:st})){
     $('team-new-box').hidden=true;$('team-new-name').value='';$('team-new-me').value='';
     addEvents([['team',`Creata la squadra ${n}`]]);syncPush();smsg(`Squadra "${n}" creata: manda il codice ai colleghi.`)}};
-$('teams-list').onclick=e=>{const b=e.target.closest('[data-team]');if(!b)return;if(openTeam(b.dataset.team)){smsg(`Aperta "${teamLabel(curTeam())}".`);window.scrollTo(0,0)}};
+$('teams-list').onclick=e=>{const b=e.target.closest('[data-team]');if(!b)return;const c=b.dataset.team;
+  if(c&&c!==sync.code&&!openTeam(c))return;location.hash='membri'};
 $('sync-copy').onclick=()=>{const t=sync.code;
   const ok=()=>smsg('Codice copiato'),ko=()=>{const r=document.createRange();r.selectNodeContents($('sync-code'));const s=getSelection();s.removeAllRanges();s.addRange(r);smsg('Codice selezionato: copialo')};
   try{navigator.clipboard?navigator.clipboard.writeText(t).then(ok,ko):ko()}catch(e){ko()}};
@@ -1650,7 +1681,7 @@ $('sync-leave').onclick=e=>{if(!e.target.dataset.c){e.target.dataset.c=1;e.targe
   const next=sync.teams[0];
   if(next){sync.code='';openTeam(next.code);smsg(`Sei uscito da "${name}". Ora sei in "${teamLabel(next)}".`);return}
   stopSync();sync={pendingDel:[],dirty:[],pendingEv:[],me:sync.me,teams:[]};saveSync();renderSync();setSync('off');smsg(`Sei uscito da "${name}": i dati restano su questo telefono.`)};
-$('team-name').onclick=()=>{if(sync.code)location.hash='squadra'};
+$('team-name').onclick=()=>{location.hash=sync.code?'membri':'squadra'};
 $('team-join-toggle').onclick=()=>{$('team-join-box').hidden=!$('team-join-box').hidden;if(!$('team-join-box').hidden)$('team-join-code').focus()};
 const _render2=render;render=function(){renderSync();_render2();renderEvents()};
 renderSync();syncStart();
@@ -1673,7 +1704,7 @@ $('install-go').onclick=async()=>{if(!installEvt)return;installEvt.prompt();try{
 $('install-x').onclick=()=>{installOff=true;try{localStorage.setItem('ca-install-off','1')}catch(e){}renderInstall()};
 function renderWelcome(){$('welcome').hidden=!(state.people.length===0&&!sync.code)}
 $('welcome-join').onclick=()=>{location.hash='squadra';setTimeout(()=>{const i=$('sync-join-code');i.scrollIntoView({block:'center'});i.focus()},120)};
-$('welcome-new').onclick=()=>{location.hash='squadra';setTimeout(()=>$('new-person').focus(),120)};
+$('welcome-new').onclick=()=>{location.hash='membri';setTimeout(()=>$('new-person').focus(),120)};
 const _render3=render;render=function(){_render3();renderWelcome()};
 renderInstall();renderWelcome();
 if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -4102,7 +4133,7 @@ $('sh-copy').onclick=()=>{const {url}=shareData();const ok=()=>{$('sh-msg').text
   if(sync.teams.some(t=>t.code===inv)){if(sync.code!==inv)openTeam(inv);return}
   location.hash='squadra';
   setTimeout(()=>{if(sync.code){$('team-join-box').hidden=false;$('team-join-code').value=inv}else $('sync-join-code').value=inv;
-    smsg('Hai ricevuto un invito: scegli il tuo nome se te lo chiede e tocca "Entra".');$('sync-panel').scrollIntoView({block:'start'})},150)})();
+    smsg('Hai ricevuto un invito: scegli il tuo nome se te lo chiede e tocca "Entra".');window.scrollTo(0,0)},150)})();
 // ===================== Menu a panino =====================
 function openMenu(){$('drawer').hidden=false;$('drawer-bg').hidden=false;$('menu-open').setAttribute('aria-expanded','true')}
 function closeMenu(){$('drawer').hidden=true;$('drawer-bg').hidden=true;$('menu-open').setAttribute('aria-expanded','false')}
@@ -4116,7 +4147,7 @@ function maybeAskWho(){
   if(!sync.code||whoLater||remoteMeta===undefined||myPid()){$('whoami').hidden=true;return}
   $('who-team').textContent=`Squadra "${teamLabel(curTeam())}". Scegli il tuo nome dall'elenco, oppure aggiungilo se non c'è.`;
   const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
-  $('who-list').innerHTML=ppl.length?ppl.map(p=>`<button data-who="${esc(p.name)}"><span>${gDot(groupOf(p.id))} ${esc(p.name)}</span><span class="pm-val">sono io ›</span></button>`).join(''):'<p class="hint" style="margin:10px">La squadra è ancora vuota.</p>';
+  $('who-list').innerHTML=ppl.length?ppl.map(p=>`<button data-who="${esc(p.name)}"><span>${dotsOf(p.id)} ${esc(p.name)}</span><span class="pm-val">sono io ›</span></button>`).join(''):'<p class="hint" style="margin:10px">La squadra è ancora vuota.</p>';
   $('whoami').hidden=false;
 }
 function setMe(n){sync.me=n;const t=curTeam();if(t)t.me=n;saveSync();$('whoami').hidden=true;render();snack(`Ciao ${n}!`)}
@@ -4147,6 +4178,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['3.1','Pagina Squadre riorganizzata: elenco delle squadre con il numero di iscritti, partecipanti e codice di condivisione. Gruppi in una pagina dedicata, modificabili da tutti, con la possibilità di stare in più gruppi.'],
  ['3.0','Nuova organizzazione: scheda Squadra con componenti e gruppi, pagina Prenotazioni, menu con Condividi, Dati e backup, Suggerimenti e Info. Solo chi crea la squadra aggiunge o espelle componenti. Chi entra sceglie il suo nome o si aggiunge. Prenotazioni per oggi fino alle 8:00.'],
  ['2.7','Condividi l\'app con link, QR code, WhatsApp e Telegram, anche con invito diretto alla squadra.'],
  ['2.5','Prenotazioni per oggi e domani con gruppo di preferenza e note.'],
