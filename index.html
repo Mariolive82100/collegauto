@@ -600,6 +600,10 @@ body.wz-on{overflow:hidden}
 .ul-neg .ul-n b,.ul-neg .ul-v{color:var(--neg)}
 .ul-row.me{outline:2px solid var(--teal);outline-offset:-2px}
 .ul-pres+.ul-abs,.ul-pres+.ul-miss,.ul-abs+.ul-miss{border-top:2px solid var(--line)!important}
+.ask3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ask3 button{min-height:60px!important;font-size:18px!important;font-weight:700;border-radius:12px!important}
+.ask-other{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ask-other[hidden]{display:none}
+.seat{cursor:default}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -607,7 +611,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.3</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.4</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -660,11 +664,9 @@ body.wz-on{overflow:hidden}
   <div class="panel bk">
     <div class="row between"><h2 id="t-bk">Prenotazioni</h2><span class="hint" id="bk-sum"></span></div>
     <div class="bk-win"><b id="bk-day"></b><p class="hint" style="margin:0" id="bk-rule"></p></div>
-    <label class="f">Prenoti come<select id="bk-person"></select></label>
     <div id="bk-tips" class="bk-tips"></div>
     <div id="bk-days-view" class="bk-cars"></div>
-    <button class="ghost wide" id="bk-newcar">+ Porto un'altra auto</button>
-    <button class="wide bk-main" id="bk-add">Registra il viaggio dalla tabella</button>
+    <button class="wide bk-main" id="bk-add">Registra il viaggio</button>
   </div>
   <details class="adv" id="plan">
     <summary>Organizza le auto · distribuzione automatica in base ai punti e ai gruppi</summary>
@@ -906,10 +908,11 @@ body.wz-on{overflow:hidden}
 
 <div class="sheet" id="ask-seat" hidden role="dialog" aria-modal="true" aria-labelledby="ask-seat-t">
   <div class="sheet-card">
-    <h2 id="ask-seat-t">Vuoi prenotare il posto?</h2>
+    <h2 id="ask-seat-t">Sarai guidatore?</h2>
     <p class="hint" style="margin:0" id="ask-seat-d"></p>
-    <button class="wide bk-main" id="ask-yes">Sì, scelgo il posto</button>
-    <button class="ghost wide" id="ask-no">No</button>
+    <div class="ask3"><button class="bk-main" data-drive="si">Sì</button><button data-drive="no">No</button><button data-drive="forse">Non so</button></div>
+    <div class="ask-other" id="ask-other"><button class="ghost" data-drive="abs">Assente</button><button class="ghost" data-drive="none">Nessuna risposta</button></div>
+    <button class="ghost wide" id="ask-no">Annulla</button>
   </div>
 </div>
 <div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
@@ -949,7 +952,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.3';
+const APP_VERSION='4.4';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1893,165 +1896,133 @@ $('welcome-new').onclick=()=>{location.hash='membri';setTimeout(()=>$('new-perso
 const _render3=render;render=function(){_render3();renderWelcome()};
 renderInstall();renderWelcome();
 if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-// ===================== Prenotazioni: tabella dei posti, valida fino alle 8:00 =====================
-// Una sola tabella per il prossimo viaggio: prima delle 8:00 è quello di oggi, dopo le 8:00 quello di domani.
-// Alle 8:00 scade e si riparte con una tabella vuota per il giorno dopo.
-// state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, car:'c1', seat:'d'|1..n, seats (solo guidatore), by, t}]
+// ===================== Prenotazioni: presenze e auto composte in automatico =====================
+// Una sola prenotazione per il prossimo viaggio: prima delle 8:00 è quello di oggi, dopo le 8:00 quello di domani.
+// state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, present:true, drive:'si'|'no'|'forse', seats?, by, t}  oppure  {.., absent:true}]
 // su Firebase: gruppi/{codice}/prenotazioni/{id}
 const BK_CUTOFF=8,SEATS_DEF=POSTI,SEATS_MAX=8;
 const tripDay=()=>new Date().getHours()<BK_CUTOFF?todayISO():isoShift(todayISO(),1);
 const bkAll=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
-const bkList=date=>bkAll(date).filter(b=>!b.absent);   // chi viaggia
-const bkAbsent=date=>bkAll(date).filter(b=>b.absent);  // chi ha dichiarato di non esserci
+const bkList=date=>bkAll(date).filter(b=>!b.absent);   // presenti
+const bkAbsent=date=>bkAll(date).filter(b=>b.absent);  // assenti
 const myPid=()=>{const p=active().find(x=>x.name===sync.me);return p?p.id:''};
 const bkLong=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
-let bkSel='',bkExtra=0,bkSeenDay='';
-const bkWho=()=>{if(!active().some(p=>p.id===bkSel))bkSel=myPid()||(active()[0]||{}).id||'';return bkSel};
+// risposta a "Sarai guidatore?" (anche dalle prenotazioni delle versioni precedenti)
+const bkDrive=b=>b.drive||(b.seat==='d'||b.role==='guido'?'si':b.role==='passeggero'||(b.car&&b.seat!=='d')?'no':'forse');
+const DRIVE_TXT={si:'guida: sì',no:'non guida',forse:'guida: non so'};
 function bkWrite(b,del){
   state.bookings=(state.bookings||[]).filter(x=>x.id!==b.id);if(!del)state.bookings.push(b);
   persistLocal();
   if(fsdb&&sync.code){const ref=gref().collection('prenotazioni').doc(b.id);(del?ref.set({deleted:true,date:b.date,pid:b.pid,t:new Date().toISOString()}):ref.set(b)).catch(()=>{})}
 }
-// dalle prenotazioni alla tabella: uguale su tutti i telefoni (in caso di posto conteso vince chi è arrivato prima)
+// --- composizione automatica delle auto
+// 1) guidano prima quelli che hanno risposto "sì", da chi ha meno punti; poi, se servono altri posti, quelli che hanno risposto "non so"
+//    (prima chi copre un gruppo rimasto senza guidatore, poi chi ha meno punti). Chi ha risposto "no" non guida mai.
+// 2) si aggiungono auto solo finché i posti non bastano per tutti (posti di ogni auto: scelti dal guidatore, di base 4)
+// 3) ogni passeggero va nell'auto con più persone del suo gruppo; un'auto rimasta senza passeggeri viene sciolta se possibile
 function bkLayout(date){
-  const list=bkList(date).sort((a,b)=>(a.t||'').localeCompare(b.t||'')),cars=new Map(),wait=[];
-  const car=id=>{if(!cars.has(id))cars.set(id,{id,driver:'',seats:SEATS_DEF,pax:[]});return cars.get(id)};
-  list.filter(b=>b.car&&b.seat==='d').forEach(b=>{const c=car(b.car);
-    if(c.driver)wait.push(b.pid);else{c.driver=b.pid;c.seats=Math.max(1,Math.min(SEATS_MAX,+b.seats||SEATS_DEF))}});
-  cars.forEach(c=>c.pax=Array(c.seats).fill(''));
-  list.filter(b=>b.car&&b.seat!=='d').forEach(b=>{const c=car(b.car);if(c.pax.length<c.seats)c.pax=[...c.pax,...Array(c.seats-c.pax.length).fill('')];
-    const i=(+b.seat||1)-1;if(i<c.seats&&!c.pax[i])c.pax[i]=b.pid;else{const f=c.pax.indexOf('');if(f>=0)c.pax[f]=b.pid;else wait.push(b.pid)}});
-  list.filter(b=>!b.car).forEach(b=>wait.push(b.pid));
-  const num=id=>+String(id).replace(/\D/g,'')||0;
-  const out=[...cars.values()].filter(c=>c.driver||c.pax.some(Boolean)).sort((a,b)=>num(a.id)-num(b.id));
-  let next=Math.max(0,...[...cars.keys()].map(num))+1;
-  const full=out.every(c=>c.pax.every(Boolean));
-  const extra=(!out.length||full?1:0)+bkExtra;
-  for(let i=0;i<extra;i++)out.push({id:'c'+(next++),driver:'',seats:SEATS_DEF,pax:Array(SEATS_DEF).fill(''),empty:true});
-  return {cars:out,wait,list};
-}
-// posto consigliato per chi prenota
-function bkSuggest(L,pid){
-  if(!pid||L.list.some(b=>b.pid===pid&&b.car)||bkAbsent(tripDay()).some(b=>b.pid===pid))return null;
-  const b=balances(),booked=L.list.map(x=>x.pid).filter(x=>x!==pid);
-  const lowest=booked.length>0&&booked.every(x=>b[x]>b[pid]||(b[x]===b[pid]&&tie(x)>=tie(pid)));
-  const noDrvPax=L.cars.find(c=>!c.driver&&c.pax.some(Boolean));
-  const paxFree=L.cars.filter(c=>c.driver&&c.pax.includes(''));
-  if(noDrvPax&&(lowest||!paxFree.length))return {car:noDrvPax.id,seat:'d',why:lowest?'low':'nodrv'};
-  if(!L.cars.some(c=>c.driver)&&L.cars.length)return {car:(noDrvPax||L.cars[0]).id,seat:'d',why:lowest?'low':'first'};
-  const mine=groupsOf(pid);
-  const score=c=>(c.driver?100:0)+(groupsOf(c.driver).some(g=>mine.includes(g))?50:0)+c.pax.filter(x=>x&&groupsOf(x).some(g=>mine.includes(g))).length*5-c.pax.filter(Boolean).length;
-  const cand=L.cars.filter(c=>c.pax.includes('')&&!c.empty).sort((x,y)=>score(y)-score(x))[0];
-  if(cand)return {car:cand.id,seat:cand.pax.indexOf('')+1,why:groupsOf(cand.driver).some(g=>mine.includes(g))?'group':'free'};
-  const e=L.cars.find(c=>!c.driver);return e?{car:e.id,seat:'d',why:'full'}:null;
+  const list=bkList(date),bal=balances();
+  const byPts=(x,y)=>(bal[x.pid]||0)-(bal[y.pid]||0)||tie(x.pid)-tie(y.pid)||name(x.pid).localeCompare(name(y.pid));
+  const cap=b=>Math.max(1,Math.min(SEATS_MAX,+b.seats||SEATS_DEF));
+  const yes=list.filter(b=>bkDrive(b)==='si').sort(byPts),maybe=list.filter(b=>bkDrive(b)==='forse').sort(byPts);
+  const drivers=[],room=()=>drivers.reduce((s,b)=>s+1+cap(b),0);
+  for(const b of yes){if(drivers.length&&room()>=list.length)break;drivers.push(b)}
+  const pool=[...maybe];
+  while(pool.length&&(room()<list.length||!drivers.length)){
+    const cov=new Set(drivers.flatMap(b=>groupsOf(b.pid))),need=new Set(list.filter(b=>!drivers.includes(b)).flatMap(b=>groupsOf(b.pid)).filter(g=>!cov.has(g)));
+    const pick=pool.find(b=>groupsOf(b.pid).some(g=>need.has(g)))||pool[0];drivers.push(pick);pool.splice(pool.indexOf(pick),1)}
+  const cars=drivers.map(b=>({id:'c_'+b.pid,driver:b.pid,seats:cap(b),pax:[],maybe:bkDrive(b)==='forse'}));
+  const rest=list.filter(b=>!drivers.includes(b)).sort((x,y)=>groupsOf(y.pid).length-groupsOf(x.pid).length||byPts(y,x));
+  const wait=[];
+  rest.forEach(b=>{const g=groupsOf(b.pid);
+    const score=c=>(groupsOf(c.driver).some(x=>g.includes(x))?10:0)+c.pax.filter(q=>groupsOf(q).some(x=>g.includes(x))).length*2-c.pax.length*3;
+    const free=cars.filter(c=>c.pax.length<c.seats).sort((a,c)=>score(c)-score(a));
+    if(free.length)free[0].pax.push(b.pid);else wait.push(b.pid)});
+  for(const c of [...cars].reverse()){if(c.pax.length||cars.length<2)continue;
+    const host=cars.find(o=>o!==c&&o.pax.length<o.seats);if(host){host.pax.push(c.driver);cars.splice(cars.indexOf(c),1)}}
+  return {cars,wait,list,extraYes:yes.filter(b=>!cars.some(c=>c.driver===b.pid)).map(b=>b.pid)};
 }
 const seatLbl=(i,n)=>i===0?'Davanti':n>4&&i>3?'Terza fila':'Dietro';
-function bkSeat(c,s,k,pid,sug){
-  const who=s==='d'?c.driver:c.pax[s-1],isS=sug&&sug.car===c.id&&String(sug.seat)===String(s);
+function bkSeat(c,s){const who=s==='d'?c.driver:c.pax[s-1]||'',me=who&&who===myPid();
   const lbl=s==='d'?'Guidatore':seatLbl(s-1,c.seats);
-  const cls=['seat',s==='d'?'drv':'',who?'taken':'',who&&who===pid?'me':'',isS?'sug':''].join(' ');
-  const body=who?`<b>${esc(name(who))}</b>${s==='d'&&who?`<span class="seat-x">+${c.pax.filter(Boolean).length} punti</span>`:''}`
-    :`<b class="free">${s==='d'?(c.pax.some(Boolean)?'Serve un guidatore':'Libero'):'Libero'}</b>${isS?'<span class="seat-x">consigliato</span>':''}`;
-  return `<button class="${cls}" data-car="${c.id}" data-seat="${s}" aria-label="Auto ${k}, ${lbl}: ${who?esc(name(who)):'libero'}"><small>${lbl}</small>${body}</button>`}
-// nome con il suo punteggio; chi è in negativo è evidenziato
-function rsBtn(id,sub){const v=balances()[id]||0,cls=v<0?'neg':v>0?'pos':'zero';
-  return `<button class="rs-p rs-${cls}${id===myPid()?' me':''}" data-rsp="${id}"><span class="rs-n">${esc(name(id))}${sub?`<small>${esc(sub)}</small>`:''}</span><span class="rs-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span></button>`}
+  return `<div class="seat${s==='d'?' drv':''}${who?' taken':''}${me?' me':''}"><small>${lbl}</small>${who?`<b>${esc(name(who))}</b>${s==='d'?`<span class="seat-x">+${c.pax.length} punti</span>`:''}`:'<b class="free">Libero</b>'}</div>`}
 function renderBookings(){
-  const d=tripDay();if(bkSeenDay&&bkSeenDay!==d)bkExtra=0;bkSeenDay=d;
-  const pid=bkWho(),L=bkLayout(d),sug=bkSuggest(L,pid),edit=id=>isAdmin()||id===pid;
-  $('bk-person').innerHTML=active().sort((a,c)=>a.name.localeCompare(c.name)).map(p=>`<option value="${p.id}" ${p.id===pid?'selected':''}>${esc(p.name)}${p.id===myPid()?' (io)':''}</option>`).join('');
-  $('bk-days-view').innerHTML=L.cars.map((c,i)=>{const k=i+1,n=c.pax.filter(Boolean).length;
-    const back=c.pax.slice(1).map((_,j)=>bkSeat(c,j+2,k,pid,sug)),cols=Math.min(3,back.length)||1;
-    return `<div class="bkcar${c.empty?' bkcar-new':''}"><div class="car-h"><b>Auto ${k}</b>${c.empty?'<span class="hint">nuova</span>':`<span class="hint">${n}/${c.seats} posti</span>`}
-      ${c.driver&&edit(c.driver)?`<span class="seats-ed"><button class="sd" data-sd="${c.id}" data-dir="-1" aria-label="Un posto in meno" ${c.seats<=Math.max(1,n)?'disabled':''}>−</button><span>${c.seats} posti</span><button class="sd" data-sd="${c.id}" data-dir="1" aria-label="Un posto in più" ${c.seats>=SEATS_MAX?'disabled':''}>+</button></span>`:''}</div>
-      <div class="car-row" style="grid-template-columns:1fr 1fr">${bkSeat(c,'d',k,pid,sug)}${c.seats?bkSeat(c,1,k,pid,sug):''}</div>
+  const d=tripDay(),L=bkLayout(d),me=myPid(),edit=id=>isAdmin()||id===me,cn=id=>L.cars.findIndex(c=>c.driver===id)+1;
+  $('bk-days-view').innerHTML=L.cars.length?L.cars.map((c,i)=>{const k=i+1,n=c.pax.length;
+    const back=Array.from({length:Math.max(0,c.seats-1)},(_,j)=>bkSeat(c,j+2)),cols=Math.min(3,back.length)||1;
+    return `<div class="bkcar"><div class="car-h"><b>Auto ${k}</b><span class="hint">${n}/${c.seats} posti</span>
+      ${edit(c.driver)?`<span class="seats-ed"><button class="sd" data-sd="${c.driver}" data-dir="-1" aria-label="Un posto in meno" ${c.seats<=1?'disabled':''}>−</button><span>${c.seats} posti</span><button class="sd" data-sd="${c.driver}" data-dir="1" aria-label="Un posto in più" ${c.seats>=SEATS_MAX?'disabled':''}>+</button></span>`:''}</div>
+      <div class="car-row" style="grid-template-columns:1fr 1fr">${bkSeat(c,'d')}${bkSeat(c,1)}</div>
       ${back.length?`<div class="car-row" style="grid-template-columns:repeat(${cols},1fr)">${back.join('')}</div>`:''}</div>`}).join('')
-    +(L.wait.length?`<div class="tip tip-warn">Presenti senza posto: ${L.wait.map(x=>esc(name(x))).join(', ')}. Scegli il nome in "Prenoti come" e tocca un posto libero.</div>`:'');
+    :`<p class="hint" style="margin:0">${L.list.length?'Nessuno dei presenti ha detto di poter guidare.':'Ancora nessun presente: le auto si compongono da sole quando i colleghi toccano "Presente".'}</p>`;
   // suggerimenti
-  const tips=[],cn=id=>L.cars.findIndex(c=>c.id===id)+1;
-  if(sug){const sn=sug.seat==='d'?'come guidatore':`${seatLbl(sug.seat-1,9).toLowerCase()}`;
-    if(sug.seat==='d')tips.push(['me',sug.why==='low'?`Tocca a ${pid===myPid()?'te':name(pid)} guidare: tra i prenotati ${pid===myPid()?'hai':'ha'} meno punti. Posto consigliato: Auto ${cn(sug.car)}, guidatore.`
-      :sug.why==='nodrv'?`L'Auto ${cn(sug.car)} ha passeggeri ma nessun guidatore: se puoi, guida tu.`
-      :sug.why==='full'?`I posti sono finiti: per viaggiare serve un'altra auto. Posto consigliato: Auto ${cn(sug.car)}, guidatore.`
-      :`Nessuno guida ancora: posto consigliato Auto ${cn(sug.car)}, guidatore.`]);
-    else tips.push(['info',`Posto consigliato: Auto ${cn(sug.car)}, ${sn}${sug.why==='group'?`, con ${name(L.cars.find(c=>c.id===sug.car).driver)} del tuo gruppo`:''}.`])}
-  L.cars.forEach((c,i)=>{const n=c.pax.filter(Boolean).length;if(!c.driver&&n)tips.push(['warn',`Auto ${i+1}: ${n} ${n===1?'passeggero':'passeggeri'} e nessun guidatore.`])});
+  const tips=[];
+  if(me&&L.cars.some(c=>c.driver===me))tips.push(['me',`Guidi tu: Auto ${cn(me)}, con ${L.cars.find(c=>c.driver===me).pax.map(name).join(', ')||'nessun passeggero per ora'}.`]);
+  if(L.wait.length){const ok=L.list.filter(b=>bkDrive(b)!=='no').length;
+    tips.push(['warn',`Mancano posti per ${L.wait.map(name).join(', ')}: ${ok?'tutti quelli che possono guidare sono già alla guida.':'nessuno dei presenti ha detto di poter guidare.'} Serve qualcuno che risponda "sì" o "non so".`])}
+  if(L.extraYes.length)tips.push(['info',`${L.extraYes.map(name).join(', ')} ${L.extraYes.length===1?'potrebbe guidare':'potrebbero guidare'}, ma le auto bastano: ${L.extraYes.length===1?'viaggia':'viaggiano'} come passeggeri.`]);
+  L.cars.filter(c=>c.maybe).forEach(c=>tips.push(['info',`${name(c.driver)} guida l'Auto ${cn(c.driver)}: serviva un'auto in più e aveva risposto "non so".`]));
   $('bk-tips').innerHTML=tips.map(([t,x])=>`<div class="tip tip-${t}">${esc(x)}</div>`).join('');
-  const seated=L.list.length,nc=L.cars.filter(c=>!c.empty).length,abs=bkAbsent(d);
-  $('bk-sum').textContent=[seated?`${seated} ${seated===1?'prenotato':'prenotati'} · ${nc} auto`:'',abs.length?`${abs.length} ${abs.length===1?'assente':'assenti'}`:''].filter(Boolean).join(' · ');
-  // assenti e chi non ha ancora risposto
-  const done=new Set(bkAll(d).map(b=>b.pid)),miss=active().filter(p=>!done.has(p.id)).map(p=>p.name).sort();
-  // due colonne affiancate: chi non ha ancora risposto | chi non c'è (tocca un nome per prenotare al suo posto)
-  const missP=active().filter(p=>!done.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
-  const absS=abs.sort((a,b)=>name(a.pid).localeCompare(name(b.pid)));
-  // un unico elenco: presenti, poi assenti, poi senza risposta; in ogni gruppo prima chi ha meno punti
+  const pres=L.list.length,abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
+  $('bk-sum').textContent=pres?`${pres} ${pres===1?'presente':'presenti'} · ${L.cars.length} auto`:'';
+  $('bk-day').textContent='Viaggio di '+bkLong(d);
+  const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);const m=Math.max(0,Math.round((end-new Date())/60000));
+  $('bk-rule').textContent=`Le auto si compongono da sole con le presenze: guida prima chi ha risposto "sì", poi chi ha risposto "non so", partendo da chi ha meno punti. Vale fino alle ${BK_CUTOFF}:00 di ${bkLong(d)} (tra ${m>=60?Math.floor(m/60)+' h ':''}${m%60} min).`;
+  $('bk-add').disabled=!L.cars.some(c=>c.pax.length);
+  // elenco unico nella pagina principale: presenti, assenti, senza risposta; in ogni gruppo prima chi ha meno punti
   const bal=balances(),sub={};
-  L.cars.forEach((c,i)=>{if(c.driver)sub[c.driver]=`Auto ${i+1} · guida`;c.pax.forEach(x=>{if(x)sub[x]=`Auto ${i+1}`+(c.driver?'':' · senza guidatore')})});
-  L.wait.forEach(x=>{sub[x]=sub[x]||'senza posto'});
+  L.cars.forEach((c,i)=>{sub[c.driver]=`Guida l'Auto ${i+1}`;c.pax.forEach(x=>{sub[x]=`Passeggero Auto ${i+1}`})});
+  L.wait.forEach(x=>{sub[x]='senza posto'});
   const byPts=(x,y)=>(bal[x]||0)-(bal[y]||0)||tie(x)-tie(y)||name(x).localeCompare(name(y));
-  const presIds=[...new Set(L.list.map(b=>b.pid))].sort(byPts),absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
+  const dr={};L.list.forEach(b=>dr[b.pid]=bkDrive(b));
+  const presIds=L.list.map(b=>b.pid).sort(byPts),absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
   const ST={pres:'Presente',abs:'Assente',miss:'Nessuna risposta'};
-  const row=(id,st)=>{const v=bal[id]||0;return `<button class="ul-row ul-${st}${v<0?' ul-neg':''}${id===myPid()?' me':''}" data-rsp="${id}">
-      <span class="ul-n"><b>${esc(name(id))}</b>${st==='pres'&&sub[id]?`<small>${esc(sub[id])}</small>`:''}</span>
+  const row=(id,st)=>{const v=bal[id]||0;return `<button class="ul-row ul-${st}${v<0?' ul-neg':''}${id===me?' me':''}" data-rsp="${id}">
+      <span class="ul-n"><b>${esc(name(id))}</b>${st==='pres'?`<small>${esc(sub[id]||DRIVE_TXT[dr[id]])}</small>`:''}</span>
       <span class="ul-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span><span class="ul-s">${ST[st]}</span></button>`};
   $('bk-abs').innerHTML=active().length?presIds.map(id=>row(id,'pres')).join('')+absIds.map(id=>row(id,'abs')).join('')+missIds.map(id=>row(id,'miss')).join('')
     :'<p class="hint" style="margin:0">Aggiungi i partecipanti della squadra per vedere l\'elenco.</p>';
-  $('hm-day').textContent=`${bkLong(d)} · ${seated} ${seated===1?'presente':'presenti'}, ${abs.length} ${abs.length===1?'assente':'assenti'}, ${missP.length} senza risposta`;
-  $('bk-day').textContent='Viaggio di '+bkLong(d);
-  const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);const m=Math.max(0,Math.round((end-new Date())/60000));
-  $('bk-rule').textContent=`La tabella scade alle ${BK_CUTOFF}:00 di ${bkLong(d)} (tra ${m>=60?Math.floor(m/60)+' h ':''}${m%60} min), poi si azzera per il giorno dopo. Tocca un posto per prenotarlo, tocca il tuo posto per liberarlo.`;
-  const ok=L.cars.some(c=>c.driver&&c.pax.some(Boolean));$('bk-add').disabled=!ok;
-  const me=myPid(),my=me&&L.list.find(b=>b.pid===me&&b.car),meAbs=me&&abs.some(b=>b.pid===me);
-  const mePres=me&&L.list.some(b=>b.pid===me);
-  $('bk-open-t').textContent=mePres?'Presente ✓':'Presente';$('bk-open-s').textContent=my?`Auto ${cn(my.car)||'?'} · ${my.seat==='d'?'guidatore':'passeggero'}`:mePres?'senza posto · tocca per sceglierlo':'al prossimo viaggio';
+  $('hm-day').textContent=`${bkLong(d)} · ${pres} ${pres===1?'presente':'presenti'}, ${abs.length} ${abs.length===1?'assente':'assenti'}, ${missP.length} senza risposta`;
+  // i due tasti della pagina principale
+  const mineB=me&&L.list.find(b=>b.pid===me),meAbs=me&&abs.some(b=>b.pid===me);
+  $('bk-open-t').textContent=mineB?'Presente ✓':'Presente';
+  $('bk-open-s').textContent=mineB?(sub[me]?`${sub[me]} · tocca per annullare`:'tocca per annullare'):'al prossimo viaggio';
   $('bk-away-t').textContent=meAbs?'Assente ✓':'Assente';$('bk-away-s').textContent=meAbs?'tocca per annullare':'al prossimo viaggio';
-  $('bk-open').classList.toggle('on',!!mePres);$('bk-away').classList.toggle('on',!!meAbs);
+  $('bk-open').classList.toggle('on',!!mineB);$('bk-away').classList.toggle('on',!!meAbs);
 }
-function bkTake(carId,seat){const pid=bkWho();if(!pid){location.hash='membri';setTimeout(()=>snack('Aggiungi prima i partecipanti della squadra'),100);return}
-  const d=tripDay(),L=bkLayout(d),c=L.cars.find(x=>x.id===carId);if(!c)return;
-  const who=seat==='d'?c.driver:c.pax[seat-1];
-  if(who===pid){bkWrite({id:d+'_'+pid,date:d,pid},true);render();snack(`Posto di ${name(pid)} liberato`);return}
-  if(who){snack(`Posto già preso da ${name(who)}${isAdmin()?'. Per spostarlo scegli il suo nome in "Prenoti come"':''}`);return}
-  const prev=(state.bookings||[]).find(b=>b.id===d+'_'+pid);
-  const b={id:d+'_'+pid,date:d,pid,car:carId,seat:seat==='d'?'d':+seat,by:sync.me||'',t:new Date().toISOString()};
-  if(seat==='d')b.seats=prev&&prev.seat==='d'&&prev.seats?prev.seats:SEATS_DEF;
-  if(c.empty)bkExtra=Math.max(0,bkExtra-1);
-  bkWrite(b);render();snack(`${name(pid)}: Auto ${L.cars.indexOf(c)+1}, ${seat==='d'?'guidatore':seatLbl(seat-1,c.seats).toLowerCase()}`)}
-$('bk-days-view').onclick=e=>{const sd=e.target.closest('[data-sd]');
-  if(sd){const d=tripDay(),c=bkLayout(d).cars.find(x=>x.id===sd.dataset.sd);if(!c||!c.driver)return;
-    const b=(state.bookings||[]).find(x=>x.id===d+'_'+c.driver);if(!b)return;
-    const n=Math.max(1,c.pax.filter(Boolean).length),v=Math.max(n,Math.min(SEATS_MAX,c.seats+(+sd.dataset.dir)));
-    bkWrite({...b,seats:v});renderBookings();return}
-  const s=e.target.closest('[data-seat]');if(s)bkTake(s.dataset.car,s.dataset.seat==='d'?'d':+s.dataset.seat)};
-$('bk-person').onchange=e=>{bkSel=e.target.value;renderBookings()};
-$('bk-abs').onclick=e=>{const b=e.target.closest('[data-rsp]');if(!b)return;bkSel=b.dataset.rsp;renderBookings();location.hash='prenotazioni';setTimeout(()=>snack(`Ora prenoti come ${name(bkSel)}`),150)};
-// --- assenze: valgono sempre e solo per il prossimo viaggio (la tabella in corso)
-function bkSetAbsent(pid){const d=tripDay(),id=d+'_'+pid,cur=(state.bookings||[]).find(b=>b.id===id);
-  if(cur&&cur.absent){bkWrite({id,date:d,pid},true);render();snack(`Assenza di ${name(pid)} annullata`);return false}
-  bkWrite({id,date:d,pid,absent:true,by:sync.me||'',t:new Date().toISOString()});render();
-  snack(`${name(pid)} assente ${bkLong(d)}${cur&&cur.car?' · posto liberato':''}`);return true}
-$('bk-away').onclick=()=>{const me=myPid();
-  if(!me){location.hash='prenotazioni';setTimeout(()=>snack('Scegli il nome in "Prenoti come" e tocca "Non ci sono"'),150);return}
-  bkSetAbsent(me)};
-$('bk-newcar').onclick=()=>{bkExtra++;renderBookings();const l=$('bk-days-view').querySelector('.bkcar:last-of-type');if(l)l.scrollIntoView({block:'center',behavior:'smooth'})};
-$('bk-open').onclick=()=>{const me=myPid();
-  if(!me){location.hash='prenotazioni';setTimeout(()=>snack('Scegli il tuo nome in "Prenoti come" e tocca un posto'),150);return}
-  const d=tripDay(),id=d+'_'+me,cur=(state.bookings||[]).find(b=>b.id===id);
-  if(!cur||cur.absent){bkWrite({id,date:d,pid:me,present:true,by:sync.me||'',t:new Date().toISOString()});render()}
-  bkSel=me;renderBookings();
-  $('ask-seat-t').textContent=cur&&cur.car&&!cur.absent?'Vuoi cambiare posto?':'Vuoi prenotare il posto?';
-  $('ask-seat-d').textContent=`Sei presente al viaggio di ${bkLong(d)}.`;$('ask-seat').hidden=false};
-$('ask-yes').onclick=()=>{$('ask-seat').hidden=true;location.hash='prenotazioni'};
+// --- risposte: presente (con "Sarai guidatore?"), assente, nessuna risposta
+function bkSet(pid,what,drive){const d=tripDay(),id=d+'_'+pid,cur=(state.bookings||[]).find(b=>b.id===id),t=new Date().toISOString();
+  if(what==='none'){if(cur)bkWrite({id,date:d,pid},true)}
+  else if(what==='abs')bkWrite({id,date:d,pid,absent:true,by:sync.me||'',t});
+  else{const b={id,date:d,pid,present:true,drive,by:sync.me||'',t};if(cur&&cur.seats)b.seats=cur.seats;bkWrite(b)}
+  render()}
+let askPid='';
+function askDrive(pid){askPid=pid;$('ask-seat-t').textContent=pid===myPid()?'Sarai guidatore?':`${name(pid)} sarà guidatore?`;
+  $('ask-seat-d').textContent=`Viaggio di ${bkLong(tripDay())}.`;$('ask-other').hidden=pid===myPid();$('ask-seat').hidden=false}
+document.querySelectorAll('[data-drive]').forEach(b=>b.onclick=()=>{$('ask-seat').hidden=true;const v=b.dataset.drive;
+  if(v==='abs'||v==='none'){bkSet(askPid,v);snack(v==='abs'?`${name(askPid)} assente`:`Risposta di ${name(askPid)} tolta`);return}
+  bkSet(askPid,'pres',v);snack(`${name(askPid)} presente · ${DRIVE_TXT[v]}`)});
 $('ask-no').onclick=()=>{$('ask-seat').hidden=true};
 $('ask-seat').onclick=e=>{if(e.target.id==='ask-seat')$('ask-seat').hidden=true};
+const needMe=()=>{snack('Tocca il tuo nome nell\'elenco qui sotto per rispondere');const r=$('bk-abs');if(r)r.scrollIntoView({block:'center',behavior:'smooth'})};
+$('bk-open').onclick=()=>{const me=myPid();if(!me){needMe();return}
+  if(bkList(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Presenza annullata');return}
+  askDrive(me)};
+$('bk-away').onclick=()=>{const me=myPid();if(!me){needMe();return}
+  if(bkAbsent(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Assenza annullata');return}
+  bkSet(me,'abs');snack(`Assente ${bkLong(tripDay())}`)};
+$('bk-abs').onclick=e=>{const b=e.target.closest('[data-rsp]');if(b)askDrive(b.dataset.rsp)};   // rispondere per un collega
+$('bk-days-view').onclick=e=>{const sd=e.target.closest('[data-sd]');if(!sd)return;
+  const d=tripDay(),b=(state.bookings||[]).find(x=>x.id===d+'_'+sd.dataset.sd);if(!b)return;
+  const v=Math.max(1,Math.min(SEATS_MAX,(+b.seats||SEATS_DEF)+(+sd.dataset.dir)));bkWrite({...b,seats:v});render()};
 $('bk-add').onclick=()=>planDay();
-function bkOpen(pid){if(pid)bkSel=pid;location.hash='prenotazioni'}
+function bkOpen(){location.hash='prenotazioni'}
 function bkShow(){location.replace('#prenotazioni')}
-// dalla tabella al viaggio da registrare (si può ancora modificare a mano)
+// dalle auto composte al viaggio da registrare (si può ancora modificare a mano)
 function planDay(){const d=tripDay(),L=bkLayout(d);
-  const cars=L.cars.filter(c=>!c.empty).map(c=>({driver:c.driver,passengers:c.pax.filter(Boolean)}));
-  draft={who:new Set([...L.list.map(b=>b.pid)].filter(id=>active().some(p=>p.id===id))),cars:cars.length?cars:[{driver:'',passengers:[]}]};
-  $('trip-date').value=d;$('dist-note').textContent='Auto prese dalla tabella delle prenotazioni: controlla e tocca Registra viaggio.';
+  const cars=L.cars.map(c=>({driver:c.driver,passengers:[...c.pax]}));
+  draft={who:new Set(L.list.map(b=>b.pid).filter(id=>active().some(p=>p.id===id))),cars:cars.length?cars:[{driver:'',passengers:[]}]};
+  $('trip-date').value=d;$('dist-note').textContent='Auto prese dalle prenotazioni: controlla e tocca Registra viaggio.';
   const adv=$('plan');adv.open=true;render();
   setTimeout(()=>adv.scrollIntoView({block:'start',behavior:'smooth'}),60)}
 const dayGroup=id=>groupOf(id);
@@ -4436,6 +4407,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['4.4','Nuova prenotazione: "Presente" chiede "Sarai guidatore?" (sì, no, non so); toccandolo di nuovo si annulla. Le auto nella pagina Prenota si compongono da sole: guida prima chi ha detto sì, poi chi ha detto non so, partendo da chi ha meno punti. Toccando un nome nell\'elenco si risponde per un collega.'],
  ['4.3','Pagina principale: un unico elenco con nome, punteggio e stato (presente, assente, nessuna risposta), ordinato per stato e poi dal punteggio più basso. "Presente" chiede se si vuole prenotare il posto. Tolti il riquadro "Prossimo a guidare" e il tasto "Non ci sono" nella pagina Prenota.'],
  ['4.2','Nella pagina principale c\'è anche l\'elenco dei presenti al prossimo viaggio, con auto, ruolo e punteggio.'],
  ['4.1','Negli elenchi "Non hanno risposto" e "Assenti" compare il punteggio accanto a ogni nome; chi è in negativo è evidenziato in rosso.'],
