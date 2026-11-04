@@ -547,6 +547,14 @@ body.wz-on{overflow:hidden}
 .abs-p.me{color:var(--fg);outline:1.5px solid var(--teal)}
 .bk-absbtn{margin-bottom:6px;color:var(--neg)!important;border-color:color-mix(in srgb,var(--neg) 45%,var(--line))!important}
 .bk-absbtn.on{color:var(--teal)!important;border-color:var(--teal)!important}
+.abs-p{display:inline-flex;flex-direction:column;align-items:flex-start;text-decoration:none!important;line-height:1.25}
+.abs-p s{text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
+.abs-p small{font-size:11.5px;color:var(--muted)}
+.bk-absfut{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;font-size:14px;color:var(--muted)}.bk-absfut:empty{display:none}
+.linkbtn{background:none!important;border:none!important;padding:0!important;min-height:0!important;color:var(--neg);font-weight:600;text-decoration:underline;font-size:14px}
+.abs-pick{display:flex;flex-direction:column;gap:6px}
+.abs-sum{margin:0;font-size:15px;line-height:1.4;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel));border-left:3px solid var(--teal)}
+.abs-sum::first-letter{text-transform:uppercase}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -554,7 +562,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.7</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.8</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -605,6 +613,7 @@ body.wz-on{overflow:hidden}
     <button class="ghost wide" id="bk-newcar">+ Porto un'altra auto</button>
     <div class="bk-abs" id="bk-abs"></div>
     <button class="ghost wide bk-absbtn" id="bk-absent">Non ci sono</button>
+    <div class="bk-absfut" id="bk-absfut"></div>
     <button class="wide bk-main" id="bk-add">Registra il viaggio dalla tabella</button>
   </div>
   <details class="adv" id="plan">
@@ -845,6 +854,19 @@ body.wz-on{overflow:hidden}
   <div class="wz-foot"><button class="primary wide" id="wz-next">Avanti</button></div>
 </div>
 
+<div class="sheet" id="abs-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="abs-t">
+  <div class="sheet-card">
+    <h2 id="abs-t">Quando non ci sei?</h2>
+    <p class="hint" style="margin:0" id="abs-who"></p>
+    <label class="f">Assente fino al (compreso)<input type="date" id="abs-until"></label>
+    <div class="abs-pick"><span class="lbl">Oppure scegli una o più date</span>
+      <label class="f"><input type="date" id="abs-day" aria-label="Aggiungi una data"></label>
+      <div class="chips" id="abs-days"></div></div>
+    <p class="abs-sum" id="abs-sum"></p>
+    <button class="wide bk-main" id="abs-ok">Conferma assenza</button>
+    <button class="ghost wide" id="abs-cancel">Annulla</button>
+  </div>
+</div>
 <div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
   <div class="sheet-card">
     <h2 id="who-t">Chi sei in questa squadra?</h2>
@@ -882,7 +904,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='3.7';
+const APP_VERSION='3.8';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1911,9 +1933,10 @@ function renderBookings(){
   $('bk-sum').textContent=[seated?`${seated} ${seated===1?'prenotato':'prenotati'} · ${nc} auto`:'',abs.length?`${abs.length} ${abs.length===1?'assente':'assenti'}`:''].filter(Boolean).join(' · ');
   // assenti e chi non ha ancora risposto
   const done=new Set(bkAll(d).map(b=>b.pid)),miss=active().filter(p=>!done.has(p.id)).map(p=>p.name).sort();
-  $('bk-abs').innerHTML=(abs.length?`<div class="abs-h">Non ci sono</div><div class="abs-list">${abs.sort((a,b)=>name(a.pid).localeCompare(name(b.pid))).map(b=>`<span class="abs-p${b.pid===pid?' me':''}">${esc(name(b.pid))}</span>`).join('')}</div>`:'')
+  $('bk-abs').innerHTML=(abs.length?`<div class="abs-h">Non ci sono</div><div class="abs-list">${abs.sort((a,b)=>name(a.pid).localeCompare(name(b.pid))).map(b=>{const r=absInfo(b.pid,d);return `<span class="abs-p${b.pid===pid?' me':''}"><s>${esc(name(b.pid))}</s>${r?`<small>${esc(r)}</small>`:''}</span>`}).join('')}</div>`:'')
     +(miss.length&&(seated||abs.length)?`<p class="hint" style="margin:0">Non hanno ancora risposto: ${miss.map(esc).join(', ')}.</p>`:'');
-  const isAbs=abs.some(b=>b.pid===pid),self=pid===myPid();
+  const isAbs=abs.some(b=>b.pid===pid),self=pid===myPid(),fut=absDates(pid).filter(x=>x>d);
+  $('bk-absfut').innerHTML=fut.length?`<span>${self?'Le tue prossime assenze':'Prossime assenze di '+esc(name(pid))}: ${fut.slice(0,6).map(x=>esc(absShort(x))).join(', ')}${fut.length>6?` e altre ${fut.length-6}`:''}</span><button class="linkbtn" id="abs-clear">Annulla tutte</button>`:'';
   $('bk-absent').textContent=isAbs?(self?'Ci sono di nuovo: annulla l\'assenza':`${name(pid)} c'è di nuovo: annulla l'assenza`):(self?'Non ci sono':`${name(pid)} non c'è`);
   $('bk-absent').classList.toggle('on',isAbs);
   $('bk-day').textContent='Viaggio di '+bkLong(d);
@@ -1940,10 +1963,44 @@ $('bk-days-view').onclick=e=>{const sd=e.target.closest('[data-sd]');
     bkWrite({...b,seats:v});renderBookings();return}
   const s=e.target.closest('[data-seat]');if(s)bkTake(s.dataset.car,s.dataset.seat==='d'?'d':+s.dataset.seat)};
 $('bk-person').onchange=e=>{bkSel=e.target.value;renderBookings()};
+// --- assenze: solo il prossimo viaggio (se non si sceglie nulla), fino a una data, oppure in date scelte
+// ogni giorno di assenza è una prenotazione {absent:true} con id data_persona, così vale anche sugli altri telefoni
+const ABS_MAX=90;
+const absShort=x=>new Date(x+'T12:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'});
+const absDates=pid=>(state.bookings||[]).filter(b=>b.pid===pid&&b.absent&&b.date>=tripDay()).map(b=>b.date).sort();
+function absInfo(pid,d){const all=new Set(absDates(pid));let e=d;while(all.has(isoShift(e,1)))e=isoShift(e,1);
+  const other=[...all].filter(x=>x>e).length;
+  return [e>d?'fino a '+absShort(e):'',other?`+${other} ${other===1?'altra data':'altre date'}`:''].filter(Boolean).join(' · ')}
+let absPick={pid:'',days:new Set()};
+function absOpen(){const pid=bkWho();if(!pid)return;const d=tripDay(),max=isoShift(d,ABS_MAX);
+  absPick={pid,days:new Set()};
+  $('abs-who').textContent=pid===myPid()?'':`Assenza di ${name(pid)}`;$('abs-who').hidden=pid===myPid();
+  for(const i of ['abs-until','abs-day']){$(i).value='';$(i).min=d;$(i).max=max}
+  absRender();$('abs-sheet').hidden=false}
+function absClose(){$('abs-sheet').hidden=true}
+function absResult(){const d=tripDay(),out=new Set(absPick.days),u=$('abs-until').value;
+  if(u&&u>=d)for(let x=d;x<=u&&out.size<=ABS_MAX;x=isoShift(x,1))out.add(x);
+  if(!out.size)out.add(d);return [...out].filter(x=>x>=d).sort()}
+function absRender(){const d=tripDay(),r=absResult(),u=$('abs-until').value;
+  $('abs-days').innerHTML=[...absPick.days].sort().map(x=>`<button class="chip" data-absd="${x}" aria-label="Togli ${esc(bkLong(x))}">${esc(absShort(x))} ✕</button>`).join('');
+  $('abs-sum').textContent=!u&&!absPick.days.size?`Se non scegli nulla, l'assenza vale solo per il prossimo viaggio: ${bkLong(d)}.`
+    :r.length===1?`Assente ${bkLong(r[0])}.`
+    :`Assente ${r.length} giorni${u&&!absPick.days.size?`, da ${bkLong(d)} a ${bkLong(u)}`:': '+r.map(absShort).join(', ')}.`}
+$('abs-until').onchange=absRender;
+$('abs-day').onchange=e=>{const v=e.target.value;if(v&&v>=tripDay())absPick.days.add(v);e.target.value='';absRender()};
+$('abs-days').onclick=e=>{const b=e.target.closest('[data-absd]');if(!b)return;absPick.days.delete(b.dataset.absd);absRender()};
+$('abs-cancel').onclick=absClose;
+$('abs-sheet').onclick=e=>{if(e.target.id==='abs-sheet')absClose()};
+$('abs-ok').onclick=()=>{const pid=absPick.pid,d=tripDay(),days=absResult(),t=new Date().toISOString();
+  const hadSeat=(state.bookings||[]).some(b=>b.id===d+'_'+pid&&b.car&&!b.absent)&&days.includes(d);
+  days.forEach(x=>bkWrite({id:x+'_'+pid,date:x,pid,absent:true,by:sync.me||'',t}));
+  absClose();render();
+  snack(`${name(pid)} assente ${days.length===1?bkLong(days[0]):days.length+' giorni'}${hadSeat?' · posto liberato':''}`)};
 $('bk-absent').onclick=()=>{const pid=bkWho();if(!pid)return;const d=tripDay(),id=d+'_'+pid,cur=(state.bookings||[]).find(b=>b.id===id);
-  if(cur&&cur.absent){bkWrite({id,date:d,pid},true);render();snack(`Assenza di ${name(pid)} annullata: scegli un posto`);return}
-  bkWrite({id,date:d,pid,absent:true,by:sync.me||'',t:new Date().toISOString()});render();
-  snack(cur&&cur.car?`${name(pid)} non c'è: posto liberato`:`${name(pid)} non c'è ${bkLong(d).split(' ')[0]}`)};
+  if(cur&&cur.absent){bkWrite({id,date:d,pid},true);render();snack(`Assenza di ${name(pid)} annullata per ${bkLong(d)}: scegli un posto`);return}
+  absOpen()};
+$('bk-absfut').onclick=e=>{if(!e.target.closest('#abs-clear'))return;const pid=bkWho(),d=tripDay(),fut=absDates(pid).filter(x=>x>d);
+  fut.forEach(x=>bkWrite({id:x+'_'+pid,date:x,pid},true));render();snack(`Annullate ${fut.length} ${fut.length===1?'assenza':'assenze'} di ${name(pid)}`)};
 $('bk-newcar').onclick=()=>{bkExtra++;renderBookings();const l=$('bk-days-view').querySelector('.bkcar:last-of-type');if(l)l.scrollIntoView({block:'center',behavior:'smooth'})};
 $('bk-open').onclick=()=>{location.hash='prenotazioni'};
 $('bk-add').onclick=()=>planDay();
@@ -4338,6 +4395,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['3.8','Assenze più lunghe: "Non ci sono" permette di indicare una data fino alla quale si è assenti oppure una o più date. Se non si sceglie nulla, l\'assenza vale solo per il prossimo viaggio. Le assenze future si possono annullare tutte insieme.'],
  ['3.7','Nelle prenotazioni si può dichiarare la propria assenza con "Non ci sono": l\'eventuale posto si libera e il nome compare tra gli assenti. Sotto la tabella si vede anche chi non ha ancora risposto.'],
  ['3.6','Prenotazioni a tabella: ogni auto ha il posto del guidatore e i posti passeggero, si sceglie il posto toccandolo. La tabella vale fino alle 8:00 del giorno del viaggio, poi si azzera. Il guidatore può cambiare i posti disponibili; quando le auto sono piene se ne apre una nuova. Posto consigliato in base a punti e gruppi.'],
  ['3.5','Prenotazioni con ruolo (Guido, Passeggero, Entrambi) e zone facoltative. Suggerimenti: a chi tocca guidare, posti mancanti, zone senza guidatore. Auto proposte automaticamente, da registrare con un tocco.'],
