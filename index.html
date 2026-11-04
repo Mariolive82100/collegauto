@@ -514,13 +514,40 @@ body.wz-on{overflow:hidden}
 .prop-car{display:flex;gap:10px;align-items:baseline;font-size:15px;line-height:1.35}
 .prop-n{flex:none;width:22px;height:22px;border-radius:50%;background:var(--teal);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .prop-car.left{color:var(--neg);font-weight:600}
+
+/* prenotazioni v3.6: tabella dei posti */
+.bk-win{display:flex;flex-direction:column;gap:2px}
+.bk-win+label.f{margin-top:6px}
+.bk-win b{font-size:18px}.bk-win b::first-letter{text-transform:uppercase}
+.bk-tips{display:flex;flex-direction:column;gap:6px}.bk-tips:empty{display:none}
+.bk-cars{display:flex;flex-direction:column;gap:12px}
+.bkcar{border:1.5px solid var(--line);border-radius:22px 22px 12px 12px;background:var(--panel);padding:12px;display:flex;flex-direction:column;gap:8px}
+.bkcar-new{border-style:dashed;background:none}
+.car-h{display:flex;align-items:center;gap:8px;min-height:34px}
+.car-h b{font-size:17px}.car-h .hint{flex:1}
+.seats-ed{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600}
+.sd{width:34px;height:34px;min-height:34px!important;padding:0!important;border-radius:50%!important;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.sd:disabled{opacity:.35}
+.car-row{display:grid;gap:8px}
+.seat{min-height:68px!important;min-width:0;border-radius:12px!important;border:1.5px dashed var(--line)!important;background:none!important;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 4px!important;text-align:center}
+.seat small{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.seat b{font-size:15px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.seat b.free{font-weight:500;color:var(--muted)}
+.seat-x{font-size:11.5px;color:var(--muted)}
+.seat.taken{border-style:solid!important;background:var(--chip)!important}
+.seat.drv.taken{border-color:color-mix(in srgb,var(--amber) 70%,var(--line))!important;background:color-mix(in srgb,var(--amber) 12%,var(--panel))!important}
+.seat.drv:not(.taken) b.free{color:var(--amber)}
+.seat.me,.seat.drv.me{border-color:var(--teal)!important;background:color-mix(in srgb,var(--teal) 18%,var(--panel))!important}
+.seat.sug{border-color:var(--amber)!important;border-width:2px!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 22%,transparent)}
+.seat.sug .seat-x{color:var(--amber);font-weight:700}
+#bk-add:disabled{opacity:.45}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.5</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.6</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -552,7 +579,7 @@ body.wz-on{overflow:hidden}
   <div class="hero">
     <div class="m-next" id="next-mini"></div>
     <button class="cta" id="wz-open"><span class="plus" aria-hidden="true">+</span> Inserisci viaggio</button>
-    <button class="cta2" id="bk-open"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg> Prenota viaggio</button>
+    <button class="cta2" id="bk-open"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg> Prenota il posto</button>
   </div>
   <div class="panel">
     <div class="row between"><h2>Ultimi viaggi</h2><a class="more-link" href="#registro">Registro ›</a></div>
@@ -564,9 +591,12 @@ body.wz-on{overflow:hidden}
 <section class="view" data-view="prenotazioni" aria-labelledby="t-bk" hidden>
   <div class="panel bk">
     <div class="row between"><h2 id="t-bk">Prenotazioni</h2><span class="hint" id="bk-sum"></span></div>
-    <p class="hint" style="margin:0" id="bk-rule"></p>
-    <div id="bk-days-view" class="bk-daysview"></div>
-    <button class="wide bk-main" id="bk-add">Prenota viaggio</button>
+    <div class="bk-win"><b id="bk-day"></b><p class="hint" style="margin:0" id="bk-rule"></p></div>
+    <label class="f">Prenoti come<select id="bk-person"></select></label>
+    <div id="bk-tips" class="bk-tips"></div>
+    <div id="bk-days-view" class="bk-cars"></div>
+    <button class="ghost wide" id="bk-newcar">+ Porto un'altra auto</button>
+    <button class="wide bk-main" id="bk-add">Registra il viaggio dalla tabella</button>
   </div>
   <details class="adv" id="plan">
     <summary>Organizza le auto · distribuzione automatica in base ai punti e ai gruppi</summary>
@@ -806,20 +836,6 @@ body.wz-on{overflow:hidden}
   <div class="wz-foot"><button class="primary wide" id="wz-next">Avanti</button></div>
 </div>
 
-<div class="wz" id="bks" hidden role="dialog" aria-modal="true" aria-labelledby="bks-title">
-  <div class="wz-head"><span></span><div class="wz-prog"><span>Prenotazione</span></div><button class="x" id="bk-cancel" aria-label="Chiudi">✕</button></div>
-  <h2 class="wz-title" id="bks-title">Quando ci sei?</h2>
-  <div class="wz-body">
-    <div class="bk-dayswz" id="bk-days"></div>
-    <p class="hint" style="margin:0" id="bk-lockmsg"></p>
-    <label class="f">Chi<select id="bk-person"></select></label>
-    <span class="lbl">Ruolo</span><div class="bk-dayswz bk-roles" id="bk-role"></div>
-    <span class="lbl">Zone (facoltative, anche più di una)</span><div class="chips" id="bk-groups"></div>
-    <label class="f">Note<input type="text" id="bk-note" maxlength="120" placeholder="es. esco alle 17, arrivo alle 9:30"></label>
-    <button class="ghost wide danger" id="bk-del" hidden>Non ci sono più</button>
-  </div>
-  <div class="wz-foot"><button class="wide bk-main" id="bk-save">Conferma prenotazione</button></div>
-</div>
 <div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
   <div class="sheet-card">
     <h2 id="who-t">Chi sei in questa squadra?</h2>
@@ -857,7 +873,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='3.5';
+const APP_VERSION='3.6';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1497,7 +1513,6 @@ function showView(){const h=location.hash.slice(1);
   if(h==='nuovo'){wzShow();return}
   if(h==='prenota'){bkShow();return}
   if(!$('wz').hidden){$('wz').hidden=true;document.body.classList.remove('wz-on')}
-  if(!$('bks').hidden)bkHide();
   if(ALIAS[h]){location.replace('#'+ALIAS[h]);return}
   const v=VIEWS.includes(h)?h:'viaggio';
   document.querySelectorAll('.view').forEach(s=>s.hidden=s.dataset.view!==v);
@@ -1802,163 +1817,127 @@ $('welcome-new').onclick=()=>{location.hash='membri';setTimeout(()=>$('new-perso
 const _render3=render;render=function(){_render3();renderWelcome()};
 renderInstall();renderWelcome();
 if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-// ===================== Prenotazioni: oggi (fino alle 8:00) e domani, con ruolo e zone =====================
-// state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, role:'guido'|'passeggero'|'entrambi', zones:[idGruppo], note, by, t}]
-// su Firebase: gruppi/{codice}/prenotazioni/{id}. Le "zone" sono i gruppi della squadra (facoltative, anche più di una).
-const BK_CUTOFF=8;
-const todayLocked=()=>new Date().getHours()>=BK_CUTOFF;
-let bkEdit=null;
-const ROLES={guido:'Guido',passeggero:'Passeggero',entrambi:'Entrambi'};
-const ROLE_HINT={guido:'porto la mia auto',passeggero:'non guido',entrambi:'guido se serve'};
-const bkDate=k=>k==='oggi'?todayISO():isoShift(todayISO(),1);
-const bkRole=b=>ROLES[b.role]?b.role:'entrambi';
-const bkZones=b=>{const z=Array.isArray(b.zones)?b.zones:(b.group?[b.group]:[]);return z.filter(id=>state.groups.some(g=>g.id===id))};
+// ===================== Prenotazioni: tabella dei posti, valida fino alle 8:00 =====================
+// Una sola tabella per il prossimo viaggio: prima delle 8:00 è quello di oggi, dopo le 8:00 quello di domani.
+// Alle 8:00 scade e si riparte con una tabella vuota per il giorno dopo.
+// state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, car:'c1', seat:'d'|1..n, seats (solo guidatore), by, t}]
+// su Firebase: gruppi/{codice}/prenotazioni/{id}
+const BK_CUTOFF=8,SEATS_DEF=POSTI,SEATS_MAX=8;
+const tripDay=()=>new Date().getHours()<BK_CUTOFF?todayISO():isoShift(todayISO(),1);
 const bkList=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
 const myPid=()=>{const p=active().find(x=>x.name===sync.me);return p?p.id:''};
 const bkLong=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
-const gName=id=>(state.groups[gIndex(id)]||{name:'?'}).name;
+let bkSel='',bkExtra=0,bkSeenDay='';
+const bkWho=()=>{if(!active().some(p=>p.id===bkSel))bkSel=myPid()||(active()[0]||{}).id||'';return bkSel};
 function bkWrite(b,del){
   state.bookings=(state.bookings||[]).filter(x=>x.id!==b.id);if(!del)state.bookings.push(b);
   persistLocal();
   if(fsdb&&sync.code){const ref=gref().collection('prenotazioni').doc(b.id);(del?ref.set({deleted:true,date:b.date,pid:b.pid,t:new Date().toISOString()}):ref.set(b)).catch(()=>{})}
 }
-
-// --- algoritmo: dalle prenotazioni di un giorno alle auto proposte
-// 1) servono ceil(n / (POSTI+1)) auto, il minimo per portare tutti
-// 2) guidano prima i "Guido", poi gli "Entrambi" (chi copre una zona scoperta, poi chi ha meno punti); i "Passeggero" non guidano mai
-// 3) ogni passeggero sale nell'auto dove ci sono più persone della sua zona (zone della prenotazione, altrimenti i suoi gruppi)
-function proposeCars(date){
-  const list=bkList(date),b=balances();
-  const byPts=(x,y)=>b[x.pid]-b[y.pid]||tie(x.pid)-tie(y.pid)||name(x.pid).localeCompare(name(y.pid));
-  const zonesOf=bk=>{const z=bkZones(bk);return z.length?z:groupsOf(bk.pid)};
-  const n=list.length,need=n<2?0:Math.ceil(n/(POSTI+1));
-  const guido=list.filter(x=>bkRole(x)==='guido').sort(byPts),entr=list.filter(x=>bkRole(x)==='entrambi').sort(byPts);
-  // i "Guido" prima; poi gli "Entrambi", preferendo chi copre una zona rimasta senza guidatore, poi chi ha meno punti
-  const drivers=guido.slice(0,need),pool=[...entr];
-  while(drivers.length<need&&pool.length){
-    const cov=new Set(drivers.flatMap(zonesOf)),open=new Set(list.filter(x=>!drivers.includes(x)).flatMap(zonesOf).filter(z=>!cov.has(z)));
-    const pick=pool.find(x=>zonesOf(x).some(z=>open.has(z)))||pool[0];
-    drivers.push(pick);pool.splice(pool.indexOf(pick),1)}
-  const cars=drivers.map(d=>({driver:d.pid,zones:zonesOf(d),passengers:[]}));
-  const pax=list.filter(x=>!drivers.includes(x)).sort((x,y)=>zonesOf(y).length-zonesOf(x).length||byPts(y,x));
-  const left=[];
-  pax.forEach(p=>{const pz=zonesOf(p);
-    const score=c=>(c.zones.some(z=>pz.includes(z))?10:0)+c.passengers.filter(q=>zonesOf(list.find(x=>x.pid===q)).some(z=>pz.includes(z))).length*3-c.passengers.length;
-    const free=cars.filter(c=>c.passengers.length<POSTI).sort((c1,c2)=>score(c2)-score(c1));
-    if(free.length)free[0].passengers.push(p.pid);else left.push(p.pid)});
-  // un'auto senza passeggeri non serve: il suo guidatore sale con qualcun altro
-  for(const c of [...cars].reverse()){if(c.passengers.length||cars.length<2)continue;
-    const host=cars.find(o=>o!==c&&o.passengers.length<POSTI);if(host){host.passengers.push(c.driver);cars.splice(cars.indexOf(c),1)}}
-  return {list,need,cars,left,canDrive:guido.length+entr.length,extraGuido:guido.slice(need).map(x=>x.pid)};
+// dalle prenotazioni alla tabella: uguale su tutti i telefoni (in caso di posto conteso vince chi è arrivato prima)
+function bkLayout(date){
+  const list=bkList(date).sort((a,b)=>(a.t||'').localeCompare(b.t||'')),cars=new Map(),wait=[];
+  const car=id=>{if(!cars.has(id))cars.set(id,{id,driver:'',seats:SEATS_DEF,pax:[]});return cars.get(id)};
+  list.filter(b=>b.car&&b.seat==='d').forEach(b=>{const c=car(b.car);
+    if(c.driver)wait.push(b.pid);else{c.driver=b.pid;c.seats=Math.max(1,Math.min(SEATS_MAX,+b.seats||SEATS_DEF))}});
+  cars.forEach(c=>c.pax=Array(c.seats).fill(''));
+  list.filter(b=>b.car&&b.seat!=='d').forEach(b=>{const c=car(b.car);if(c.pax.length<c.seats)c.pax=[...c.pax,...Array(c.seats-c.pax.length).fill('')];
+    const i=(+b.seat||1)-1;if(i<c.seats&&!c.pax[i])c.pax[i]=b.pid;else{const f=c.pax.indexOf('');if(f>=0)c.pax[f]=b.pid;else wait.push(b.pid)}});
+  list.filter(b=>!b.car).forEach(b=>wait.push(b.pid));
+  const num=id=>+String(id).replace(/\D/g,'')||0;
+  const out=[...cars.values()].filter(c=>c.driver||c.pax.some(Boolean)).sort((a,b)=>num(a.id)-num(b.id));
+  let next=Math.max(0,...[...cars.keys()].map(num))+1;
+  const full=out.every(c=>c.pax.every(Boolean));
+  const extra=(!out.length||full?1:0)+bkExtra;
+  for(let i=0;i<extra;i++)out.push({id:'c'+(next++),driver:'',seats:SEATS_DEF,pax:Array(SEATS_DEF).fill(''),empty:true});
+  return {cars:out,wait,list};
 }
-// --- suggerimenti per un giorno
-function bkTips(k){
-  const d=bkDate(k),pr=proposeCars(d),tips=[],me=myPid(),label=k==='oggi'?'Oggi':'Domani';
-  if(pr.list.length<2)return {pr,tips};
-  const mine=pr.list.find(x=>x.pid===me);
-  if(mine){const drives=pr.cars.some(c=>c.driver===me);
-    if(drives)tips.push(['me',`Tocca a te guidare ${k}${bkRole(mine)==='guido'?': ti sei offerto e sei nella proposta.':': tra chi può guidare sei tra quelli con meno punti.'}`]);
-    else if(bkRole(mine)==='passeggero'){const b=balances(),low=pr.list.every(x=>x.pid===me||b[x.pid]>=b[me]);
-      if(low)tips.push(['me',`Hai meno punti di tutti quelli che ci sono ${k}: se puoi, offriti come guidatore.`])}}
-  if(pr.canDrive===0)tips.push(['warn',`${label}: ${pr.list.length} persone e nessuno può guidare. Serve almeno un guidatore.`]);
-  else if(pr.canDrive<pr.need||pr.left.length)tips.push(['warn',`${label}: ${pr.list.length} persone ma solo ${pr.canDrive} ${pr.canDrive===1?'può':'possono'} guidare: servono ${pr.need} auto. Mancano posti per ${pr.left.length||pr.list.length-pr.canDrive*(POSTI+1)} ${pr.left.length===1?'persona':'persone'}.`]);
-  // zone con passeggeri ma senza un guidatore della stessa zona
-  const zp={};pr.cars.forEach(c=>c.passengers.forEach(q=>{const bk=pr.list.find(x=>x.pid===q);bkZones(bk).forEach(z=>{(zp[z]=zp[z]||[]).push(q)})}));
-  Object.entries(zp).forEach(([z,ps])=>{const ok=pr.cars.some(c=>{const db=pr.list.find(x=>x.pid===c.driver);return bkZones(db).includes(z)||groupsOf(c.driver).includes(z)});
-    if(!ok)tips.push(['zone',`Zona ${gName(z)}: ${ps.length} ${ps.length===1?'passeggero':'passeggeri'} ma nessun guidatore della zona.`])});
-  if(pr.extraGuido.length)tips.push(['info',`${pr.extraGuido.map(name).join(', ')} ${pr.extraGuido.length===1?'si è offerto':'si sono offerti'} di guidare, ma ${pr.need===1?'basta 1 auto':`bastano ${pr.need} auto`}: ${pr.extraGuido.length===1?'viaggia':'viaggiano'} come passeggeri.`]);
-  return {pr,tips};
+// posto consigliato per chi prenota
+function bkSuggest(L,pid){
+  if(!pid||L.list.some(b=>b.pid===pid&&b.car))return null;
+  const b=balances(),booked=L.list.map(x=>x.pid).filter(x=>x!==pid);
+  const lowest=booked.length>0&&booked.every(x=>b[x]>b[pid]||(b[x]===b[pid]&&tie(x)>=tie(pid)));
+  const noDrvPax=L.cars.find(c=>!c.driver&&c.pax.some(Boolean));
+  const paxFree=L.cars.filter(c=>c.driver&&c.pax.includes(''));
+  if(noDrvPax&&(lowest||!paxFree.length))return {car:noDrvPax.id,seat:'d',why:lowest?'low':'nodrv'};
+  if(!L.cars.some(c=>c.driver)&&L.cars.length)return {car:(noDrvPax||L.cars[0]).id,seat:'d',why:lowest?'low':'first'};
+  const mine=groupsOf(pid);
+  const score=c=>(c.driver?100:0)+(groupsOf(c.driver).some(g=>mine.includes(g))?50:0)+c.pax.filter(x=>x&&groupsOf(x).some(g=>mine.includes(g))).length*5-c.pax.filter(Boolean).length;
+  const cand=L.cars.filter(c=>c.pax.includes('')&&!c.empty).sort((x,y)=>score(y)-score(x))[0];
+  if(cand)return {car:cand.id,seat:cand.pax.indexOf('')+1,why:groupsOf(cand.driver).some(g=>mine.includes(g))?'group':'free'};
+  const e=L.cars.find(c=>!c.driver);return e?{car:e.id,seat:'d',why:'full'}:null;
 }
+const seatLbl=(i,n)=>i===0?'Davanti':n>4&&i>3?'Terza fila':'Dietro';
+function bkSeat(c,s,k,pid,sug){
+  const who=s==='d'?c.driver:c.pax[s-1],isS=sug&&sug.car===c.id&&String(sug.seat)===String(s);
+  const lbl=s==='d'?'Guidatore':seatLbl(s-1,c.seats);
+  const cls=['seat',s==='d'?'drv':'',who?'taken':'',who&&who===pid?'me':'',isS?'sug':''].join(' ');
+  const body=who?`<b>${esc(name(who))}</b>${s==='d'&&who?`<span class="seat-x">+${c.pax.filter(Boolean).length} punti</span>`:''}`
+    :`<b class="free">${s==='d'?(c.pax.some(Boolean)?'Serve un guidatore':'Libero'):'Libero'}</b>${isS?'<span class="seat-x">consigliato</span>':''}`;
+  return `<button class="${cls}" data-car="${c.id}" data-seat="${s}" aria-label="Auto ${k}, ${lbl}: ${who?esc(name(who)):'libero'}"><small>${lbl}</small>${body}</button>`}
 function renderBookings(){
-  const me=myPid();let tot=0;
-  $('bk-days-view').innerHTML=['oggi','domani'].map(k=>{
-    const d=bkDate(k),list=bkList(d).sort((a,c)=>name(a.pid).localeCompare(name(c.pid)));tot+=list.length;
-    const nG=list.filter(x=>bkRole(x)==='guido').length,nE=list.filter(x=>bkRole(x)==='entrambi').length,nP=list.length-nG-nE;
-    const rows=list.length?`<div class="bk-list">${list.map(b=>{const zs=bkZones(b),r=bkRole(b);
-      return `<button class="bk-row${b.pid===me?' mine':''}" data-bk="${esc(b.pid)}"><span class="bk-who"><b>${esc(name(b.pid))}</b><span class="role r-${r}">${ROLES[r]}</span>${zs.map(z=>`<span class="bk-g">${gDot(z)}${esc(gName(z))}</span>`).join('')}</span>${b.note?`<span class="bk-note">${esc(b.note)}</span>`:''}</button>`}).join('')}</div>`
-      :`<p class="hint" style="margin:0">Nessuna prenotazione${k==='oggi'&&todayLocked()?' (chiuse alle 8:00)':''}.</p>`;
-    const {pr,tips}=bkTips(k);
-    const tipH=tips.map(([t,txt])=>`<div class="tip tip-${t}">${esc(txt)}</div>`).join('');
-    const carsH=pr.cars.length&&pr.list.length>=2?`<div class="prop"><div class="prop-h"><b>Auto proposte</b><span class="hint">in base a ruoli, punti e zone</span></div>
-      ${pr.cars.map((c,i)=>`<div class="prop-car"><span class="prop-n">${i+1}</span><span><b>${esc(name(c.driver))}</b> guida${c.passengers.length?` · ${c.passengers.map(q=>esc(name(q))).join(', ')}`:''}</span></div>`).join('')}
-      ${pr.left.length?`<div class="prop-car left">Senza posto: ${pr.left.map(q=>esc(name(q))).join(', ')}</div>`:''}
-      <button class="wide bk-plan" data-plan="${k}">Usa questa proposta e registra il viaggio</button></div>`:'';
-    return `<div class="bkd"><div class="bkd-head"><b>${k==='oggi'?'Oggi':'Domani'}</b><span class="hint">${bkLong(d)}</span><span class="bk-n">${list.length}</span></div>
-      ${list.length?`<div class="bk-counts"><span class="role r-guido">${nG} guido</span><span class="role r-entrambi">${nE} entrambi</span><span class="role r-passeggero">${nP} passeggeri</span></div>`:''}
-      ${tipH}${rows}${carsH}</div>`}).join('');
-  $('bk-sum').textContent=tot?`${tot} ${tot===1?'prenotazione':'prenotazioni'}`:'';
-  $('bk-rule').textContent=todayLocked()?`Le prenotazioni per oggi si sono chiuse alle ${BK_CUTOFF}:00: puoi prenotare per domani.`:`Per oggi puoi prenotare fino alle ${BK_CUTOFF}:00, per domani quando vuoi.`;
-  const mine=['oggi','domani'].some(k=>bkList(bkDate(k)).some(b=>b.pid===me));
-  $('bk-add').textContent=mine?'Modifica la mia prenotazione':'Prenota viaggio';
-  $('bk-open').lastChild.textContent=mine?' La mia prenotazione':' Prenota viaggio';
-  if(!$('bks').hidden)renderBkForm();
+  const d=tripDay();if(bkSeenDay&&bkSeenDay!==d)bkExtra=0;bkSeenDay=d;
+  const pid=bkWho(),L=bkLayout(d),sug=bkSuggest(L,pid),edit=id=>isAdmin()||id===pid;
+  $('bk-person').innerHTML=active().sort((a,c)=>a.name.localeCompare(c.name)).map(p=>`<option value="${p.id}" ${p.id===pid?'selected':''}>${esc(p.name)}${p.id===myPid()?' (io)':''}</option>`).join('');
+  $('bk-days-view').innerHTML=L.cars.map((c,i)=>{const k=i+1,n=c.pax.filter(Boolean).length;
+    const back=c.pax.slice(1).map((_,j)=>bkSeat(c,j+2,k,pid,sug)),cols=Math.min(3,back.length)||1;
+    return `<div class="bkcar${c.empty?' bkcar-new':''}"><div class="car-h"><b>Auto ${k}</b>${c.empty?'<span class="hint">nuova</span>':`<span class="hint">${n}/${c.seats} posti</span>`}
+      ${c.driver&&edit(c.driver)?`<span class="seats-ed"><button class="sd" data-sd="${c.id}" data-dir="-1" aria-label="Un posto in meno" ${c.seats<=Math.max(1,n)?'disabled':''}>−</button><span>${c.seats} posti</span><button class="sd" data-sd="${c.id}" data-dir="1" aria-label="Un posto in più" ${c.seats>=SEATS_MAX?'disabled':''}>+</button></span>`:''}</div>
+      <div class="car-row" style="grid-template-columns:1fr 1fr">${bkSeat(c,'d',k,pid,sug)}${c.seats?bkSeat(c,1,k,pid,sug):''}</div>
+      ${back.length?`<div class="car-row" style="grid-template-columns:repeat(${cols},1fr)">${back.join('')}</div>`:''}</div>`}).join('')
+    +(L.wait.length?`<div class="tip tip-warn">Senza posto: ${L.wait.map(x=>esc(name(x))).join(', ')}. Tocca un posto libero per sistemarli.</div>`:'');
+  // suggerimenti
+  const tips=[],cn=id=>L.cars.findIndex(c=>c.id===id)+1;
+  if(sug){const sn=sug.seat==='d'?'come guidatore':`${seatLbl(sug.seat-1,9).toLowerCase()}`;
+    if(sug.seat==='d')tips.push(['me',sug.why==='low'?`Tocca a ${pid===myPid()?'te':name(pid)} guidare: tra i prenotati ${pid===myPid()?'hai':'ha'} meno punti. Posto consigliato: Auto ${cn(sug.car)}, guidatore.`
+      :sug.why==='nodrv'?`L'Auto ${cn(sug.car)} ha passeggeri ma nessun guidatore: se puoi, guida tu.`
+      :sug.why==='full'?`I posti sono finiti: per viaggiare serve un'altra auto. Posto consigliato: Auto ${cn(sug.car)}, guidatore.`
+      :`Nessuno guida ancora: posto consigliato Auto ${cn(sug.car)}, guidatore.`]);
+    else tips.push(['info',`Posto consigliato: Auto ${cn(sug.car)}, ${sn}${sug.why==='group'?`, con ${name(L.cars.find(c=>c.id===sug.car).driver)} del tuo gruppo`:''}.`])}
+  L.cars.forEach((c,i)=>{const n=c.pax.filter(Boolean).length;if(!c.driver&&n)tips.push(['warn',`Auto ${i+1}: ${n} ${n===1?'passeggero':'passeggeri'} e nessun guidatore.`])});
+  $('bk-tips').innerHTML=tips.map(([t,x])=>`<div class="tip tip-${t}">${esc(x)}</div>`).join('');
+  const seated=L.list.length,nc=L.cars.filter(c=>!c.empty).length;
+  $('bk-sum').textContent=seated?`${seated} ${seated===1?'prenotato':'prenotati'} · ${nc} ${nc===1?'auto':'auto'}`:'';
+  $('bk-day').textContent='Viaggio di '+bkLong(d);
+  const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);const m=Math.max(0,Math.round((end-new Date())/60000));
+  $('bk-rule').textContent=`La tabella scade alle ${BK_CUTOFF}:00 di ${bkLong(d)} (tra ${m>=60?Math.floor(m/60)+' h ':''}${m%60} min), poi si azzera per il giorno dopo. Tocca un posto per prenotarlo, tocca il tuo posto per liberarlo.`;
+  const ok=L.cars.some(c=>c.driver&&c.pax.some(Boolean));$('bk-add').disabled=!ok;
+  const me=myPid(),my=me&&L.list.find(b=>b.pid===me&&b.car);
+  $('bk-open').lastChild.textContent=my?` Il mio posto: Auto ${cn(my.car)||'?'}${my.seat==='d'?' · guido':''}`:' Prenota il posto';
 }
-function bkInit(pid){
-  const p=pid||myPid()||(active()[0]||{}).id;if(!p)return null;
-  const days=new Set(),bs=state.bookings||[];
-  ['oggi','domani'].forEach(k=>{if(bs.some(b=>b.pid===p&&b.date===bkDate(k)))days.add(k)});
-  const src=bs.find(b=>b.pid===p&&(b.date===bkDate('oggi')||b.date===bkDate('domani')))||[...bs].filter(b=>b.pid===p).pop();
-  if(!days.size)days.add(todayLocked()?'domani':'oggi');
-  return {pid:p,days,role:src?bkRole(src):'entrambi',zones:src?bkZones(src):[],note:src&&(src.date===bkDate('oggi')||src.date===bkDate('domani'))?src.note||'':''};
-}
-function bkOpen(pid){bkEdit=bkInit(pid);
-  if(!bkEdit){location.hash='membri';setTimeout(()=>snack('Aggiungi prima i partecipanti della squadra'),100);return}
-  if(location.hash!=='#prenota')location.hash='prenota';else bkShow()}
-function bkShow(){if(!bkEdit)bkEdit=bkInit();if(!bkEdit){location.replace('#membri');return}
-  $('bks').hidden=false;document.body.classList.add('wz-on');renderBkForm()}
-function bkHide(){$('bks').hidden=true;if($('wz').hidden)document.body.classList.remove('wz-on')}
-function bkClose(){bkEdit=null;if(location.hash==='#prenota')history.back();else bkHide()}
-function renderBkForm(){
-  if(!bkEdit)return;
-  const lock=todayLocked(),bookedToday=(state.bookings||[]).some(b=>b.pid===bkEdit.pid&&b.date===bkDate('oggi'));
-  if(lock&&!bookedToday)bkEdit.days.delete('oggi');
-  $('bk-person').innerHTML=active().sort((a,c)=>a.name.localeCompare(c.name)).map(p=>`<option value="${p.id}" ${p.id===bkEdit.pid?'selected':''}>${esc(p.name)}</option>`).join('');
-  $('bk-days').innerHTML=['oggi','domani'].map(k=>{const off=k==='oggi'&&lock;
-    return `<button class="wz-q bkq${bkEdit.days.has(k)?' sel':''}" data-bkd="${k}" aria-pressed="${bkEdit.days.has(k)}" ${off?'disabled':''}>
-      <span>${k==='oggi'?'Oggi':'Domani'}${bkEdit.days.has(k)?' ✓':''}</span><small>${off?(bookedToday?'prenotato · chiuso alle 8:00':'chiuso alle 8:00'):bkLong(bkDate(k))}</small></button>`}).join('');
-  $('bk-lockmsg').textContent=lock?`Oggi non è più prenotabile: le prenotazioni per il giorno stesso chiudono alle ${BK_CUTOFF}:00.`:'Puoi scegliere oggi, domani o entrambi.';
-  $('bk-role').innerHTML=Object.keys(ROLES).map(r=>`<button class="wz-q bkq rq${bkEdit.role===r?' sel':''}" data-role="${r}" aria-pressed="${bkEdit.role===r}"><span>${ROLES[r]}${bkEdit.role===r?' ✓':''}</span><small>${ROLE_HINT[r]}</small></button>`).join('');
-  $('bk-groups').innerHTML=state.groups.length?state.groups.map(g=>`<button class="chip" data-bkg="${g.id}" aria-pressed="${bkEdit.zones.includes(g.id)}">${gDot(g.id)}${esc(g.name)}</button>`).join('')
-    :'<span class="hint">La squadra non ha ancora zone: si creano nella scheda Gruppi.</span>';
-  if(document.activeElement!==$('bk-note'))$('bk-note').value=bkEdit.note;
-  const has=['oggi','domani'].some(k=>(state.bookings||[]).some(b=>b.pid===bkEdit.pid&&b.date===bkDate(k)));
-  $('bk-del').hidden=!has;
-  $('bk-save').disabled=![...bkEdit.days].some(k=>!(k==='oggi'&&lock))&&!(has&&!lock);
-  $('bks-title').textContent=bkEdit.pid===myPid()?'Quando ci sei?':`Quando c'è ${name(bkEdit.pid)}?`;
-}
-$('bk-open').onclick=()=>bkOpen();
-$('bk-add').onclick=()=>bkOpen();
-$('bk-days-view').onclick=e=>{const r=e.target.closest('[data-bk]');if(r){bkOpen(r.dataset.bk);return}
-  const pl=e.target.closest('[data-plan]');if(pl)planDay(pl.dataset.plan)};
-$('bk-person').onchange=e=>{bkEdit=bkInit(e.target.value);renderBkForm()};
-$('bk-days').onclick=e=>{const b=e.target.closest('[data-bkd]');if(!b||b.disabled)return;const k=b.dataset.bkd;bkEdit.days.has(k)?bkEdit.days.delete(k):bkEdit.days.add(k);renderBkForm()};
-$('bk-role').onclick=e=>{const b=e.target.closest('[data-role]');if(!b)return;bkEdit.role=b.dataset.role;renderBkForm()};
-$('bk-groups').onclick=e=>{const b=e.target.closest('[data-bkg]');if(!b)return;const z=b.dataset.bkg;
-  bkEdit.zones=bkEdit.zones.includes(z)?bkEdit.zones.filter(x=>x!==z):[...bkEdit.zones,z];renderBkForm()};
-$('bk-note').oninput=e=>{bkEdit.note=e.target.value};
-$('bk-cancel').onclick=bkClose;
-$('bk-save').onclick=()=>{const e=bkEdit;if(!e)return;const lock=todayLocked();
-  ['oggi','domani'].forEach(k=>{if(k==='oggi'&&lock)return;const date=bkDate(k),id=date+'_'+e.pid;
-    if(e.days.has(k))bkWrite({id,date,pid:e.pid,role:e.role,zones:[...e.zones],note:(e.note||'').trim().slice(0,120),by:sync.me||'',t:new Date().toISOString()});
-    else if((state.bookings||[]).some(b=>b.id===id))bkWrite({id,date,pid:e.pid},true)});
-  const nm=name(e.pid),dd=[...e.days].filter(k=>!(k==='oggi'&&lock)).join(' e ');
-  bkClose();render();snack(dd?`${nm} c'è ${dd} · ${ROLES[e.role].toLowerCase()}`:`Prenotazione di ${nm} aggiornata`)};
-$('bk-del').onclick=()=>{const e=bkEdit;if(!e)return;
-  ['oggi','domani'].forEach(k=>{const date=bkDate(k),id=date+'_'+e.pid;if((state.bookings||[]).some(b=>b.id===id))bkWrite({id,date,pid:e.pid},true)});
-  const nm=name(e.pid);bkClose();render();snack(`Prenotazione di ${nm} annullata`)};
-// la proposta diventa il viaggio da registrare (si può ancora modificare a mano)
-function planDay(k){const d=bkDate(k),pr=proposeCars(d);
-  draft={who:new Set(pr.list.map(b=>b.pid).filter(id=>active().some(p=>p.id===id))),cars:pr.cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))};
-  if(!draft.cars.length)draft.cars=[{driver:'',passengers:[]}];
-  $('trip-date').value=d;$('dist-note').textContent='Proposta dalle prenotazioni: controlla e tocca Registra viaggio.';
+function bkTake(carId,seat){const pid=bkWho();if(!pid){location.hash='membri';setTimeout(()=>snack('Aggiungi prima i partecipanti della squadra'),100);return}
+  const d=tripDay(),L=bkLayout(d),c=L.cars.find(x=>x.id===carId);if(!c)return;
+  const who=seat==='d'?c.driver:c.pax[seat-1];
+  if(who===pid){bkWrite({id:d+'_'+pid,date:d,pid},true);render();snack(`Posto di ${name(pid)} liberato`);return}
+  if(who){snack(`Posto già preso da ${name(who)}${isAdmin()?'. Per spostarlo scegli il suo nome in "Prenoti come"':''}`);return}
+  const prev=(state.bookings||[]).find(b=>b.id===d+'_'+pid);
+  const b={id:d+'_'+pid,date:d,pid,car:carId,seat:seat==='d'?'d':+seat,by:sync.me||'',t:new Date().toISOString()};
+  if(seat==='d')b.seats=prev&&prev.seat==='d'&&prev.seats?prev.seats:SEATS_DEF;
+  if(c.empty)bkExtra=Math.max(0,bkExtra-1);
+  bkWrite(b);render();snack(`${name(pid)}: Auto ${L.cars.indexOf(c)+1}, ${seat==='d'?'guidatore':seatLbl(seat-1,c.seats).toLowerCase()}`)}
+$('bk-days-view').onclick=e=>{const sd=e.target.closest('[data-sd]');
+  if(sd){const d=tripDay(),c=bkLayout(d).cars.find(x=>x.id===sd.dataset.sd);if(!c||!c.driver)return;
+    const b=(state.bookings||[]).find(x=>x.id===d+'_'+c.driver);if(!b)return;
+    const n=Math.max(1,c.pax.filter(Boolean).length),v=Math.max(n,Math.min(SEATS_MAX,c.seats+(+sd.dataset.dir)));
+    bkWrite({...b,seats:v});renderBookings();return}
+  const s=e.target.closest('[data-seat]');if(s)bkTake(s.dataset.car,s.dataset.seat==='d'?'d':+s.dataset.seat)};
+$('bk-person').onchange=e=>{bkSel=e.target.value;renderBookings()};
+$('bk-newcar').onclick=()=>{bkExtra++;renderBookings();const l=$('bk-days-view').querySelector('.bkcar:last-of-type');if(l)l.scrollIntoView({block:'center',behavior:'smooth'})};
+$('bk-open').onclick=()=>{location.hash='prenotazioni'};
+$('bk-add').onclick=()=>planDay();
+function bkOpen(pid){if(pid)bkSel=pid;location.hash='prenotazioni'}
+function bkShow(){location.replace('#prenotazioni')}
+// dalla tabella al viaggio da registrare (si può ancora modificare a mano)
+function planDay(){const d=tripDay(),L=bkLayout(d);
+  const cars=L.cars.filter(c=>!c.empty).map(c=>({driver:c.driver,passengers:c.pax.filter(Boolean)}));
+  draft={who:new Set([...L.list.map(b=>b.pid)].filter(id=>active().some(p=>p.id===id))),cars:cars.length?cars:[{driver:'',passengers:[]}]};
+  $('trip-date').value=d;$('dist-note').textContent='Auto prese dalla tabella delle prenotazioni: controlla e tocca Registra viaggio.';
   const adv=$('plan');adv.open=true;render();
   setTimeout(()=>adv.scrollIntoView({block:'start',behavior:'smooth'}),60)}
-// gruppo da usare nella distribuzione manuale: la prima zona della prenotazione, altrimenti il primo gruppo
-function dayGroup(id){const day=$('trip-date').value,b=(state.bookings||[]).find(x=>x.date===day&&x.pid===id);
-  const z=b?bkZones(b):[];return z[0]||groupOf(id)}
+const dayGroup=id=>groupOf(id);
 const _render4=render;render=function(){_render4();renderBookings()};
 renderBookings();
-setInterval(()=>{if(!document.hidden)renderBookings()},60000);   // alle 8:00 il tasto "Oggi" si chiude da solo
+setInterval(()=>{if(!document.hidden)renderBookings()},60000);   // alle 8:00 la tabella si azzera da sola
 
 // --- libreria QR code (qrcode-generator 1.4.4, Kazuhiko Arase, licenza MIT)
 //---------------------------------------------------------------------
@@ -4337,6 +4316,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['3.6','Prenotazioni a tabella: ogni auto ha il posto del guidatore e i posti passeggero, si sceglie il posto toccandolo. La tabella vale fino alle 8:00 del giorno del viaggio, poi si azzera. Il guidatore può cambiare i posti disponibili; quando le auto sono piene se ne apre una nuova. Posto consigliato in base a punti e gruppi.'],
  ['3.5','Prenotazioni con ruolo (Guido, Passeggero, Entrambi) e zone facoltative. Suggerimenti: a chi tocca guidare, posti mancanti, zone senza guidatore. Auto proposte automaticamente, da registrare con un tocco.'],
  ['3.4','Classifica a barre: linea centrale, punti negativi a sinistra e positivi a destra, con posizione, nome e gruppo. Anche nell\'immagine da condividere.'],
  ['3.2','Password amministratore: chi ha creato la squadra può riavere i permessi da qualsiasi dispositivo.'],
