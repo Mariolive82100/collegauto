@@ -368,13 +368,25 @@ body.wz-on{overflow:hidden}
 .sync-box.sub{border:1px dashed var(--line);border-radius:10px;padding:12px}
 .ev.team .ev-x{color:var(--teal);font-weight:600}
 #sync-msg{color:var(--fg)}
+
+/* prenotazioni */
+.bk-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bk-list:has(p){border:none}
+.bk-row{display:flex;flex-direction:column;align-items:flex-start;gap:3px;border:none;border-bottom:1px solid var(--line);border-radius:0!important;background:var(--panel);text-align:left;padding:10px 12px;min-height:50px!important}
+.bk-row:last-child{border-bottom:none}
+.bk-row.mine{background:color-mix(in srgb,var(--amber) 10%,var(--panel))}
+.bk-who{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:16px}
+.bk-g{display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--muted)}
+.bk-note{font-size:14px;color:var(--muted)}
+.bk-n{display:inline-block;min-width:22px;padding:0 6px;border-radius:999px;background:var(--chip);color:var(--fg);font-size:12.5px;margin-left:4px}
+[aria-selected="true"] .bk-n{background:var(--amber);color:#16120a}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span> <em>mobile</em></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.4</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.5</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div></div>
 </header>
@@ -405,6 +417,24 @@ body.wz-on{overflow:hidden}
   <div class="hero">
     <div class="m-next" id="next-mini"></div>
     <button class="cta" id="wz-open"><span class="plus" aria-hidden="true">+</span> Inserisci viaggio</button>
+  </div>
+  <div class="panel bk" id="bk-panel">
+    <div class="row between"><h2>Chi c'è</h2><span class="hint" id="bk-date"></span></div>
+    <div class="seg" role="tablist" aria-label="Giorno">
+      <button role="tab" data-bkday="oggi" aria-selected="true">Oggi</button>
+      <button role="tab" data-bkday="domani" aria-selected="false">Domani</button>
+    </div>
+    <div id="bk-list" class="bk-list"></div>
+    <button class="primary wide" id="bk-add">Ci sono anch'io</button>
+    <div id="bk-form" class="sync-box sub" hidden>
+      <label class="f">Chi<select id="bk-person"></select></label>
+      <span class="lbl">Ci sono</span><div class="chips" id="bk-days"></div>
+      <span class="lbl">Gruppo di preferenza</span><div class="chips" id="bk-groups"></div>
+      <label class="f">Note<input type="text" id="bk-note" maxlength="120" placeholder="es. esco alle 17, arrivo alle 9:30"></label>
+      <div class="m-grid2"><button id="bk-cancel">Annulla</button><button class="primary" id="bk-save">Conferma</button></div>
+      <button class="ghost wide danger" id="bk-del" hidden>Non ci sono più</button>
+    </div>
+    <button class="wide" id="bk-plan" hidden></button>
   </div>
   <div class="panel">
     <h2>Ultimi viaggi</h2>
@@ -601,7 +631,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='2.4';
+const APP_VERSION='2.5';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -693,17 +723,17 @@ $('auto').onclick=()=>{
   if(who.length-n>POSTI*n){setMsg(`${who.length-n} passeggeri non entrano in ${n} auto da ${POSTI} posti: aggiungi un'auto.`);return}
   // guidatori: saldi più bassi, ma al massimo uno per gruppo (gli altri del gruppo salgono con lui)
   const drivers=[],used=new Set(),skipped=[];
-  for(const p of who){if(drivers.length===n)break;const g=groupOf(p);
+  for(const p of who){if(drivers.length===n)break;const g=dayGroup(p);
     if(g&&used.has(g)){skipped.push(p);continue}drivers.push(p);if(g)used.add(g)}
   for(const p of who){if(drivers.length===n)break;if(!drivers.includes(p))drivers.push(p)}
   const rest=who.filter(p=>!drivers.includes(p));
   const cars=drivers.map(d=>({driver:d,passengers:[]}));
   const room=c=>POSTI-c.passengers.length;
   const byG={},singles=[];
-  rest.forEach(p=>{const g=groupOf(p);if(g)(byG[g]=byG[g]||[]).push(p);else singles.push(p)});
+  rest.forEach(p=>{const g=dayGroup(p);if(g)(byG[g]=byG[g]||[]).push(p);else singles.push(p)});
   const split=new Set(),together=new Set();
   Object.entries(byG).sort((a,c)=>c[1].length-a[1].length).forEach(([g,m])=>{
-    const isPref=c=>groupOf(c.driver)===g;
+    const isPref=c=>dayGroup(c.driver)===g;
     const order=[...cars].sort((x,y)=>(isPref(x)?0:1)-(isPref(y)?0:1)||room(y)-room(x)||x.passengers.length-y.passengers.length);
     const fit=order.find(c=>room(c)>=m.length);
     if(fit){fit.passengers.push(...m);together.add(g);return}
@@ -715,17 +745,17 @@ $('auto').onclick=()=>{
   cars.filter(c=>!c.passengers.length).forEach(empty=>{
     const src=[...cars].sort((x,y)=>y.passengers.length-x.passengers.length)[0];
     if(src.passengers.length<2)return;
-    const alone=p=>{const g=groupOf(p);return !g||(groupOf(src.driver)!==g&&src.passengers.filter(x=>groupOf(x)===g).length<2)};
+    const alone=p=>{const g=dayGroup(p);return !g||(dayGroup(src.driver)!==g&&src.passengers.filter(x=>dayGroup(x)===g).length<2)};
     const pick=src.passengers.slice().reverse().find(alone)||src.passengers[src.passengers.length-1];
-    const g=groupOf(pick);if(g&&!alone(pick)){split.add(g);together.delete(g)}
+    const g=dayGroup(pick);if(g&&!alone(pick)){split.add(g);together.delete(g)}
     src.passengers=src.passengers.filter(x=>x!==pick);empty.passengers.push(pick);
   });
   draft.cars=cars;
   // gruppi davvero insieme: tutti i presenti del gruppo nella stessa auto
   const gname=g=>state.groups[gIndex(g)].name;
-  const present=[...new Set(who.map(groupOf).filter(Boolean))].filter(g=>who.filter(p=>groupOf(p)===g).length>1);
+  const present=[...new Set(who.map(groupOf).filter(Boolean))].filter(g=>who.filter(p=>dayGroup(p)===g).length>1);
   const carOf=p=>cars.findIndex(c=>c.driver===p||c.passengers.includes(p));
-  const ok=present.filter(g=>new Set(who.filter(p=>groupOf(p)===g).map(carOf)).size===1);
+  const ok=present.filter(g=>new Set(who.filter(p=>dayGroup(p)===g).map(carOf)).size===1);
   const ko=present.filter(g=>!ok.includes(g));
   $('dist-note').textContent=(ok.length?`Insieme: ${ok.map(gname).join(', ')}. `:'')+(ko.length?`Divisi: ${ko.map(gname).join(', ')} (posti o auto insufficienti).`:'');
   setMsg('');renderComposer()};
@@ -1258,6 +1288,8 @@ async function syncStart(){
   }catch(e){setSync('pending',e&&e.code||'');setTimeout(syncStart,15000);return}
   unsubs.push(gref().collection('viaggi').onSnapshot(snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
+  unsubs.push(gref().collection('prenotazioni').onSnapshot(snap=>{const today=todayISO(),list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted&&b.date>=today)list.push({...b,id:d.id})});
+    state.bookings=list;persistLocal();if(typeof renderBookings==='function')renderBookings()},()=>{}));
   unsubs.push(gref().collection('eventi').orderBy('t','desc').limit(200).onSnapshot(snap=>{remoteEvents=[];snap.forEach(d=>remoteEvents.push(d.data()));renderEvents()},()=>{}));
   unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
 }
@@ -1496,4 +1528,75 @@ $('welcome-new').onclick=()=>{location.hash='persone';setTimeout(()=>$('new-pers
 const _render3=render;render=function(){_render3();renderWelcome()};
 renderInstall();renderWelcome();
 if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+// ===================== Prenotazioni: chi c'è oggi e domani =====================
+// state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, group, note, by, t}]  · su Firebase: gruppi/{codice}/prenotazioni/{id}
+let bkDay='oggi',bkEdit=null;   // bkEdit: {pid, days:Set, group, note} mentre il modulo è aperto
+const bkDate=k=>k==='oggi'?todayISO():isoShift(todayISO(),1);
+const bkList=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
+const myPid=()=>{const p=active().find(x=>x.name===sync.me);return p?p.id:''};
+function bkWrite(b,del){
+  state.bookings=(state.bookings||[]).filter(x=>x.id!==b.id);if(!del)state.bookings.push(b);
+  persistLocal();
+  if(fsdb&&sync.code){const ref=gref().collection('prenotazioni').doc(b.id);(del?ref.set({deleted:true,date:b.date,pid:b.pid,t:new Date().toISOString()}):ref.set(b)).catch(()=>{})}
+}
+function renderBookings(){
+  const d=bkDate(bkDay),list=bkList(d).sort((a,c)=>name(a.pid).localeCompare(name(c.pid)));
+  ['oggi','domani'].forEach(k=>{const n=bkList(bkDate(k)).length;const b=document.querySelector(`[data-bkday="${k}"]`);
+    b.setAttribute('aria-selected',String(k===bkDay));b.innerHTML=`${k==='oggi'?'Oggi':'Domani'} <span class="bk-n">${n}</span>`});
+  $('bk-date').textContent=new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+  const me=myPid();
+  $('bk-list').innerHTML=list.length?list.map(b=>{const g=b.group&&state.groups.some(x=>x.id===b.group)?b.group:'';
+    return `<button class="bk-row${b.pid===me?' mine':''}" data-bk="${esc(b.pid)}"><span class="bk-who"><b>${esc(name(b.pid))}</b>${g?`<span class="bk-g">${gDot(g)}${esc(state.groups[gIndex(g)].name)}</span>`:''}</span>${b.note?`<span class="bk-note">${esc(b.note)}</span>`:''}</button>`}).join('')
+    :`<p class="hint" style="margin:0">Nessuno ha ancora detto se c'è ${bkDay==='oggi'?'oggi':'domani'}.</p>`;
+  const mine=list.some(b=>b.pid===me);
+  $('bk-add').textContent=mine?'Modifica la mia prenotazione':(me?'Ci sono anch\'io':'Prenota');
+  $('bk-plan').hidden=list.length<2;
+  $('bk-plan').textContent=`Organizza le auto di ${bkDay} (${list.length} persone)`;
+  renderBkForm();
+}
+function openBk(pid){
+  const p=pid||myPid()||(active()[0]||{}).id;if(!p){location.hash='persone';return}
+  const days=new Set(),src=(state.bookings||[]).find(b=>b.pid===p&&b.date===bkDate(bkDay));
+  ['oggi','domani'].forEach(k=>{if((state.bookings||[]).some(b=>b.pid===p&&b.date===bkDate(k)))days.add(k)});
+  if(!days.size)days.add(bkDay);
+  bkEdit={pid:p,days,group:src?src.group||'':(groupOf(p)||''),note:src?src.note||'':'',existing:days.size&&!!src};
+  renderBkForm();$('bk-form').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function renderBkForm(){
+  const f=$('bk-form');f.hidden=!bkEdit;if(!bkEdit)return;
+  const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
+  $('bk-person').innerHTML=ppl.map(p=>`<option value="${p.id}" ${p.id===bkEdit.pid?'selected':''}>${esc(p.name)}</option>`).join('');
+  $('bk-days').innerHTML=['oggi','domani'].map(k=>`<button class="chip" data-bkd="${k}" aria-pressed="${bkEdit.days.has(k)}">${k==='oggi'?'Oggi':'Domani'} <span class="bal">${new Date(bkDate(k)+'T12:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric'})}</span></button>`).join('');
+  $('bk-groups').innerHTML=`<button class="chip" data-bkg="" aria-pressed="${!bkEdit.group}">Nessuna preferenza</button>`+state.groups.map(g=>`<button class="chip" data-bkg="${g.id}" aria-pressed="${bkEdit.group===g.id}">${gDot(g.id)}${esc(g.name)}</button>`).join('');
+  if(document.activeElement!==$('bk-note'))$('bk-note').value=bkEdit.note;
+  const has=['oggi','domani'].some(k=>(state.bookings||[]).some(b=>b.pid===bkEdit.pid&&b.date===bkDate(k)));
+  $('bk-del').hidden=!has;$('bk-save').disabled=!bkEdit.days.size;
+}
+document.querySelectorAll('[data-bkday]').forEach(b=>b.onclick=()=>{bkDay=b.dataset.bkday;renderBookings()});
+$('bk-add').onclick=()=>openBk();
+$('bk-list').onclick=e=>{const r=e.target.closest('[data-bk]');if(r)openBk(r.dataset.bk)};
+$('bk-person').onchange=e=>openBk(e.target.value);
+$('bk-days').onclick=e=>{const b=e.target.closest('[data-bkd]');if(!b)return;const k=b.dataset.bkd;bkEdit.days.has(k)?bkEdit.days.delete(k):bkEdit.days.add(k);renderBkForm()};
+$('bk-groups').onclick=e=>{const b=e.target.closest('[data-bkg]');if(!b)return;bkEdit.group=b.dataset.bkg;renderBkForm()};
+$('bk-note').oninput=e=>{bkEdit.note=e.target.value};
+$('bk-cancel').onclick=()=>{bkEdit=null;renderBookings()};
+$('bk-save').onclick=()=>{const e=bkEdit;if(!e||!e.days.size)return;
+  ['oggi','domani'].forEach(k=>{const date=bkDate(k),id=date+'_'+e.pid;
+    if(e.days.has(k))bkWrite({id,date,pid:e.pid,group:e.group||'',note:(e.note||'').trim().slice(0,120),by:sync.me||'',t:new Date().toISOString()});
+    else if((state.bookings||[]).some(b=>b.id===id))bkWrite({id,date,pid:e.pid},true)});
+  const nm=name(e.pid),dd=[...e.days].map(k=>k).join(' e ');bkEdit=null;render();snack(`${nm} c'è ${dd}`)};
+$('bk-del').onclick=()=>{const e=bkEdit;if(!e)return;
+  ['oggi','domani'].forEach(k=>{const date=bkDate(k),id=date+'_'+e.pid;if((state.bookings||[]).some(b=>b.id===id))bkWrite({id,date,pid:e.pid},true)});
+  const nm=name(e.pid);bkEdit=null;render();snack(`Prenotazione di ${nm} annullata`)};
+// dalle prenotazioni all'inserimento: chi c'è è già selezionato, la data è quella giusta
+$('bk-plan').onclick=()=>{const d=bkDate(bkDay);
+  draft={who:new Set(bkList(d).map(b=>b.pid).filter(id=>active().some(p=>p.id===id))),cars:[{driver:'',passengers:[]}]};
+  $('trip-date').value=d;const n=draft.who.size;while(draft.cars.length<Math.ceil(n/(POSTI+1)))draft.cars.push({driver:'',passengers:[]});
+  const adv=document.querySelector('details.adv');adv.open=true;render();$('auto').click();
+  setTimeout(()=>adv.scrollIntoView({block:'start',behavior:'smooth'}),60)};
+// gruppo da usare nella distribuzione: quello scelto nella prenotazione del giorno, altrimenti quello abituale
+function dayGroup(id){const day=$('trip-date').value,b=(state.bookings||[]).find(x=>x.date===day&&x.pid===id);
+  return b&&b.group&&state.groups.some(g=>g.id===b.group)?b.group:groupOf(id)}
+const _render4=render;render=function(){_render4();renderBookings()};
+renderBookings();
 </script>
