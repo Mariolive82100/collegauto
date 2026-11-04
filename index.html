@@ -615,6 +615,22 @@ body.wz-on{overflow:hidden}
 .cmp-act button{min-height:52px!important;font-weight:700}
 #bk-add.armed{background:var(--amber)!important;border-color:var(--amber)!important;color:#16120a!important}
 #bk-add:disabled{opacity:.55}
+.hm-rs h2+.hint::first-letter,#hm-day::first-letter{text-transform:uppercase}
+.cmp-h{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:2px 2px 0}
+.cmp-empty .ul-row{min-height:44px!important;cursor:default}
+.cmp-empty .ul-n b{color:var(--muted);font-weight:500}
+.cmp-empty .ul-s{opacity:.55}
+#bk-abs.mini-wrap{display:flex!important;flex-direction:column;gap:12px;padding:6px 2px 0;border:none;border-radius:0;background:none;overflow:visible}
+.hm-rs .cmp+#bk-add{margin-top:2px}
+.mini{display:flex;flex-direction:column;gap:4px}
+.mini-h{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.mini-h i{font-style:normal;font-weight:600;opacity:.8}
+.mini-l{display:flex;flex-wrap:wrap;gap:4px 14px}
+.mn{background:none!important;border:none!important;padding:2px 0!important;min-height:0!important;font-size:15px;font-weight:600;color:var(--fg)}
+.mn i{font-style:normal;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.mn.neg,.mn.neg i{color:var(--neg)}
+.mn.me{text-decoration:underline;text-decoration-color:var(--teal);text-decoration-thickness:2px;text-underline-offset:3px}
+.mn-none{color:var(--muted)}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -622,7 +638,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.5</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.6</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -660,12 +676,12 @@ body.wz-on{overflow:hidden}
     </div>
   </div>
   <div class="panel hm-rs">
-    <div class="row between"><h2>Prossimo viaggio</h2><span class="hint" id="bk-sum"></span></div>
-    <p class="hint" style="margin:0" id="hm-day"></p>
-    <div id="bk-tips" class="bk-tips"></div>
+    <div class="row between"><h2>Prossimo viaggio</h2><span class="hint" id="hm-day"></span></div>
     <div id="bk-days-view" class="cmp"></div>
-    <div class="cmp-act" id="cmp-act"><button class="ghost" id="bk-edit">Modifica</button><button class="bk-main" id="bk-add">Conferma e registra</button></div>
+    <button class="wide bk-main" id="bk-add">Conferma e registra</button>
+    <div class="mini-wrap" id="bk-abs"></div>
   </div>
+  <div hidden>
   <details class="adv" id="plan">
     <summary>Modifica la composizione · auto, guidatori e passeggeri a mano</summary>
   <div class="panel">
@@ -688,9 +704,6 @@ body.wz-on{overflow:hidden}
     <button class="ghost" id="clear">Svuota</button><button class="primary" id="save">Registra viaggio</button>
   </div>
   </details>
-  <div class="panel">
-    <div class="row between"><h2>Assenti e senza risposta</h2><span class="hint" id="abs-sum"></span></div>
-    <div class="bk-rs" id="bk-abs"></div>
   </div>
   <div class="panel">
     <div class="row between"><h2>Ultimi viaggi</h2><a class="more-link" href="#registro">Registro ›</a></div>
@@ -957,7 +970,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.5';
+const APP_VERSION='4.6';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1954,50 +1967,32 @@ function bkSeat(c,s){const who=s==='d'?c.driver:c.pax[s-1]||'',me=who&&who===myP
 let bkArm=false,bkArmT;
 function renderBookings(){
   const d=tripDay(),L=bkLayout(d),me=myPid(),edit=id=>isAdmin()||id===me,cn=id=>L.cars.findIndex(c=>c.driver===id)+1;
-  // composizione suggerita: per ogni auto prima il guidatore, poi i passeggeri
-  const bal0=balances(),pts=id=>{const v=bal0[id]||0;return `<span class="ul-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span>`};
-  const crow=(id,role,extra)=>`<button class="ul-row cmp-${role}${(bal0[id]||0)<0?' ul-neg':''}${id===me?' me':''}" data-rsp="${id}">
-      <span class="ul-n"><b>${esc(name(id))}</b>${extra?`<small>${esc(extra)}</small>`:''}</span>${pts(id)}<span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></button>`;
-  const dt={};L.list.forEach(b=>dt[b.pid]=bkDrive(b));
-  $('bk-days-view').innerHTML=L.cars.length||L.wait.length?L.cars.map((c,i)=>`<div class="cmp-car"><div class="car-h"><b>Auto ${i+1}</b><span class="hint">${c.pax.length}/${c.seats} posti</span>
-      ${edit(c.driver)?`<span class="seats-ed"><button class="sd" data-sd="${c.driver}" data-dir="-1" aria-label="Un posto in meno" ${c.seats<=1?'disabled':''}>−</button><span>${c.seats} posti</span><button class="sd" data-sd="${c.driver}" data-dir="1" aria-label="Un posto in più" ${c.seats>=SEATS_MAX?'disabled':''}>+</button></span>`:''}</div>
-      <div class="cmp-list">${crow(c.driver,'drv',`+${c.pax.length} punti${c.maybe?' · aveva detto "non so"':''}`)}${c.pax.map(x=>crow(x,'pax',dt[x]==='si'?'poteva guidare':'')).join('')}</div></div>`).join('')
-    +(L.wait.length?`<div class="cmp-car"><div class="car-h"><b>Senza posto</b></div><div class="cmp-list">${L.wait.map(x=>crow(x,'wait','')).join('')}</div></div>`:'')
-    :`<p class="hint" style="margin:0">${L.list.length?'Nessuno dei presenti ha detto di poter guidare.':'Ancora nessun presente: la composizione delle auto compare qui quando i colleghi toccano "Presente".'}</p>`;
-  // suggerimenti
-  const tips=[];
-  if(me&&L.cars.some(c=>c.driver===me))tips.push(['me',`Guidi tu: Auto ${cn(me)}, con ${L.cars.find(c=>c.driver===me).pax.map(name).join(', ')||'nessun passeggero per ora'}.`]);
-  if(L.wait.length){const ok=L.list.filter(b=>bkDrive(b)!=='no').length;
-    tips.push(['warn',`Mancano posti per ${L.wait.map(name).join(', ')}: ${ok?'tutti quelli che possono guidare sono già alla guida.':'nessuno dei presenti ha detto di poter guidare.'} Serve qualcuno che risponda "sì" o "non so".`])}
-  if(L.extraYes.length)tips.push(['info',`${L.extraYes.map(name).join(', ')} ${L.extraYes.length===1?'potrebbe guidare':'potrebbero guidare'}, ma le auto bastano: ${L.extraYes.length===1?'viaggia':'viaggiano'} come passeggeri.`]);
-  L.cars.filter(c=>c.maybe).forEach(c=>tips.push(['info',`${name(c.driver)} guida l'Auto ${cn(c.driver)}: serviva un'auto in più e aveva risposto "non so".`]));
-  $('bk-tips').innerHTML=tips.map(([t,x])=>`<div class="tip tip-${t}">${esc(x)}</div>`).join('');
-  const pres=L.list.length,abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
-  $('bk-sum').textContent=pres?`${pres} ${pres===1?'presente':'presenti'} · ${L.cars.length} auto`:'';
+  // composizione suggerita (non modificabile): per ogni auto prima il guidatore, poi i passeggeri
+  const bal=balances(),sc=id=>{const v=bal[id]||0;return `${v>0?'+':v<0?'−':''}${Math.abs(v)}`};
+  const crow=(id,role)=>`<button class="ul-row cmp-${role}${(bal[id]||0)<0?' ul-neg':''}${id===me?' me':''}" data-rsp="${id}">
+      <span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></button>`;
+  const empty=`<div class="cmp-car"><div class="cmp-list cmp-empty">
+      <div class="ul-row cmp-drv"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">Guida</span></div>
+      ${'<div class="ul-row cmp-pax"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">Passeggero</span></div>'.repeat(SEATS_DEF)}</div></div>`;
+  $('bk-days-view').innerHTML=L.cars.length||L.wait.length
+    ?L.cars.map((c,i)=>`<div class="cmp-car">${L.cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">${crow(c.driver,'drv')}${c.pax.map(x=>crow(x,'pax')).join('')}</div></div>`).join('')
+      +(L.wait.length?`<div class="cmp-car"><div class="cmp-h">Senza posto</div><div class="cmp-list">${L.wait.map(x=>crow(x,'wait')).join('')}</div></div>`:'')
+    :empty;
+  const abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
   const done1=state.trips.some(t=>!t.hist&&t.date===d),can=L.cars.some(c=>c.pax.length);
-  $('cmp-act').hidden=!L.cars.length;$('bk-add').disabled=!can||done1;
-  $('bk-add').textContent=done1?'Viaggio già registrato ✓':bkArm?'Tocca di nuovo per registrare':'Conferma e registra';
+  $('bk-add').hidden=!can&&!done1;$('bk-add').disabled=!can||done1;
+  $('bk-add').textContent=done1?'Viaggio registrato ✓':bkArm?'Tocca di nuovo per registrare':'Conferma e registra';
   $('bk-add').classList.toggle('armed',bkArm&&!done1);
-  // elenco unico nella pagina principale: presenti, assenti, senza risposta; in ogni gruppo prima chi ha meno punti
-  const bal=balances(),sub={};
-  L.cars.forEach((c,i)=>{sub[c.driver]=`Guida l'Auto ${i+1}`;c.pax.forEach(x=>{sub[x]=`Passeggero Auto ${i+1}`})});
-  L.wait.forEach(x=>{sub[x]='senza posto'});
+  // due liste minimal: assenti e nessuna conferma (prima chi ha meno punti)
   const byPts=(x,y)=>(bal[x]||0)-(bal[y]||0)||tie(x)-tie(y)||name(x).localeCompare(name(y));
-  const dr={};L.list.forEach(b=>dr[b.pid]=bkDrive(b));
-  const presIds=L.list.map(b=>b.pid).sort(byPts),absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
-  const ST={pres:'Presente',abs:'Assente',miss:'Nessuna risposta'};
-  const row=(id,st)=>{const v=bal[id]||0;return `<button class="ul-row ul-${st}${v<0?' ul-neg':''}${id===me?' me':''}" data-rsp="${id}">
-      <span class="ul-n"><b>${esc(name(id))}</b>${st==='pres'?`<small>${esc(sub[id]||DRIVE_TXT[dr[id]])}</small>`:''}</span>
-      <span class="ul-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span><span class="ul-s">${ST[st]}</span></button>`};
-  $('bk-abs').innerHTML=!active().length?'<p class="hint" style="margin:0">Aggiungi i partecipanti della squadra per vedere l\'elenco.</p>'
-    :absIds.length||missIds.length?absIds.map(id=>row(id,'abs')).join('')+missIds.map(id=>row(id,'miss')).join('')
-    :'<p class="hint" style="margin:0">Hanno risposto tutti e nessuno è assente.</p>';
-  $('abs-sum').textContent=`${abs.length} ${abs.length===1?'assente':'assenti'} · ${missP.length} senza risposta`;
-  const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);
-  $('hm-day').textContent=`${bkLong(d)} · composizione suggerita in base ai presenti: guida prima chi ha detto "sì", poi chi ha detto "non so", da chi ha meno punti. Si azzera alle ${BK_CUTOFF}:00.`;
+  const absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
+  const mini=(t,ids)=>`<div class="mini"><span class="mini-h">${t} <i>${ids.length}</i></span><span class="mini-l">${ids.length?ids.map(id=>`<button class="mn${(bal[id]||0)<0?' neg':''}${id===me?' me':''}" data-rsp="${id}">${esc(name(id))} <i>${sc(id)}</i></button>`).join(''):'<span class="mn-none">—</span>'}</span></div>`;
+  $('bk-abs').innerHTML=mini('Assenti',absIds)+mini('Nessuna conferma',missIds);
+  $('hm-day').textContent=bkLong(d);
   // i due tasti della pagina principale
   const mineB=me&&L.list.find(b=>b.pid===me),meAbs=me&&abs.some(b=>b.pid===me);
   $('bk-open-t').textContent=mineB?'Presente ✓':'Presente';
+  const sub={};L.cars.forEach((c,i)=>{const k=L.cars.length>1?` ${i+1}`:'';sub[c.driver]=`Guidi l'auto${k}`;c.pax.forEach(x=>{sub[x]=`Passeggero auto${k}`})});L.wait.forEach(x=>{sub[x]='Senza posto'});
   $('bk-open-s').textContent=mineB?(sub[me]?`${sub[me]} · tocca per annullare`:'tocca per annullare'):'al prossimo viaggio';
   $('bk-away-t').textContent=meAbs?'Assente ✓':'Assente';$('bk-away-s').textContent=meAbs?'tocca per annullare':'al prossimo viaggio';
   $('bk-open').classList.toggle('on',!!mineB);$('bk-away').classList.toggle('on',!!meAbs);
@@ -2024,13 +2019,10 @@ $('bk-away').onclick=()=>{const me=myPid();if(!me){needMe();return}
   if(bkAbsent(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Assenza annullata');return}
   bkSet(me,'abs');snack(`Assente ${bkLong(tripDay())}`)};
 $('bk-abs').onclick=e=>{const b=e.target.closest('[data-rsp]');if(b)askDrive(b.dataset.rsp)};   // rispondere per un collega
-$('bk-days-view').onclick=e=>{const sd=e.target.closest('[data-sd]');if(!sd)return;
-  const d=tripDay(),b=(state.bookings||[]).find(x=>x.id===d+'_'+sd.dataset.sd);if(!b)return;
-  const v=Math.max(1,Math.min(SEATS_MAX,(+b.seats||SEATS_DEF)+(+sd.dataset.dir)));bkWrite({...b,seats:v});render()};
+$('bk-days-view').onclick=e=>{const b=e.target.closest('[data-rsp]');if(b)askDrive(b.dataset.rsp)};
 $('bk-add').onclick=()=>{if(!bkArm){bkArm=true;renderBookings();clearTimeout(bkArmT);bkArmT=setTimeout(()=>{bkArm=false;renderBookings()},4000);return}
-  bkArm=false;clearTimeout(bkArmT);fillDraft();const v=validate();if(v){$('plan').open=true;render();setMsg(v);$('plan').scrollIntoView({block:'start',behavior:'smooth'});return}
-  $('save').click();$('plan').open=false;snack(`Viaggio di ${bkLong(tripDay())} registrato`)};
-$('bk-edit').onclick=()=>planDay();
+  bkArm=false;clearTimeout(bkArmT);fillDraft();const v=validate();if(v){render();snack(v);return}
+  renderComposer();$('save').disabled=false;$('save').click();snack(`Viaggio di ${bkLong(tripDay())} registrato`)};
 // dalle auto composte al viaggio da registrare (si può ancora modificare a mano)
 function fillDraft(){const d=tripDay(),L=bkLayout(d);
   const cars=L.cars.map(c=>({driver:c.driver,passengers:[...c.pax]}));
@@ -4421,6 +4413,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['4.6','Pagina principale più semplice: sotto i tasti Presente/Assente c\'è solo la tabella dell\'auto (vuota finché nessuno conferma), il tasto per registrare e due liste minimal, Assenti e Nessuna conferma. La composizione suggerita non si modifica.'],
  ['4.5','La composizione suggerita delle auto per il prossimo viaggio è nella pagina principale: per ogni auto prima il guidatore, poi i passeggeri. Si può confermare e registrare oppure modificare. Assenti e senza risposta in una tabella sotto. Eliminata la pagina Prenota.'],
  ['4.4','Nuova prenotazione: "Presente" chiede "Sarai guidatore?" (sì, no, non so); toccandolo di nuovo si annulla. Le auto nella pagina Prenota si compongono da sole: guida prima chi ha detto sì, poi chi ha detto non so, partendo da chi ha meno punti. Toccando un nome nell\'elenco si risponde per un collega.'],
  ['4.3','Pagina principale: un unico elenco con nome, punteggio e stato (presente, assente, nessuna risposta), ordinato per stato e poi dal punteggio più basso. "Presente" chiede se si vuole prenotare il posto. Tolti il riquadro "Prossimo a guidare" e il tasto "Non ci sono" nella pagina Prenota.'],
