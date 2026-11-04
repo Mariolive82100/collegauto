@@ -461,13 +461,28 @@ body.wz-on{overflow:hidden}
 .share-code{border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
 .admin-box summary{cursor:pointer;color:var(--muted);font-size:14.5px}
 #admin-claim-toggle{color:var(--amber)}
+
+/* classifica punti */
+#bars{display:flex;flex-direction:column;gap:6px;max-width:none}
+.rk-row{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,auto) 44px;align-items:center;gap:8px}
+.rk-h{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);padding-bottom:2px}
+.rk-h span:last-child{text-align:right}
+.rk-pos{font-size:15px;font-weight:700;color:var(--muted);text-align:center}
+.rk-row.top .rk-pos{color:var(--amber)}
+.rk-name{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;padding:8px 10px;border-radius:9px;font-size:16px}
+.rk-name b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk-next{flex:none;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);border:1px solid var(--amber);border-radius:999px;padding:1px 7px}
+.rk-grp{display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted);max-width:110px;min-width:0}
+.rk-grp span{display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rk-none{opacity:.5}
+.rk-v{font-size:18px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.2</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.3</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -803,7 +818,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='3.2';
+const APP_VERSION='3.3';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1066,9 +1081,17 @@ function renderBalances(){
   const all=state.people.map(p=>({...p,v:b[p.id]}));
   const arr=all.filter(x=>!x.archived&&!x.deleted).sort((a,c)=>a.v-c.v||tie(a.id)-tie(c.id)||a.name.localeCompare(c.name));
   const max=Math.max(1,...arr.map(x=>Math.abs(x.v)));
-  $('bars').innerHTML=arr.map(x=>{const pct=Math.abs(x.v)/max*50;
-    const st=x.v>=0?`left:50%;width:${pct}%;background:var(--teal)`:`left:${50-pct}%;width:${pct}%;background:var(--neg)`;
-    return `<div class="bar"><span class="n" title="${esc(x.name)}">${esc(x.name)}</span><div class="track"><div class="fill" style="${st}"></div></div><span class="gp">${cnt[x.id].g}G·${cnt[x.id].p}P</span><span class="v ${x.v>0?'pos':x.v<0?'neg':''}">${fmt(x.v)}</span></div>`}).join('');
+  // classifica: chi ha più punti in alto; a pari punti stessa posizione; in fondo chi deve guidare
+  const rk=[...arr].reverse();let pos=0,prev=null;
+  const tint=v=>v===0?'var(--chip)':`color-mix(in srgb,var(${v>0?'--teal':'--neg'}) ${14+Math.round(30*Math.abs(v)/max)}%,transparent)`;
+  const nextId=arr.length?arr[0].id:null;
+  $('bars').innerHTML=(rk.length?`<div class="rk-row rk-h"><span>Pos.</span><span>Nome</span><span>Gruppo</span><span>Punti</span></div>`:'')+rk.map((x,i)=>{
+    if(x.v!==prev){pos=i+1;prev=x.v}
+    const gs=groupsOf(x.id);
+    return `<div class="rk-row${pos<=3?' top':''}"><span class="rk-pos">${pos}°</span>
+      <span class="rk-name" style="background:${tint(x.v)}"><b>${esc(x.name)}</b>${x.id===nextId?'<span class="rk-next">guida</span>':''}</span>
+      <span class="rk-grp">${gs.length?gs.map(g=>`<span>${gDot(g)}${esc(state.groups[gIndex(g)].name)}</span>`).join(''):'<span class="rk-none">—</span>'}</span>
+      <span class="rk-v ${x.v>0?'pos':x.v<0?'neg':''}">${fmt(x.v)||'0'}</span></div>`}).join('');
   const startSum=Object.values((state.start&&state.start.points)||{}).reduce((a,v)=>a+(+v||0),0);
   const total=all.reduce((s,x)=>s+x.v,0)-startSum;
   $('zero').className='zero'+(total?' bad':'');$('zero').innerHTML=`Σ punti <b>${fmt(total)||'0'}</b>`;
@@ -1243,15 +1266,19 @@ async function buildImage(){
   y+=44;x.fillStyle=C.ln;x.fillRect(P,y,W-2*P,1);
   // grafico
   y+=36;txt('PUNTI',P,y,`600 16px ${F}`,C.mu);
-  const nx=P,nw=200,vx=W-P,bx0=P+nw+10,bx1=W-P-80,mid=(bx0+bx1)/2,half=(bx1-bx0)/2;
   const max=Math.max(1,...arr.map(a=>Math.abs(a.v)));
-  y+=24;const top=y;
-  arr.forEach((a,i)=>{const cy=top+i*rowH+rowH/2;
-    txt(fit(a.name,`500 22px ${F}`,nw),nx,cy,`500 22px ${F}`,C.fg);
-    const w=Math.abs(a.v)/max*half;x.fillStyle=a.v>=0?C.te:C.ne;
-    if(w)x.fillRect(a.v>=0?mid:mid-w,cy-11,w,22);
-    txt(fmt(a.v)||'0',vx,cy,`600 22px ${F}`,a.v>0?C.te:a.v<0?C.ne:C.fg,'right');});
-  x.fillStyle=C.ln;x.fillRect(mid,top-6,1,arr.length*rowH+12);
+  const gcol=gid=>cs.getPropertyValue('--g'+(gIndex(gid)%6+1)).trim()||C.mu;
+  const rr=(X,Y,w,h,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()};
+  y+=24;const top=y;const rk=[...arr].reverse();let pos=0,prev=null;const nextId=arr.length?arr[0].id:null;
+  rk.forEach((a,i)=>{const cy=top+i*rowH+rowH/2;if(a.v!==prev){pos=i+1;prev=a.v}
+    txt(pos+'°',P,cy,`700 20px ${F}`,pos<=3?C.am:C.mu);
+    const nx0=P+52,nw0=330;
+    x.save();x.globalAlpha=a.v===0?0.10:0.16+0.32*Math.abs(a.v)/max;x.fillStyle=a.v>0?C.te:a.v<0?C.ne:C.mu;rr(nx0,cy-18,nw0,36,9);x.fill();x.restore();
+    txt(fit(a.name,`600 21px ${F}`,nw0-(a.id===nextId?90:24)),nx0+12,cy,`600 21px ${F}`,C.fg);
+    if(a.id===nextId)txt('guida',nx0+nw0-12,cy,`700 15px ${F}`,C.am,'right');
+    let gx=nx0+nw0+18;groupsOf(a.id).slice(0,2).forEach(g=>{const nm=state.groups[gIndex(g)].name;x.fillStyle=gcol(g);rr(gx,cy-6,12,12,3);x.fill();
+      const t=fit(nm,`500 17px ${F}`,140);txt(t,gx+18,cy,`500 17px ${F}`,C.mu);x.font=`500 17px ${F}`;gx+=18+x.measureText(t).width+14});
+    txt(fmt(a.v)||'0',W-P,cy,`700 23px ${F}`,a.v>0?C.te:a.v<0?C.ne:C.fg,'right')});
   y=top+arr.length*rowH+24;
   if(arr.length){txt('Prossimo a guidare: ',P,y,`400 20px ${F}`,C.mu);x.font=`400 20px ${F}`;txt(arr[0].name,P+x.measureText('Prossimo a guidare: ').width,y,`700 20px ${F}`,C.am)}
   y+=36;x.fillStyle=C.ln;x.fillRect(P,y,W-2*P,1);
@@ -4202,6 +4229,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['3.3','Punti come classifica: posizione, nome colorato in base al punteggio, gruppi e punti colorati. Anche l\'immagine da condividere.'],
  ['3.2','Password amministratore: chi ha creato la squadra può riavere i permessi da qualsiasi dispositivo.'],
  ['3.1','Pagina Squadre riorganizzata: elenco delle squadre con il numero di iscritti, partecipanti e codice di condivisione. Gruppi in una pagina dedicata, modificabili da tutti, con la possibilità di stare in più gruppi.'],
  ['3.0','Nuova organizzazione: scheda Squadra con componenti e gruppi, pagina Prenotazioni, menu con Condividi, Dati e backup, Suggerimenti e Info. Solo chi crea la squadra aggiunge o espelle componenti. Chi entra sceglie il suo nome o si aggiunge. Prenotazioni per oggi fino alle 8:00.'],
