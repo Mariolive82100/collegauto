@@ -540,6 +540,13 @@ body.wz-on{overflow:hidden}
 .seat.me,.seat.drv.me{border-color:var(--teal)!important;background:color-mix(in srgb,var(--teal) 18%,var(--panel))!important}
 .seat.sug{border-color:var(--amber)!important;border-width:2px!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 22%,transparent)}
 .seat.sug .seat-x{color:var(--amber);font-weight:700}
+.bk-abs{display:flex;flex-direction:column;gap:6px}.bk-abs:empty{display:none}
+.abs-h{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.abs-list{display:flex;flex-wrap:wrap;gap:6px}
+.abs-p{font-size:14px;padding:3px 10px;border-radius:999px;background:var(--chip);color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
+.abs-p.me{color:var(--fg);outline:1.5px solid var(--teal)}
+.bk-absbtn{margin-bottom:6px;color:var(--neg)!important;border-color:color-mix(in srgb,var(--neg) 45%,var(--line))!important}
+.bk-absbtn.on{color:var(--teal)!important;border-color:var(--teal)!important}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -547,7 +554,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.6</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v3.7</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -596,6 +603,8 @@ body.wz-on{overflow:hidden}
     <div id="bk-tips" class="bk-tips"></div>
     <div id="bk-days-view" class="bk-cars"></div>
     <button class="ghost wide" id="bk-newcar">+ Porto un'altra auto</button>
+    <div class="bk-abs" id="bk-abs"></div>
+    <button class="ghost wide bk-absbtn" id="bk-absent">Non ci sono</button>
     <button class="wide bk-main" id="bk-add">Registra il viaggio dalla tabella</button>
   </div>
   <details class="adv" id="plan">
@@ -873,7 +882,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='3.6';
+const APP_VERSION='3.7';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1824,7 +1833,9 @@ if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')
 // su Firebase: gruppi/{codice}/prenotazioni/{id}
 const BK_CUTOFF=8,SEATS_DEF=POSTI,SEATS_MAX=8;
 const tripDay=()=>new Date().getHours()<BK_CUTOFF?todayISO():isoShift(todayISO(),1);
-const bkList=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
+const bkAll=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
+const bkList=date=>bkAll(date).filter(b=>!b.absent);   // chi viaggia
+const bkAbsent=date=>bkAll(date).filter(b=>b.absent);  // chi ha dichiarato di non esserci
 const myPid=()=>{const p=active().find(x=>x.name===sync.me);return p?p.id:''};
 const bkLong=d=>new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
 let bkSel='',bkExtra=0,bkSeenDay='';
@@ -1854,7 +1865,7 @@ function bkLayout(date){
 }
 // posto consigliato per chi prenota
 function bkSuggest(L,pid){
-  if(!pid||L.list.some(b=>b.pid===pid&&b.car))return null;
+  if(!pid||L.list.some(b=>b.pid===pid&&b.car)||bkAbsent(tripDay()).some(b=>b.pid===pid))return null;
   const b=balances(),booked=L.list.map(x=>x.pid).filter(x=>x!==pid);
   const lowest=booked.length>0&&booked.every(x=>b[x]>b[pid]||(b[x]===b[pid]&&tie(x)>=tie(pid)));
   const noDrvPax=L.cars.find(c=>!c.driver&&c.pax.some(Boolean));
@@ -1896,14 +1907,21 @@ function renderBookings(){
     else tips.push(['info',`Posto consigliato: Auto ${cn(sug.car)}, ${sn}${sug.why==='group'?`, con ${name(L.cars.find(c=>c.id===sug.car).driver)} del tuo gruppo`:''}.`])}
   L.cars.forEach((c,i)=>{const n=c.pax.filter(Boolean).length;if(!c.driver&&n)tips.push(['warn',`Auto ${i+1}: ${n} ${n===1?'passeggero':'passeggeri'} e nessun guidatore.`])});
   $('bk-tips').innerHTML=tips.map(([t,x])=>`<div class="tip tip-${t}">${esc(x)}</div>`).join('');
-  const seated=L.list.length,nc=L.cars.filter(c=>!c.empty).length;
-  $('bk-sum').textContent=seated?`${seated} ${seated===1?'prenotato':'prenotati'} · ${nc} ${nc===1?'auto':'auto'}`:'';
+  const seated=L.list.length,nc=L.cars.filter(c=>!c.empty).length,abs=bkAbsent(d);
+  $('bk-sum').textContent=[seated?`${seated} ${seated===1?'prenotato':'prenotati'} · ${nc} auto`:'',abs.length?`${abs.length} ${abs.length===1?'assente':'assenti'}`:''].filter(Boolean).join(' · ');
+  // assenti e chi non ha ancora risposto
+  const done=new Set(bkAll(d).map(b=>b.pid)),miss=active().filter(p=>!done.has(p.id)).map(p=>p.name).sort();
+  $('bk-abs').innerHTML=(abs.length?`<div class="abs-h">Non ci sono</div><div class="abs-list">${abs.sort((a,b)=>name(a.pid).localeCompare(name(b.pid))).map(b=>`<span class="abs-p${b.pid===pid?' me':''}">${esc(name(b.pid))}</span>`).join('')}</div>`:'')
+    +(miss.length&&(seated||abs.length)?`<p class="hint" style="margin:0">Non hanno ancora risposto: ${miss.map(esc).join(', ')}.</p>`:'');
+  const isAbs=abs.some(b=>b.pid===pid),self=pid===myPid();
+  $('bk-absent').textContent=isAbs?(self?'Ci sono di nuovo: annulla l\'assenza':`${name(pid)} c'è di nuovo: annulla l'assenza`):(self?'Non ci sono':`${name(pid)} non c'è`);
+  $('bk-absent').classList.toggle('on',isAbs);
   $('bk-day').textContent='Viaggio di '+bkLong(d);
   const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);const m=Math.max(0,Math.round((end-new Date())/60000));
   $('bk-rule').textContent=`La tabella scade alle ${BK_CUTOFF}:00 di ${bkLong(d)} (tra ${m>=60?Math.floor(m/60)+' h ':''}${m%60} min), poi si azzera per il giorno dopo. Tocca un posto per prenotarlo, tocca il tuo posto per liberarlo.`;
   const ok=L.cars.some(c=>c.driver&&c.pax.some(Boolean));$('bk-add').disabled=!ok;
-  const me=myPid(),my=me&&L.list.find(b=>b.pid===me&&b.car);
-  $('bk-open').lastChild.textContent=my?` Il mio posto: Auto ${cn(my.car)||'?'}${my.seat==='d'?' · guido':''}`:' Prenota il posto';
+  const me=myPid(),my=me&&L.list.find(b=>b.pid===me&&b.car),meAbs=me&&abs.some(b=>b.pid===me);
+  $('bk-open').lastChild.textContent=meAbs?' Assente · cambia':my?` Il mio posto: Auto ${cn(my.car)||'?'}${my.seat==='d'?' · guido':''}`:' Prenota il posto';
 }
 function bkTake(carId,seat){const pid=bkWho();if(!pid){location.hash='membri';setTimeout(()=>snack('Aggiungi prima i partecipanti della squadra'),100);return}
   const d=tripDay(),L=bkLayout(d),c=L.cars.find(x=>x.id===carId);if(!c)return;
@@ -1922,6 +1940,10 @@ $('bk-days-view').onclick=e=>{const sd=e.target.closest('[data-sd]');
     bkWrite({...b,seats:v});renderBookings();return}
   const s=e.target.closest('[data-seat]');if(s)bkTake(s.dataset.car,s.dataset.seat==='d'?'d':+s.dataset.seat)};
 $('bk-person').onchange=e=>{bkSel=e.target.value;renderBookings()};
+$('bk-absent').onclick=()=>{const pid=bkWho();if(!pid)return;const d=tripDay(),id=d+'_'+pid,cur=(state.bookings||[]).find(b=>b.id===id);
+  if(cur&&cur.absent){bkWrite({id,date:d,pid},true);render();snack(`Assenza di ${name(pid)} annullata: scegli un posto`);return}
+  bkWrite({id,date:d,pid,absent:true,by:sync.me||'',t:new Date().toISOString()});render();
+  snack(cur&&cur.car?`${name(pid)} non c'è: posto liberato`:`${name(pid)} non c'è ${bkLong(d).split(' ')[0]}`)};
 $('bk-newcar').onclick=()=>{bkExtra++;renderBookings();const l=$('bk-days-view').querySelector('.bkcar:last-of-type');if(l)l.scrollIntoView({block:'center',behavior:'smooth'})};
 $('bk-open').onclick=()=>{location.hash='prenotazioni'};
 $('bk-add').onclick=()=>planDay();
@@ -4316,6 +4338,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['3.7','Nelle prenotazioni si può dichiarare la propria assenza con "Non ci sono": l\'eventuale posto si libera e il nome compare tra gli assenti. Sotto la tabella si vede anche chi non ha ancora risposto.'],
  ['3.6','Prenotazioni a tabella: ogni auto ha il posto del guidatore e i posti passeggero, si sceglie il posto toccandolo. La tabella vale fino alle 8:00 del giorno del viaggio, poi si azzera. Il guidatore può cambiare i posti disponibili; quando le auto sono piene se ne apre una nuova. Posto consigliato in base a punti e gruppi.'],
  ['3.5','Prenotazioni con ruolo (Guido, Passeggero, Entrambi) e zone facoltative. Suggerimenti: a chi tocca guidare, posti mancanti, zone senza guidatore. Auto proposte automaticamente, da registrare con un tocco.'],
  ['3.4','Classifica a barre: linea centrale, punti negativi a sinistra e positivi a destra, con posizione, nome e gruppo. Anche nell\'immagine da condividere.'],
