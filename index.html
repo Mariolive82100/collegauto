@@ -601,7 +601,7 @@ body.wz-on{overflow:hidden}
 .ul-row.me{outline:2px solid var(--teal);outline-offset:-2px}
 .ul-pres+.ul-abs,.ul-pres+.ul-miss,.ul-abs+.ul-miss{border-top:2px solid var(--line)!important}
 .ask3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.ask3 button{min-height:60px!important;font-size:18px!important;font-weight:700;border-radius:12px!important}
+.ask3 button{min-height:60px!important;font-size:15px!important;font-weight:700;border-radius:12px!important}
 .ask-other{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ask-other[hidden]{display:none}
 .seat{cursor:default}
 .cmp{display:flex;flex-direction:column;gap:10px}
@@ -617,20 +617,23 @@ body.wz-on{overflow:hidden}
 #bk-add:disabled{opacity:.55}
 .hm-rs h2+.hint::first-letter,#hm-day::first-letter{text-transform:uppercase}
 .cmp-h{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:2px 2px 0}
-.cmp-empty .ul-row{min-height:44px!important;cursor:default}
-.cmp-empty .ul-n b{color:var(--muted);font-weight:500}
-.cmp-empty .ul-s{opacity:.55}
+.cmp-free{min-height:44px!important;cursor:default;background:none!important}
+.cmp-free .ul-n b{color:var(--muted);font-weight:500}
+.cmp-free .ul-s{opacity:.5}
 #bk-abs.mini-wrap{display:flex!important;flex-direction:column;gap:12px;padding:6px 2px 0;border:none;border-radius:0;background:none;overflow:visible}
 .hm-rs .cmp+#bk-add{margin-top:2px}
 .mini{display:flex;flex-direction:column;gap:4px}
 .mini-h{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
 .mini-h i{font-style:normal;font-weight:600;opacity:.8}
 .mini-l{display:flex;flex-wrap:wrap;gap:4px 14px}
-.mn{background:none!important;border:none!important;padding:2px 0!important;min-height:0!important;font-size:15px;font-weight:600;color:var(--fg)}
+.mn{background:none!important;border:none!important;padding:2px 0!important;min-height:0!important;font-size:15px;font-weight:500;color:color-mix(in srgb,var(--muted) 75%,var(--bg))!important}
 .mn i{font-style:normal;font-size:13px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .mn.neg,.mn.neg i{color:var(--neg)}
 .mn.me{text-decoration:underline;text-decoration-color:var(--teal);text-decoration-thickness:2px;text-underline-offset:3px}
 .mn-none{color:var(--muted)}
+.ul-row{cursor:default}
+.who-msg{margin:0;font-size:15px;line-height:1.4;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel));border-left:3px solid var(--teal)}
+#who-find{width:100%;min-height:46px;font-size:16px}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -638,7 +641,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.6</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.9</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -926,20 +929,20 @@ body.wz-on{overflow:hidden}
 
 <div class="sheet" id="ask-seat" hidden role="dialog" aria-modal="true" aria-labelledby="ask-seat-t">
   <div class="sheet-card">
-    <h2 id="ask-seat-t">Sarai guidatore?</h2>
+    <h2 id="ask-seat-t"></h2>
     <p class="hint" style="margin:0" id="ask-seat-d"></p>
-    <div class="ask3"><button class="bk-main" data-drive="si">Sì</button><button data-drive="no">No</button><button data-drive="forse">Non so</button></div>
-    <div class="ask-other" id="ask-other"><button class="ghost" data-drive="abs">Assente</button><button class="ghost" data-drive="none">Nessuna risposta</button></div>
+    <div class="ask3"><button class="bk-main" data-drive="forse">Presente</button><button data-drive="abs">Assente</button><button data-drive="none">Nessuna risposta</button></div>
     <button class="ghost wide" id="ask-no">Annulla</button>
   </div>
 </div>
 <div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
   <div class="sheet-card">
     <h2 id="who-t">Chi sei in questa squadra?</h2>
-    <p class="hint" style="margin:0" id="who-team"></p>
+    <p class="who-msg" id="who-team">Cerca il tuo nome in elenco. Se non è presente, contatta l'amministratore della squadra.</p>
+    <input type="search" id="who-find" placeholder="Cerca il tuo nome" aria-label="Cerca il tuo nome" autocomplete="off">
     <div class="pmenu" id="who-list"></div>
-    <span class="lbl">Non sei in elenco?</span>
-    <div class="m-add"><input type="text" id="who-new" maxlength="40" placeholder="Il tuo nome" aria-label="Il tuo nome"><button class="primary" id="who-add">Aggiungimi</button></div>
+    <div id="who-admin" hidden><span class="lbl">Non sei in elenco?</span>
+    <div class="m-add"><input type="text" id="who-new" maxlength="40" placeholder="Il tuo nome" aria-label="Il tuo nome"><button class="primary" id="who-add">Aggiungimi</button></div></div>
     <button class="ghost" id="who-later">Più tardi</button>
   </div>
 </div>
@@ -970,7 +973,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.6';
+const APP_VERSION='4.9';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1969,15 +1972,15 @@ function renderBookings(){
   const d=tripDay(),L=bkLayout(d),me=myPid(),edit=id=>isAdmin()||id===me,cn=id=>L.cars.findIndex(c=>c.driver===id)+1;
   // composizione suggerita (non modificabile): per ogni auto prima il guidatore, poi i passeggeri
   const bal=balances(),sc=id=>{const v=bal[id]||0;return `${v>0?'+':v<0?'−':''}${Math.abs(v)}`};
-  const crow=(id,role)=>`<button class="ul-row cmp-${role}${(bal[id]||0)<0?' ul-neg':''}${id===me?' me':''}" data-rsp="${id}">
-      <span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></button>`;
-  const empty=`<div class="cmp-car"><div class="cmp-list cmp-empty">
-      <div class="ul-row cmp-drv"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">Guida</span></div>
-      ${'<div class="ul-row cmp-pax"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">Passeggero</span></div>'.repeat(SEATS_DEF)}</div></div>`;
-  $('bk-days-view').innerHTML=L.cars.length||L.wait.length
-    ?L.cars.map((c,i)=>`<div class="cmp-car">${L.cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">${crow(c.driver,'drv')}${c.pax.map(x=>crow(x,'pax')).join('')}</div></div>`).join('')
-      +(L.wait.length?`<div class="cmp-car"><div class="cmp-h">Senza posto</div><div class="cmp-list">${L.wait.map(x=>crow(x,'wait')).join('')}</div></div>`:'')
-    :empty;
+  const crow=(id,role)=>`<div class="ul-row cmp-${role}${(bal[id]||0)<0?' ul-neg':''}${id===me?' me':''}">
+      <span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></div>`;
+  // la tabella resta sempre la stessa: i posti liberi hanno "—" e si riempiono man mano che arrivano i presenti
+  const slot=role=>`<div class="ul-row cmp-${role} cmp-free"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">${role==='drv'?'Guida':'Passeggero'}</span></div>`;
+  let cars=L.cars.map(c=>({driver:c.driver,seats:c.seats,pax:[...c.pax]})),wait=[...L.wait];
+  if(!cars.length)cars=[{driver:'',seats:SEATS_DEF,pax:wait.splice(0,SEATS_DEF)}];
+  const carH=(c,i)=>`<div class="cmp-car">${cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">${c.driver?crow(c.driver,'drv'):slot('drv')}${c.pax.map(x=>crow(x,'pax')).join('')}${Array.from({length:Math.max(0,c.seats-c.pax.length)},()=>slot('pax')).join('')}</div></div>`;
+  $('bk-days-view').innerHTML=cars.map(carH).join('')
+    +(wait.length?`<div class="cmp-car"><div class="cmp-h">Senza posto</div><div class="cmp-list">${wait.map(x=>crow(x,'wait')).join('')}</div></div>`:'');
   const abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
   const done1=state.trips.some(t=>!t.hist&&t.date===d),can=L.cars.some(c=>c.pax.length);
   $('bk-add').hidden=!can&&!done1;$('bk-add').disabled=!can||done1;
@@ -1986,13 +1989,13 @@ function renderBookings(){
   // due liste minimal: assenti e nessuna conferma (prima chi ha meno punti)
   const byPts=(x,y)=>(bal[x]||0)-(bal[y]||0)||tie(x)-tie(y)||name(x).localeCompare(name(y));
   const absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
-  const mini=(t,ids)=>`<div class="mini"><span class="mini-h">${t} <i>${ids.length}</i></span><span class="mini-l">${ids.length?ids.map(id=>`<button class="mn${(bal[id]||0)<0?' neg':''}${id===me?' me':''}" data-rsp="${id}">${esc(name(id))} <i>${sc(id)}</i></button>`).join(''):'<span class="mn-none">—</span>'}</span></div>`;
+  const mini=(t,ids)=>`<div class="mini"><span class="mini-h">${t} <i>${ids.length}</i></span><span class="mini-l">${ids.length?ids.map(id=>`<span class="mn${id===me?' me':''}">${esc(name(id))}</span>`).join(''):'<span class="mn-none">—</span>'}</span></div>`;
   $('bk-abs').innerHTML=mini('Assenti',absIds)+mini('Nessuna conferma',missIds);
   $('hm-day').textContent=bkLong(d);
   // i due tasti della pagina principale
   const mineB=me&&L.list.find(b=>b.pid===me),meAbs=me&&abs.some(b=>b.pid===me);
   $('bk-open-t').textContent=mineB?'Presente ✓':'Presente';
-  const sub={};L.cars.forEach((c,i)=>{const k=L.cars.length>1?` ${i+1}`:'';sub[c.driver]=`Guidi l'auto${k}`;c.pax.forEach(x=>{sub[x]=`Passeggero auto${k}`})});L.wait.forEach(x=>{sub[x]='Senza posto'});
+  const sub={};L.cars.forEach((c,i)=>{const k=L.cars.length>1?` ${i+1}`:'';sub[c.driver]=k?`Guidi l'auto${k}`:'Guidi tu';c.pax.forEach(x=>{sub[x]=`Passeggero${k?' auto'+k:''}`})});L.wait.forEach(x=>{sub[x]='Senza posto'});
   $('bk-open-s').textContent=mineB?(sub[me]?`${sub[me]} · tocca per annullare`:'tocca per annullare'):'al prossimo viaggio';
   $('bk-away-t').textContent=meAbs?'Assente ✓':'Assente';$('bk-away-s').textContent=meAbs?'tocca per annullare':'al prossimo viaggio';
   $('bk-open').classList.toggle('on',!!mineB);$('bk-away').classList.toggle('on',!!meAbs);
@@ -2004,22 +2007,22 @@ function bkSet(pid,what,drive){const d=tripDay(),id=d+'_'+pid,cur=(state.booking
   else{const b={id,date:d,pid,present:true,drive,by:sync.me||'',t};if(cur&&cur.seats)b.seats=cur.seats;bkWrite(b)}
   render()}
 let askPid='';
-function askDrive(pid){askPid=pid;$('ask-seat-t').textContent=pid===myPid()?'Sarai guidatore?':`${name(pid)} sarà guidatore?`;
-  $('ask-seat-d').textContent=`Viaggio di ${bkLong(tripDay())}.`;$('ask-other').hidden=pid===myPid();$('ask-seat').hidden=false}
+// toccando un nome si risponde per quel collega: presente, assente o nessuna risposta
+function askDrive(pid){askPid=pid;$('ask-seat-t').textContent=name(pid);
+  $('ask-seat-d').textContent=`Prossimo viaggio: ${bkLong(tripDay())}.`;$('ask-seat').hidden=false}
 document.querySelectorAll('[data-drive]').forEach(b=>b.onclick=()=>{$('ask-seat').hidden=true;const v=b.dataset.drive;
   if(v==='abs'||v==='none'){bkSet(askPid,v);snack(v==='abs'?`${name(askPid)} assente`:`Risposta di ${name(askPid)} tolta`);return}
-  bkSet(askPid,'pres',v);snack(`${name(askPid)} presente · ${DRIVE_TXT[v]}`)});
+  bkSet(askPid,'pres',v);snack(`${name(askPid)} presente`)});
 $('ask-no').onclick=()=>{$('ask-seat').hidden=true};
 $('ask-seat').onclick=e=>{if(e.target.id==='ask-seat')$('ask-seat').hidden=true};
-const needMe=()=>{snack('Tocca il tuo nome nell\'elenco qui sotto per rispondere');const r=$('bk-abs');if(r)r.scrollIntoView({block:'center',behavior:'smooth'})};
+const needMe=()=>{if(sync.code){whoLater=false;maybeAskWho()}else snack('Per confermare la presenza entra nella tua squadra: menu › Squadra')};
 $('bk-open').onclick=()=>{const me=myPid();if(!me){needMe();return}
   if(bkList(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Presenza annullata');return}
-  askDrive(me)};
+  bkSet(me,'pres','forse');snack(`Presente ${bkLong(tripDay())}`)};
 $('bk-away').onclick=()=>{const me=myPid();if(!me){needMe();return}
   if(bkAbsent(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Assenza annullata');return}
   bkSet(me,'abs');snack(`Assente ${bkLong(tripDay())}`)};
-$('bk-abs').onclick=e=>{const b=e.target.closest('[data-rsp]');if(b)askDrive(b.dataset.rsp)};   // rispondere per un collega
-$('bk-days-view').onclick=e=>{const b=e.target.closest('[data-rsp]');if(b)askDrive(b.dataset.rsp)};
+// ognuno conferma solo la propria presenza: i nomi degli altri non si toccano
 $('bk-add').onclick=()=>{if(!bkArm){bkArm=true;renderBookings();clearTimeout(bkArmT);bkArmT=setTimeout(()=>{bkArm=false;renderBookings()},4000);return}
   bkArm=false;clearTimeout(bkArmT);fillDraft();const v=validate();if(v){render();snack(v);return}
   renderComposer();$('save').disabled=false;$('save').click();snack(`Viaggio di ${bkLong(tripDay())} registrato`)};
@@ -4380,14 +4383,18 @@ addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('drawer').hidden)closeMen
 let whoLater=false;
 function maybeAskWho(){
   if(!sync.code||whoLater||remoteMeta===undefined||myPid()){$('whoami').hidden=true;return}
-  $('who-team').textContent=`Squadra "${teamLabel(curTeam())}". Scegli il tuo nome dall'elenco, oppure aggiungilo se non c'è.`;
-  const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
-  $('who-list').innerHTML=ppl.length?ppl.map(p=>`<button data-who="${esc(p.name)}"><span>${dotsOf(p.id)} ${esc(p.name)}</span><span class="pm-val">sono io ›</span></button>`).join(''):'<p class="hint" style="margin:10px">La squadra è ancora vuota.</p>';
-  $('whoami').hidden=false;
+  $('who-team').textContent=`Squadra "${teamLabel(curTeam())}". Cerca il tuo nome in elenco: se non è presente, contatta l'amministratore della squadra.`;
+  $('who-admin').hidden=!isAdmin();if($('whoami').hidden)$('who-find').value='';
+  whoList();$('whoami').hidden=false;
 }
+function whoList(){const q=$('who-find').value.trim().toLowerCase();
+  const ppl=active().filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,c)=>a.name.localeCompare(c.name));
+  $('who-list').innerHTML=ppl.length?ppl.map(p=>`<button data-who="${esc(p.name)}"><span>${dotsOf(p.id)} ${esc(p.name)}</span><span class="pm-val">sono io ›</span></button>`).join('')
+    :`<p class="hint" style="margin:10px">${active().length?'Nessun nome trovato. Se non sei in elenco, contatta l\'amministratore della squadra.':'La squadra è ancora vuota: contatta l\'amministratore.'}</p>`}
+$('who-find').oninput=whoList;
 function setMe(n){sync.me=n;const t=curTeam();if(t)t.me=n;saveSync();$('whoami').hidden=true;render();snack(`Ciao ${n}!`)}
 $('who-list').onclick=e=>{const b=e.target.closest('[data-who]');if(b)setMe(b.dataset.who)};
-$('who-add').onclick=()=>{const n=$('who-new').value.trim().slice(0,40);if(!n)return;
+$('who-add').onclick=()=>{if(!isAdmin())return;const n=$('who-new').value.trim().slice(0,40);if(!n)return;
   const ex=listed().find(p=>p.name.toLowerCase()===n.toLowerCase());
   if(ex){if(ex.archived){delete ex.archived;persist()}setMe(ex.name);return}
   state.people.push({id:uid(),name:n});persist();setMe(n)};
@@ -4413,6 +4420,9 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['4.9','Ognuno può confermare o annullare solo la propria presenza. Entrando in una squadra si cerca il proprio nome in elenco; se non c\'è, va contattato l\'amministratore.'],
+ ['4.8','Tolta la domanda "Sarai guidatore?": "Presente" conferma subito. Il guidatore viene scelto tra i presenti partendo da chi ha meno punti.'],
+ ['4.7','La tabella dell\'auto resta sempre visibile e si riempie man mano che arrivano i presenti. Assenti e Nessuna conferma: solo i nomi, tutti in grigio chiaro.'],
  ['4.6','Pagina principale più semplice: sotto i tasti Presente/Assente c\'è solo la tabella dell\'auto (vuota finché nessuno conferma), il tasto per registrare e due liste minimal, Assenti e Nessuna conferma. La composizione suggerita non si modifica.'],
  ['4.5','La composizione suggerita delle auto per il prossimo viaggio è nella pagina principale: per ogni auto prima il guidatore, poi i passeggeri. Si può confermare e registrare oppure modificare. Assenti e senza risposta in una tabella sotto. Eliminata la pagina Prenota.'],
  ['4.4','Nuova prenotazione: "Presente" chiede "Sarai guidatore?" (sì, no, non so); toccandolo di nuovo si annulla. Le auto nella pagina Prenota si compongono da sole: guida prima chi ha detto sì, poi chi ha detto non so, partendo da chi ha meno punti. Toccando un nome nell\'elenco si risponde per un collega.'],
