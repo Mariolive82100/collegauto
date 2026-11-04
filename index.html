@@ -584,6 +584,22 @@ body.wz-on{overflow:hidden}
 .rs-pres .rs-h{color:var(--teal)}.rs-pres .rs-h b{background:var(--teal)}
 .rs-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .rs-n{display:flex;flex-direction:column}.rs-n small{font-size:12px;font-weight:500;color:var(--muted)}
+.bk-rs.ul,#bk-abs{display:flex!important;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+#bk-abs:has(p){border:none;background:none}
+.ul-row{width:100%;box-sizing:border-box;display:grid!important;grid-template-columns:minmax(0,1fr) auto 128px;align-items:center;gap:10px;border:none!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;background:none!important;padding:8px 12px!important;min-height:48px!important;text-align:left}
+.ul-row:last-child{border-bottom:none!important}
+.ul-n{display:flex;flex-direction:column;min-width:0}.ul-n b{font-size:16px;overflow-wrap:anywhere}.ul-n small{font-size:12px;color:var(--muted)}
+.ul-v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;text-align:right;min-width:30px;color:var(--muted)}
+.ul-s{justify-self:end;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.ul-pres .ul-s{background:color-mix(in srgb,var(--teal) 18%,transparent);color:var(--teal)}
+.ul-abs .ul-s{background:color-mix(in srgb,var(--neg) 14%,transparent);color:var(--neg)}
+.ul-miss .ul-s{background:var(--chip);color:var(--muted)}
+.ul-abs .ul-n b,.ul-miss .ul-n b{font-weight:600}
+.ul-abs{opacity:.85}
+.ul-neg{background:color-mix(in srgb,var(--neg) 10%,transparent)!important;box-shadow:inset 3px 0 0 var(--neg)}
+.ul-neg .ul-n b,.ul-neg .ul-v{color:var(--neg)}
+.ul-row.me{outline:2px solid var(--teal);outline-offset:-2px}
+.ul-pres+.ul-abs,.ul-pres+.ul-miss,.ul-abs+.ul-miss{border-top:2px solid var(--line)!important}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -591,7 +607,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.2</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.3</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -621,7 +637,7 @@ body.wz-on{overflow:hidden}
     <button class="wide" id="welcome-new">Inizio da zero: aggiungo i viaggiatori</button>
   </div>
   <div class="hero">
-    <div class="m-next" id="next-mini"></div>
+    <div class="m-next" id="next-mini" hidden></div>
     <button class="cta" id="wz-open"><span class="plus" aria-hidden="true">+</span> Inserisci viaggio</button>
     <div class="hm-pa">
       <button class="cta2 pa-yes" id="bk-open"><b id="bk-open-t">Presente</b><small id="bk-open-s">al prossimo viaggio</small></button>
@@ -648,7 +664,6 @@ body.wz-on{overflow:hidden}
     <div id="bk-tips" class="bk-tips"></div>
     <div id="bk-days-view" class="bk-cars"></div>
     <button class="ghost wide" id="bk-newcar">+ Porto un'altra auto</button>
-    <button class="ghost wide bk-absbtn" id="bk-absent">Non ci sono</button>
     <button class="wide bk-main" id="bk-add">Registra il viaggio dalla tabella</button>
   </div>
   <details class="adv" id="plan">
@@ -889,6 +904,14 @@ body.wz-on{overflow:hidden}
   <div class="wz-foot"><button class="primary wide" id="wz-next">Avanti</button></div>
 </div>
 
+<div class="sheet" id="ask-seat" hidden role="dialog" aria-modal="true" aria-labelledby="ask-seat-t">
+  <div class="sheet-card">
+    <h2 id="ask-seat-t">Vuoi prenotare il posto?</h2>
+    <p class="hint" style="margin:0" id="ask-seat-d"></p>
+    <button class="wide bk-main" id="ask-yes">Sì, scelgo il posto</button>
+    <button class="ghost wide" id="ask-no">No</button>
+  </div>
+</div>
 <div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
   <div class="sheet-card">
     <h2 id="who-t">Chi sei in questa squadra?</h2>
@@ -926,7 +949,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.2';
+const APP_VERSION='4.3';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1943,7 +1966,7 @@ function renderBookings(){
       ${c.driver&&edit(c.driver)?`<span class="seats-ed"><button class="sd" data-sd="${c.id}" data-dir="-1" aria-label="Un posto in meno" ${c.seats<=Math.max(1,n)?'disabled':''}>−</button><span>${c.seats} posti</span><button class="sd" data-sd="${c.id}" data-dir="1" aria-label="Un posto in più" ${c.seats>=SEATS_MAX?'disabled':''}>+</button></span>`:''}</div>
       <div class="car-row" style="grid-template-columns:1fr 1fr">${bkSeat(c,'d',k,pid,sug)}${c.seats?bkSeat(c,1,k,pid,sug):''}</div>
       ${back.length?`<div class="car-row" style="grid-template-columns:repeat(${cols},1fr)">${back.join('')}</div>`:''}</div>`}).join('')
-    +(L.wait.length?`<div class="tip tip-warn">Senza posto: ${L.wait.map(x=>esc(name(x))).join(', ')}. Tocca un posto libero per sistemarli.</div>`:'');
+    +(L.wait.length?`<div class="tip tip-warn">Presenti senza posto: ${L.wait.map(x=>esc(name(x))).join(', ')}. Scegli il nome in "Prenoti come" e tocca un posto libero.</div>`:'');
   // suggerimenti
   const tips=[],cn=id=>L.cars.findIndex(c=>c.id===id)+1;
   if(sug){const sn=sug.seat==='d'?'come guidatore':`${seatLbl(sug.seat-1,9).toLowerCase()}`;
@@ -1961,26 +1984,28 @@ function renderBookings(){
   // due colonne affiancate: chi non ha ancora risposto | chi non c'è (tocca un nome per prenotare al suo posto)
   const missP=active().filter(p=>!done.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
   const absS=abs.sort((a,b)=>name(a.pid).localeCompare(name(b.pid)));
-  const presP=[];L.cars.forEach((c,i)=>{if(c.driver)presP.push([c.driver,`Auto ${i+1} · guida`]);c.pax.forEach(x=>{if(x)presP.push([x,`Auto ${i+1}`+(c.driver?'':' · senza guidatore')])})});
-  L.wait.forEach(x=>presP.push([x,'senza posto']));
-  $('bk-abs').innerHTML=`<div class="rs-col rs-pres"><div class="rs-h"><span>Presenti</span><b>${presP.length}</b></div>
-      ${presP.length?`<div class="rs-grid">${presP.map(([id,sub])=>rsBtn(id,sub)).join('')}</div>`:'<span class="rs-none">Ancora nessuno</span>'}</div>
-    <div class="rs-col rs-miss"><div class="rs-h"><span>Non hanno risposto</span><b>${missP.length}</b></div>
-      ${missP.length?missP.map(p=>rsBtn(p.id)).join(''):'<span class="rs-none">Hanno risposto tutti</span>'}</div>
-    <div class="rs-col rs-abs"><div class="rs-h"><span>Assenti</span><b>${absS.length}</b></div>
-      ${absS.length?absS.map(b=>rsBtn(b.pid)).join(''):'<span class="rs-none">Nessuno</span>'}</div>`;
+  // un unico elenco: presenti, poi assenti, poi senza risposta; in ogni gruppo prima chi ha meno punti
+  const bal=balances(),sub={};
+  L.cars.forEach((c,i)=>{if(c.driver)sub[c.driver]=`Auto ${i+1} · guida`;c.pax.forEach(x=>{if(x)sub[x]=`Auto ${i+1}`+(c.driver?'':' · senza guidatore')})});
+  L.wait.forEach(x=>{sub[x]=sub[x]||'senza posto'});
+  const byPts=(x,y)=>(bal[x]||0)-(bal[y]||0)||tie(x)-tie(y)||name(x).localeCompare(name(y));
+  const presIds=[...new Set(L.list.map(b=>b.pid))].sort(byPts),absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
+  const ST={pres:'Presente',abs:'Assente',miss:'Nessuna risposta'};
+  const row=(id,st)=>{const v=bal[id]||0;return `<button class="ul-row ul-${st}${v<0?' ul-neg':''}${id===myPid()?' me':''}" data-rsp="${id}">
+      <span class="ul-n"><b>${esc(name(id))}</b>${st==='pres'&&sub[id]?`<small>${esc(sub[id])}</small>`:''}</span>
+      <span class="ul-v">${v>0?'+':v<0?'−':''}${Math.abs(v)}</span><span class="ul-s">${ST[st]}</span></button>`};
+  $('bk-abs').innerHTML=active().length?presIds.map(id=>row(id,'pres')).join('')+absIds.map(id=>row(id,'abs')).join('')+missIds.map(id=>row(id,'miss')).join('')
+    :'<p class="hint" style="margin:0">Aggiungi i partecipanti della squadra per vedere l\'elenco.</p>';
   $('hm-day').textContent=`${bkLong(d)} · ${seated} ${seated===1?'presente':'presenti'}, ${abs.length} ${abs.length===1?'assente':'assenti'}, ${missP.length} senza risposta`;
-  const isAbs=abs.some(b=>b.pid===pid),self=pid===myPid();
-  $('bk-absent').textContent=isAbs?(self?'Ci sono di nuovo: annulla l\'assenza':`${name(pid)} c'è di nuovo: annulla l'assenza`):(self?'Non ci sono':`${name(pid)} non c'è`);
-  $('bk-absent').classList.toggle('on',isAbs);
   $('bk-day').textContent='Viaggio di '+bkLong(d);
   const end=new Date(d+'T00:00');end.setHours(BK_CUTOFF);const m=Math.max(0,Math.round((end-new Date())/60000));
   $('bk-rule').textContent=`La tabella scade alle ${BK_CUTOFF}:00 di ${bkLong(d)} (tra ${m>=60?Math.floor(m/60)+' h ':''}${m%60} min), poi si azzera per il giorno dopo. Tocca un posto per prenotarlo, tocca il tuo posto per liberarlo.`;
   const ok=L.cars.some(c=>c.driver&&c.pax.some(Boolean));$('bk-add').disabled=!ok;
   const me=myPid(),my=me&&L.list.find(b=>b.pid===me&&b.car),meAbs=me&&abs.some(b=>b.pid===me);
-  $('bk-open-t').textContent=my?'Presente ✓':'Presente';$('bk-open-s').textContent=my?`Auto ${cn(my.car)||'?'} · ${my.seat==='d'?'guidatore':'passeggero'}`:'al prossimo viaggio';
+  const mePres=me&&L.list.some(b=>b.pid===me);
+  $('bk-open-t').textContent=mePres?'Presente ✓':'Presente';$('bk-open-s').textContent=my?`Auto ${cn(my.car)||'?'} · ${my.seat==='d'?'guidatore':'passeggero'}`:mePres?'senza posto · tocca per sceglierlo':'al prossimo viaggio';
   $('bk-away-t').textContent=meAbs?'Assente ✓':'Assente';$('bk-away-s').textContent=meAbs?'tocca per annullare':'al prossimo viaggio';
-  $('bk-open').classList.toggle('on',!!my);$('bk-away').classList.toggle('on',!!meAbs);
+  $('bk-open').classList.toggle('on',!!mePres);$('bk-away').classList.toggle('on',!!meAbs);
 }
 function bkTake(carId,seat){const pid=bkWho();if(!pid){location.hash='membri';setTimeout(()=>snack('Aggiungi prima i partecipanti della squadra'),100);return}
   const d=tripDay(),L=bkLayout(d),c=L.cars.find(x=>x.id===carId);if(!c)return;
@@ -2005,12 +2030,20 @@ function bkSetAbsent(pid){const d=tripDay(),id=d+'_'+pid,cur=(state.bookings||[]
   if(cur&&cur.absent){bkWrite({id,date:d,pid},true);render();snack(`Assenza di ${name(pid)} annullata`);return false}
   bkWrite({id,date:d,pid,absent:true,by:sync.me||'',t:new Date().toISOString()});render();
   snack(`${name(pid)} assente ${bkLong(d)}${cur&&cur.car?' · posto liberato':''}`);return true}
-$('bk-absent').onclick=()=>{const pid=bkWho();if(pid)bkSetAbsent(pid)};
 $('bk-away').onclick=()=>{const me=myPid();
   if(!me){location.hash='prenotazioni';setTimeout(()=>snack('Scegli il nome in "Prenoti come" e tocca "Non ci sono"'),150);return}
   bkSetAbsent(me)};
 $('bk-newcar').onclick=()=>{bkExtra++;renderBookings();const l=$('bk-days-view').querySelector('.bkcar:last-of-type');if(l)l.scrollIntoView({block:'center',behavior:'smooth'})};
-$('bk-open').onclick=()=>{if(myPid())bkSel=myPid();renderBookings();location.hash='prenotazioni'};
+$('bk-open').onclick=()=>{const me=myPid();
+  if(!me){location.hash='prenotazioni';setTimeout(()=>snack('Scegli il tuo nome in "Prenoti come" e tocca un posto'),150);return}
+  const d=tripDay(),id=d+'_'+me,cur=(state.bookings||[]).find(b=>b.id===id);
+  if(!cur||cur.absent){bkWrite({id,date:d,pid:me,present:true,by:sync.me||'',t:new Date().toISOString()});render()}
+  bkSel=me;renderBookings();
+  $('ask-seat-t').textContent=cur&&cur.car&&!cur.absent?'Vuoi cambiare posto?':'Vuoi prenotare il posto?';
+  $('ask-seat-d').textContent=`Sei presente al viaggio di ${bkLong(d)}.`;$('ask-seat').hidden=false};
+$('ask-yes').onclick=()=>{$('ask-seat').hidden=true;location.hash='prenotazioni'};
+$('ask-no').onclick=()=>{$('ask-seat').hidden=true};
+$('ask-seat').onclick=e=>{if(e.target.id==='ask-seat')$('ask-seat').hidden=true};
 $('bk-add').onclick=()=>planDay();
 function bkOpen(pid){if(pid)bkSel=pid;location.hash='prenotazioni'}
 function bkShow(){location.replace('#prenotazioni')}
@@ -4403,6 +4436,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['4.3','Pagina principale: un unico elenco con nome, punteggio e stato (presente, assente, nessuna risposta), ordinato per stato e poi dal punteggio più basso. "Presente" chiede se si vuole prenotare il posto. Tolti il riquadro "Prossimo a guidare" e il tasto "Non ci sono" nella pagina Prenota.'],
  ['4.2','Nella pagina principale c\'è anche l\'elenco dei presenti al prossimo viaggio, con auto, ruolo e punteggio.'],
  ['4.1','Negli elenchi "Non hanno risposto" e "Assenti" compare il punteggio accanto a ogni nome; chi è in negativo è evidenziato in rosso.'],
  ['4.0','Pagina principale: due tasti "Presente al prossimo viaggio" (porta alla scelta del posto) e "Assente al prossimo viaggio", e gli elenchi di chi non ha risposto e degli assenti. L\'assenza vale sempre solo per il prossimo viaggio.'],
