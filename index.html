@@ -634,6 +634,26 @@ body.wz-on{overflow:hidden}
 .ul-row{cursor:default}
 .who-msg{margin:0;font-size:15px;line-height:1.4;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel));border-left:3px solid var(--teal)}
 #who-find{width:100%;min-height:46px;font-size:16px}
+.pend-note{display:flex;align-items:center;justify-content:space-between;gap:10px;text-decoration:none;color:var(--fg);border-radius:14px;padding:12px 16px;
+  background:color-mix(in srgb,var(--amber) 16%,var(--panel));border:1.5px solid var(--amber)}
+.pend-note[hidden]{display:none}
+.pend-note b{display:block;font-size:17px;color:var(--amber)}.pend-note small{display:block;font-size:13px;color:var(--muted)}
+.pend-note>span:last-child{font-size:26px;color:var(--amber)}
+.pend-list{display:flex;flex-direction:column;gap:12px}
+.pend-day::first-letter{text-transform:uppercase}
+.pend h2{text-transform:none;letter-spacing:0;font-size:18px;color:var(--fg)}
+.pc{display:flex;flex-direction:column;gap:6px}
+.pend .ul-row{grid-template-columns:minmax(0,1fr) auto 100px 36px!important}
+.pc-rm{width:32px;height:32px;min-height:32px!important;padding:0!important;border-radius:50%!important;font-size:14px;color:var(--neg)!important;background:none!important;border:1px solid var(--line)!important}
+.pend-act{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.pend-act button{min-height:50px!important;font-weight:700}
+.pend-act .danger{color:var(--neg)!important}
+.m-tabs{grid-template-columns:repeat(6,1fr)}
+.tab-ico{position:relative;display:block;line-height:0}
+.tab-badge{position:absolute;top:-5px;right:-10px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--neg);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-shadow:0 0 0 2px var(--panel)}
+.tab-badge[hidden]{display:none}
+.pend-ro{margin:0;font-size:14px;color:var(--muted);padding:8px 12px;border-radius:10px;background:var(--chip)}
+.pend .ul-row{grid-template-columns:minmax(0,1fr) auto 100px 36px!important}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -641,7 +661,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.9</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.2</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -678,10 +698,10 @@ body.wz-on{overflow:hidden}
       <button class="cta2 pa-no" id="bk-away"><b id="bk-away-t">Assente</b><small id="bk-away-s">al prossimo viaggio</small></button>
     </div>
   </div>
+  <a class="pend-note" id="pend-note" href="#conferma" hidden><span><b>Ci sono viaggi da confermare</b><small id="pend-note-s"></small></span><span aria-hidden="true">›</span></a>
   <div class="panel hm-rs">
     <div class="row between"><h2>Prossimo viaggio</h2><span class="hint" id="hm-day"></span></div>
     <div id="bk-days-view" class="cmp"></div>
-    <button class="wide bk-main" id="bk-add">Conferma e registra</button>
     <div class="mini-wrap" id="bk-abs"></div>
   </div>
   <div hidden>
@@ -712,6 +732,15 @@ body.wz-on{overflow:hidden}
     <div class="row between"><h2>Ultimi viaggi</h2><a class="more-link" href="#registro">Registro ›</a></div>
     <div id="recent"></div>
   </div>
+</section>
+
+<!-- VIAGGI DA CONFERMARE -->
+<section class="view" data-view="conferma" aria-labelledby="t-pend" hidden>
+  <div class="panel">
+    <h2 id="t-pend">Viaggi da confermare</h2>
+    <p class="hint" style="margin:0">Alle 8:00 il prossimo viaggio arriva qui. Controllalo, togli chi non c'era o cambia il guidatore, poi registralo.</p>
+  </div>
+  <div id="pend-list" class="pend-list"></div>
 </section>
 
 <!-- PUNTI -->
@@ -902,6 +931,7 @@ body.wz-on{overflow:hidden}
 <nav class="m-tabs" aria-label="Sezioni">
   <a href="#viaggio" data-tab="viaggio"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2M19 16v2M3 11h18"/><circle cx="8" cy="13.5" r=".6"/><circle cx="16" cy="13.5" r=".6"/></svg>Viaggio</a>
   <a href="#punti" data-tab="punti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M12 7H6M12 11h8M12 15H8M12 19h5"/></svg>Punti</a>
+  <a href="#conferma" data-tab="conferma" class="tab-pend"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg><b class="tab-badge" id="tab-badge" hidden></b></span>Conferma</a>
   <a href="#registro" data-tab="registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>Registro</a>
   <a href="#gruppi" data-tab="gruppi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2 20c.5-3 2.5-5 5-5s4.5 2 5 5M12 20c.5-3 2.5-5 5-5s4.5 2 5 5"/></svg>Gruppi</a>
   <a href="#squadra" data-tab="squadra"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><circle cx="12" cy="15" r="2.5"/><path d="M4 21c.5-2 2-3 4-3M20 21c-.5-2-2-3-4-3"/></svg>Squadra</a>
@@ -910,6 +940,7 @@ body.wz-on{overflow:hidden}
 <div class="drawer-bg" id="drawer-bg" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Menu">
   <div class="drawer-head"><b>Colleg<span>Auto</span></b><button class="x" id="menu-close" aria-label="Chiudi menu">✕</button></div>
+  <a href="#conferma" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg><span>Viaggi da confermare<small id="dm-pend">Controlla e registra i viaggi passati</small></span></a>
   <a href="#condividi" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.3 10.8l7.4-4.4M8.3 13.2l7.4 4.4"/></svg><span>Condividi l'app<small>Link, QR code, WhatsApp, Telegram</small></span></a>
   <a href="#backup" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M8 11l4 4 4-4M5 19h14"/></svg><span>Dati e backup<small>Esporta e importa i dati</small></span></a>
   <a href="#suggerimenti" class="dm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg><span>Suggerimenti<small>Idee e segnalazioni</small></span></a>
@@ -973,7 +1004,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.9';
+const APP_VERSION='5.2';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1606,7 +1637,7 @@ function renderRecent(){
 const _render=render;render=function(){_render();renderRecent()};
 renderRecent();
 
-const VIEWS=['viaggio','punti','registro','gruppi','squadra','membri','condividi','backup','suggerimenti','info'];
+const VIEWS=['viaggio','conferma','punti','registro','gruppi','squadra','membri','condividi','backup','suggerimenti','info'];
 const ALIAS={persone:'membri',dati:'squadra',prenotazioni:'viaggio'};
 const TAB_OF={membri:'squadra'};
 function showView(){const h=location.hash.slice(1);
@@ -1619,7 +1650,7 @@ function showView(){const h=location.hash.slice(1);
   const tv=TAB_OF[v]||v;document.querySelectorAll('[data-tab]').forEach(a=>{if(a.dataset.tab===tv)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   if(!$('drawer').hidden)closeMenu();
   window.scrollTo(0,0);
-  setTimeout(()=>{if(v==='condividi')renderShare();if(v==='info')renderInfo();if(v==='suggerimenti')renderSug()},0)}
+  setTimeout(()=>{if(v==='conferma')renderPending();if(v==='condividi')renderShare();if(v==='info')renderInfo();if(v==='suggerimenti')renderSug()},0)}
 window.addEventListener('hashchange',showView);
 document.querySelectorAll('[data-tab]').forEach(a=>a.addEventListener('click',e=>{if(location.hash==='#'+a.dataset.tab){e.preventDefault();window.scrollTo(0,0)}}));
 if(['#nuovo','#prenota'].includes(location.hash))history.replaceState(null,'','#viaggio');
@@ -1664,8 +1695,8 @@ async function syncStart(){
   }catch(e){setSync('pending',e&&e.code||'');setTimeout(syncStart,15000);return}
   unsubs.push(gref().collection('viaggi').onSnapshot(snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
-  unsubs.push(gref().collection('prenotazioni').onSnapshot(snap=>{const today=todayISO(),list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted&&b.date>=today)list.push({...b,id:d.id})});
-    state.bookings=list;persistLocal();if(typeof renderBookings==='function')renderBookings()},()=>{}));
+  unsubs.push(gref().collection('prenotazioni').onSnapshot(snap=>{const today=todayISO(),list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted&&b.date>=isoShift(today,-14))list.push({...b,id:d.id})});
+    state.bookings=list;persistLocal();if(typeof renderBookings==='function'){renderBookings();renderPending()}},()=>{}));
   unsubs.push(gref().collection('suggerimenti').onSnapshot(snap=>{sugRemote=[];snap.forEach(d=>sugRemote.push({...d.data(),id:d.id}));if(!$('sug-list').closest('.view').hidden)renderSug()},()=>{}));
   unsubs.push(gref().collection('eventi').orderBy('t','desc').limit(200).onSnapshot(snap=>{remoteEvents=[];snap.forEach(d=>remoteEvents.push(d.data()));renderEvents()},()=>{}));
   unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
@@ -1983,9 +2014,6 @@ function renderBookings(){
     +(wait.length?`<div class="cmp-car"><div class="cmp-h">Senza posto</div><div class="cmp-list">${wait.map(x=>crow(x,'wait')).join('')}</div></div>`:'');
   const abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
   const done1=state.trips.some(t=>!t.hist&&t.date===d),can=L.cars.some(c=>c.pax.length);
-  $('bk-add').hidden=!can&&!done1;$('bk-add').disabled=!can||done1;
-  $('bk-add').textContent=done1?'Viaggio registrato ✓':bkArm?'Tocca di nuovo per registrare':'Conferma e registra';
-  $('bk-add').classList.toggle('armed',bkArm&&!done1);
   // due liste minimal: assenti e nessuna conferma (prima chi ha meno punti)
   const byPts=(x,y)=>(bal[x]||0)-(bal[y]||0)||tie(x)-tie(y)||name(x).localeCompare(name(y));
   const absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
@@ -2023,9 +2051,6 @@ $('bk-away').onclick=()=>{const me=myPid();if(!me){needMe();return}
   if(bkAbsent(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Assenza annullata');return}
   bkSet(me,'abs');snack(`Assente ${bkLong(tripDay())}`)};
 // ognuno conferma solo la propria presenza: i nomi degli altri non si toccano
-$('bk-add').onclick=()=>{if(!bkArm){bkArm=true;renderBookings();clearTimeout(bkArmT);bkArmT=setTimeout(()=>{bkArm=false;renderBookings()},4000);return}
-  bkArm=false;clearTimeout(bkArmT);fillDraft();const v=validate();if(v){render();snack(v);return}
-  renderComposer();$('save').disabled=false;$('save').click();snack(`Viaggio di ${bkLong(tripDay())} registrato`)};
 // dalle auto composte al viaggio da registrare (si può ancora modificare a mano)
 function fillDraft(){const d=tripDay(),L=bkLayout(d);
   const cars=L.cars.map(c=>({driver:c.driver,passengers:[...c.pax]}));
@@ -2035,7 +2060,56 @@ function planDay(){fillDraft();$('dist-note').textContent='Composizione suggerit
   const adv=$('plan');adv.open=true;render();
   setTimeout(()=>adv.scrollIntoView({block:'start',behavior:'smooth'}),60)}
 const dayGroup=id=>groupOf(id);
-const _render4=render;render=function(){_render4();renderBookings()};
+
+// ===================== Viaggi da confermare =====================
+// Alle 8:00 la tabella del prossimo viaggio "scade" e diventa un viaggio da confermare.
+// La composizione viene fissata in un documento prenotazioni/plan_AAAA-MM-GG {plan:true, cars, done?, discarded?}
+// così resta uguale su tutti i telefoni e si può modificare prima di registrarla.
+const planId=d=>'plan_'+d;
+const planOf=d=>(state.bookings||[]).find(b=>b.id===planId(d));
+function pendingDates(){const td=tripDay(),reg=new Set(state.trips.filter(t=>!t.hist).map(t=>t.date)),ds=new Set();
+  (state.bookings||[]).forEach(b=>{if(b.date<td&&((b.pid&&!b.absent&&state.people.some(p=>p.id===b.pid))||b.plan))ds.add(b.date)});
+  return [...ds].filter(d=>{const p=planOf(d);return !(p&&(p.done||p.discarded))&&!reg.has(d)}).sort()}
+function pendingCars(d){const p=planOf(d);if(p&&Array.isArray(p.cars))return p.cars.map(c=>({driver:c.driver,passengers:[...(c.passengers||[])]}));
+  return bkLayout(d).cars.map(c=>({driver:c.driver,passengers:[...c.pax]}))}
+function savePlan(d,cars,extra={}){bkWrite({id:planId(d),date:d,plan:true,cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]})),by:sync.me||'',t:new Date().toISOString(),...extra})}
+let pendArm='';
+// può confermare, modificare o eliminare un viaggio solo chi ne fa parte (in auto o presente quel giorno)
+function pendCan(d){const me=myPid();if(!me)return false;
+  return pendingCars(d).some(c=>c.driver===me||c.passengers.includes(me))||bkList(d).some(b=>b.pid===me)}
+function renderPending(){const ds=pendingDates();
+  ds.forEach(d=>{if(!planOf(d))savePlan(d,pendingCars(d))});   // la composizione si fissa al momento in cui scade
+  $('pend-note').hidden=!ds.length;
+  $('pend-note-s').textContent=ds.length?ds.map(d=>bkLong(d)).join(' · '):'';
+  $('tab-badge').hidden=!ds.length;$('tab-badge').textContent=ds.length;
+  $('dm-pend').textContent=ds.length?`${ds.length} ${ds.length===1?'viaggio':'viaggi'} in attesa`:'Nessun viaggio in attesa';
+  if($('pend-list').closest('.view').hidden&&location.hash!=='#conferma')return;
+  const bal=balances(),sc=id=>{const v=bal[id]||0;return `${v>0?'+':v<0?'−':''}${Math.abs(v)}`};
+  $('pend-list').innerHTML=ds.length?ds.map(d=>{const cars=pendingCars(d),n=cars.reduce((s,c)=>s+(c.driver?1:0)+c.passengers.length,0),can=pendCan(d);
+    return `<div class="panel pend" data-d="${d}"><div class="row between"><h2 class="pend-day">${esc(bkLong(d))}</h2><span class="hint">${n} ${n===1?'persona':'persone'}</span></div>
+      ${cars.map((c,i)=>{const mem=[c.driver,...c.passengers].filter(Boolean);
+        return `<div class="pc">${cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}
+          ${mem.length&&can?`<label class="f">Guidatore<select data-pdrv="${i}">${mem.map(id=>`<option value="${id}" ${id===c.driver?'selected':''}>${esc(name(id))}</option>`).join('')}</select></label>`:''}
+          <div class="cmp-list">${mem.map(id=>`<div class="ul-row ${id===c.driver?'cmp-drv':'cmp-pax'}${(bal[id]||0)<0?' ul-neg':''}"><span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${id===c.driver?'Guida':'Passeggero'}</span>${can?`<button class="pc-rm" data-rm="${i}|${id}" aria-label="Togli ${esc(name(id))}">✕</button>`:'<span></span>'}</div>`).join('')||'<p class="hint" style="margin:8px 12px">Auto vuota</p>'}</div>
+          ${mem.length&&!c.passengers.length?'<p class="hint" style="margin:0">Senza passeggeri: questa auto non verrà registrata.</p>':''}</div>`}).join('')||'<p class="hint" style="margin:0">Nessuno in questo viaggio.</p>'}
+      ${can?'':'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può confermarlo o modificarlo.</p>'}
+      <div class="pend-act"${can?'':' hidden'}><button class="ghost danger" data-del="1">${pendArm==='del'+d?'Tocca di nuovo per eliminare':'Elimina viaggio'}</button><button class="bk-main" data-ok="1">Conferma e registra</button></div></div>`}).join('')
+    :'<div class="panel"><p class="hint" style="margin:0">Nessun viaggio da confermare.</p></div>';
+}
+$('pend-list').onchange=e=>{const sel=e.target.closest('[data-pdrv]');if(!sel)return;const d=sel.closest('[data-d]').dataset.d;if(!pendCan(d))return;const cars=pendingCars(d),c=cars[+sel.dataset.pdrv],nd=sel.value;
+  if(!c||nd===c.driver)return;c.passengers=[c.driver,...c.passengers.filter(x=>x!==nd)].filter(Boolean);c.driver=nd;savePlan(d,cars);renderPending();snack(`Guida ${name(nd)}`)};
+$('pend-list').onclick=e=>{const card=e.target.closest('[data-d]');if(!card)return;const d=card.dataset.d;if(!pendCan(d))return;
+  const rm=e.target.closest('[data-rm]');
+  if(rm){const [i,id]=rm.dataset.rm.split('|'),cars=pendingCars(d),c=cars[+i];if(!c)return;
+    if(c.driver===id){c.driver=c.passengers.shift()||''}else c.passengers=c.passengers.filter(x=>x!==id);
+    savePlan(d,cars.filter(x=>x.driver||x.passengers.length));renderPending();snack(`${name(id)} tolto dal viaggio`);return}
+  if(e.target.closest('[data-del]')){if(pendArm!=='del'+d){pendArm='del'+d;renderPending();setTimeout(()=>{if(pendArm==='del'+d){pendArm='';renderPending()}},4000);return}
+    pendArm='';savePlan(d,pendingCars(d),{discarded:true});render();snack(`Viaggio di ${bkLong(d)} eliminato`);return}
+  if(e.target.closest('[data-ok]')){const cars=pendingCars(d).filter(c=>c.driver&&c.passengers.length);
+    if(!cars.length){snack('Serve almeno un\'auto con guidatore e passeggeri');return}
+    state.trips.push({id:uid(),date:d,weight:1,note:'',cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
+    state.trips.sort((a,b)=>a.date.localeCompare(b.date));savePlan(d,cars,{done:true});persist();render();snack(`Viaggio di ${bkLong(d)} registrato`)}};
+const _render4=render;render=function(){_render4();renderBookings();renderPending()};
 renderBookings();
 setInterval(()=>{if(!document.hidden)renderBookings()},60000);   // alle 8:00 la tabella si azzera da sola
 
@@ -4420,6 +4494,8 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['5.2','"Conferma" è una scheda in basso, dopo Punti, con il numero dei viaggi in attesa. Solo chi ha partecipato a un viaggio può confermarlo, modificarlo o eliminarlo.'],
+ ['5.1','Nuova pagina "Viaggi da confermare": alle 8:00 il prossimo viaggio passa lì e nella pagina principale compare l\'avviso. Si possono togliere persone, cambiare guidatore, registrare o eliminare il viaggio. Tolto il tasto "Conferma e registra" dalla pagina principale.'],
  ['4.9','Ognuno può confermare o annullare solo la propria presenza. Entrando in una squadra si cerca il proprio nome in elenco; se non c\'è, va contattato l\'amministratore.'],
  ['4.8','Tolta la domanda "Sarai guidatore?": "Presente" conferma subito. Il guidatore viene scelto tra i presenti partendo da chi ha meno punti.'],
  ['4.7','La tabella dell\'auto resta sempre visibile e si riempie man mano che arrivano i presenti. Assenti e Nessuna conferma: solo i nomi, tutti in grigio chiaro.'],
