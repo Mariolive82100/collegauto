@@ -634,6 +634,9 @@ body.wz-on{overflow:hidden}
 .ul-row{cursor:default}
 .who-msg{margin:0;font-size:15px;line-height:1.4;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--teal) 10%,var(--panel));border-left:3px solid var(--teal)}
 #who-find{width:100%;min-height:46px;font-size:16px}
+.adm-sep{height:1px;background:var(--line);margin:6px 0}
+.adm-code{font-size:34px!important;letter-spacing:.2em;text-align:center}
+#team-delete{color:var(--neg)!important;border-color:color-mix(in srgb,var(--neg) 50%,var(--line))!important}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -641,7 +644,7 @@ body.wz-on{overflow:hidden}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v4.9</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.0</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -794,11 +797,26 @@ body.wz-on{overflow:hidden}
       <button class="ghost wide" id="admin-claim-toggle">Hai creato tu questa squadra? Recupera i permessi</button>
       <div id="admin-claim-form" class="sync-box sub" hidden>
         <p class="hint" style="margin:0" id="admin-claim-hint"></p>
-        <label class="f">Password amministratore<input type="password" id="admin-pw" autocomplete="current-password" minlength="6"></label>
+        <label class="f"><span id="admin-pw-lbl">Password amministratore</span><input type="password" id="admin-pw" autocomplete="current-password" minlength="6"></label>
         <button class="primary wide" id="admin-claim-go">Recupera i permessi</button>
         <span class="msg" id="admin-msg" role="status"></span>
       </div>
     </div>
+    <details id="admin-tools" class="admin-box" hidden><summary>Amministrazione della squadra</summary>
+      <div class="sync-box" style="margin-top:10px">
+        <span class="lbl">Nuovo amministratore</span>
+        <p class="hint" style="margin:0">Scegli un partecipante: riceverà un codice da inserire nella sua app. Da quel momento tu non sarai più amministratore.</p>
+        <label class="f">Partecipante<select id="adm-to"></select></label>
+        <button class="wide" id="adm-give">Nomina amministratore</button>
+        <span class="msg" id="adm-msg" role="status"></span>
+        <div class="adm-sep"></div>
+        <span class="lbl">Elimina la squadra</span>
+        <p class="hint" style="margin:0">Cancella viaggi, punti, partecipanti e prenotazioni per tutti. Ogni collega vedrà la squadra sparire dalla sua app. Non si può annullare.</p>
+        <label class="f">Per confermare scrivi il nome della squadra<input type="text" id="team-del-name" autocomplete="off"></label>
+        <button class="wide danger" id="team-delete">Elimina la squadra per tutti</button>
+        <span class="msg" id="team-del-msg" role="status"></span>
+      </div>
+    </details>
     <details id="admin-set" class="admin-box" hidden><summary id="admin-set-sum">Password amministratore</summary>
       <div class="sync-box" style="margin-top:10px">
         <p class="hint" style="margin:0">Serve a riavere i permessi da creatore se cambi telefono, reinstalli l'app o la apri da un altro dispositivo. Tienila per te.</p>
@@ -935,6 +953,15 @@ body.wz-on{overflow:hidden}
     <button class="ghost wide" id="ask-no">Annulla</button>
   </div>
 </div>
+<div class="sheet" id="adm-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="adm-t">
+  <div class="sheet-card">
+    <h2 id="adm-t">Codice per il nuovo amministratore</h2>
+    <p class="hint" style="margin:0" id="adm-who"></p>
+    <div class="sync-code adm-code" id="adm-code"></div>
+    <button class="primary wide" id="adm-share">Invia il codice</button>
+    <button class="ghost wide" id="adm-close">Fatto</button>
+  </div>
+</div>
 <div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
   <div class="sheet-card">
     <h2 id="who-t">Chi sei in questa squadra?</h2>
@@ -973,7 +1000,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='4.9';
+const APP_VERSION='5.0';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1639,7 +1666,7 @@ sync.pendingDel=sync.pendingDel||[];sync.dirty=sync.dirty||[];
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 const syncSupported=()=>!inViewer&&!!window.firebase;
 let fsdb=null,remoteTrips=null,remoteMeta,applying=false,unsubs=[],lastMeta='',pushing=false,pushAgain=false,syncState='off';
-const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null,teamName:state.teamName||'',adminHash:state.adminHash||''});
+const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null,teamName:state.teamName||'',adminHash:state.adminHash||'',admin:state.admin||'',adminBy:state.adminBy||''});
 const clean=o=>JSON.parse(JSON.stringify(o));
 const core=t=>JSON.stringify({date:t.date,weight:t.weight||1,note:t.note||'',cars:t.cars||[],hist:!!t.hist});
 const gref=()=>fsdb.collection('gruppi').doc(sync.code);
@@ -1673,8 +1700,9 @@ async function syncStart(){
 // unisce i dati remoti con quelli locali non ancora inviati
 function syncMerge(fromCache){
   if(remoteTrips===null||remoteMeta===undefined)return;
+  if(remoteMeta&&remoteMeta.closed&&!fromCache){teamClosed(remoteMeta);return}
   applying=true;
-  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];migrateGroups(state);state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';state.adminHash=remoteMeta.adminHash||'';
+  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];migrateGroups(state);state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';state.adminHash=remoteMeta.adminHash||'';state.admin=remoteMeta.admin||'';state.adminBy=remoteMeta.adminBy||'';
     const tt=sync.teams&&sync.teams.find(x=>x.code===sync.code);if(tt&&tt.name!==state.teamName){tt.name=state.teamName;saveSync()}}
   const del=new Set(sync.pendingDel),dirty=new Set(sync.dirty),localById=new Map(state.trips.map(t=>[t.id,t])),out=[];
   remoteTrips.forEach((d,id)=>{if(dirty.has(id)&&localById.has(id)){out.push(localById.get(id));return}
@@ -1685,6 +1713,7 @@ function syncMerge(fromCache){
   persistLocal();lastMeta=JSON.stringify(metaOf());lastSnap=snapOf();
   render();applying=false;
   setSync(fromCache?'pending':'ok');
+  if(!fromCache)adminCheck();
   if(!fromCache)setTimeout(maybeAskWho,0);
   if(!fromCache&&/…$/.test($('sync-msg').textContent))smsg('Dati sincronizzati.');
   if(!fromCache&&remoteMeta===null&&!sync.creator&&!remoteTrips.size)smsg('Nessuna squadra trovata con questo codice: controllalo, oppure esci dalla squadra.');
@@ -1825,19 +1854,25 @@ function renderSync(){
   const cnt=code=>{if(code===sync.code)return active().length;
     try{const c=JSON.parse(localStorage.getItem(CACHE_PREFIX+code));return c?(c.people||[]).filter(p=>!p.archived&&!p.deleted).length:null}catch(e){return null}};
   let rows=sync.teams.map(x=>{const n=cnt(x.code);
-    return `<button class="tm${x.code===sync.code?' cur':''}" data-team="${esc(x.code)}"><span><b>${esc(teamLabel(x))}</b><small>${x.creator?'creata da te':'creata da un collega'}${x.code===sync.code?' · aperta':''}</small></span><span class="tm-n">${n==null?'—':n}<small>${n===1?'iscritto':'iscritti'}</small></span><span class="tm-go">›</span></button>`}).join('');
+    return `<button class="tm${x.code===sync.code?' cur':''}" data-team="${esc(x.code)}"><span><b>${esc(teamLabel(x))}</b><small>${x.creator?'amministratore: tu':'di un collega'}${x.code===sync.code?' · aperta':''}</small></span><span class="tm-n">${n==null?'—':n}<small>${n===1?'iscritto':'iscritti'}</small></span><span class="tm-go">›</span></button>`}).join('');
   if(!on)rows=`<button class="tm cur" data-team=""><span><b>Su questo telefono</b><small>non condivisa</small></span><span class="tm-n">${active().length}<small>persone</small></span><span class="tm-go">›</span></button>`+rows;
   $('teams-list').innerHTML=rows;
   $('teams-hint').textContent=on?'Tocca una squadra per vedere i partecipanti e il codice di condivisione.':'Non sei ancora in una squadra condivisa: entra con un codice ricevuto o creane una.';
   // pagina della squadra aperta
   $('team-title').textContent=on?teamLabel(t):'Su questo telefono';
-  $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".';
+  $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?'sei l\'amministratore':state.admin?'amministratore: '+name(state.admin):'creata da un collega'}`:'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".';
   $('team-rename-box').hidden=!on||!sync.creator;$('me-box').hidden=!on;
-  $('admin-claim').hidden=!on||!!sync.creator;$('admin-set').hidden=!on||!sync.creator;
+  $('admin-claim').hidden=!on||!!sync.creator;$('admin-set').hidden=!on||!sync.creator;$('admin-tools').hidden=!on||!sync.creator;
+  if(on&&sync.creator){const cur=$('adm-to').value;$('adm-to').innerHTML='<option value="">— scegli —</option>'+active().filter(p=>p.id!==myPid()).sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(p.name)}</option>`).join('')}
+  const nominated=on&&!sync.creator&&state.admin&&state.admin===myPid();
+  $('admin-pw-lbl').textContent=nominated?'Codice ricevuto (6 cifre)':'Password amministratore';$('admin-pw').inputMode=nominated?'numeric':'text';
+  if(nominated){$('admin-claim-toggle').textContent='Sei il nuovo amministratore: inserisci il codice';$('admin-claim-form').hidden=false}
+  else $('admin-claim-toggle').textContent='Hai creato tu questa squadra? Recupera i permessi';
   if(on){$('admin-set-sum').textContent=state.adminHash?'Password amministratore · impostata':'Password amministratore · non ancora impostata';
-    $('admin-claim-hint').textContent=state.adminHash?'Inserisci la password amministratore che hai scelto quando hai creato o gestito la squadra.'
+    $('admin-claim-hint').textContent=state.admin&&state.admin===myPid()&&!sync.creator?`${state.adminBy||"L'amministratore"} ti ha nominato amministratore: inserisci il codice che ti ha inviato.`
+      :state.adminHash?'Inserisci la password amministratore che hai scelto quando hai creato o gestito la squadra.'
       :'Questa squadra non ha ancora una password amministratore: chi la imposta per primo diventa amministratore. Fallo solo se sei tu il creatore, la cosa resta scritta nel registro.';
-    $('admin-claim-go').textContent=state.adminHash?'Recupera i permessi':'Imposta la password e recupera i permessi'}
+    $('admin-claim-go').textContent=state.admin&&state.admin===myPid()?'Diventa amministratore':state.adminHash?'Recupera i permessi':'Imposta la password e recupera i permessi'}
   if(on){$('sync-code').textContent=sync.code;if(document.activeElement!==$('team-rename'))$('team-rename').value=t&&t.name||''}
   setSync(syncState);
 }
@@ -1886,10 +1921,14 @@ $('sync-share').onclick=()=>{const txt=`Entra nella squadra "${teamLabel(curTeam
 $('sync-leave').onclick=e=>{if(!e.target.dataset.c){e.target.dataset.c=1;e.target.textContent='Conferma: esci da questa squadra';return}
   delete e.target.dataset.c;e.target.textContent='Esci da questa squadra';
   if(hasPending()){smsg('Ci sono modifiche non ancora inviate: aspetta che il pallino diventi verde e riprova.');return}
-  const old=sync.code,name=teamLabel(curTeam());sync.teams=sync.teams.filter(t=>t.code!==old);try{localStorage.removeItem(CACHE_PREFIX+old)}catch(x){}
+  const name=teamLabel(curTeam());dropTeam(`Sei uscito da "${name}"`,'i dati restano su questo telefono.')};
+// toglie la squadra aperta da questo telefono (uscita o squadra eliminata) e passa alla successiva
+function dropTeam(msg,tail,wipe){const old=sync.code;sync.teams=sync.teams.filter(t=>t.code!==old);try{localStorage.removeItem(CACHE_PREFIX+old)}catch(x){}
   const next=sync.teams[0];
-  if(next){sync.code='';openTeam(next.code);smsg(`Sei uscito da "${name}". Ora sei in "${teamLabel(next)}".`);return}
-  stopSync();sync={pendingDel:[],dirty:[],pendingEv:[],me:sync.me,teams:[]};saveSync();renderSync();setSync('off');smsg(`Sei uscito da "${name}": i dati restano su questo telefono.`)};
+  if(next){sync.code='';sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];sync.metaDirty=false;openTeam(next.code);smsg(`${msg}. Ora sei in "${teamLabel(next)}".`);snack(msg);return}
+  stopSync();sync={pendingDel:[],dirty:[],pendingEv:[],me:sync.me,teams:[]};
+  if(wipe){applying=true;state={people:[],trips:[],groups:[],start:null,bookings:[]};persistLocal();applying=false}
+  saveSync();render();setSync('off');smsg(`${msg}${wipe?'.':': '+tail}`);snack(msg)}
 $('team-name').onclick=()=>{location.hash=sync.code?'membri':'squadra'};
 $('team-join-toggle').onclick=()=>{$('team-join-box').hidden=!$('team-join-box').hidden;if(!$('team-join-box').hidden)$('team-join-code').focus()};
 const _render2=render;render=function(){renderSync();_render2();renderEvents()};
@@ -4420,6 +4459,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['5.0','L\'amministratore può nominare un nuovo amministratore (che riceve un codice da inserire nella sua app) oppure eliminare la squadra per tutti.'],
  ['4.9','Ognuno può confermare o annullare solo la propria presenza. Entrando in una squadra si cerca il proprio nome in elenco; se non c\'è, va contattato l\'amministratore.'],
  ['4.8','Tolta la domanda "Sarai guidatore?": "Presente" conferma subito. Il guidatore viene scelto tra i presenti partendo da chi ha meno punti.'],
  ['4.7','La tabella dell\'auto resta sempre visibile e si riempie man mano che arrivano i presenti. Assenti e Nessuna conferma: solo i nomi, tutti in grigio chiaro.'],
@@ -4464,17 +4504,66 @@ function renderInfo(){
 async function hashPw(pw){const data=new TextEncoder().encode('collegauto|'+sync.code+'|'+pw);
   try{if(crypto&&crypto.subtle){const h=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}}catch(e){}
   let a=0x811c9dc5,b=0;for(const c of data){a=Math.imul(a^c,16777619)>>>0;b=(b*31+c)>>>0}return 'f'+a.toString(16)+b.toString(16)}
-function becomeAdmin(how){sync.creator=true;const t=curTeam();if(t)t.creator=true;saveSync();
+function becomeAdmin(how){sync.creator=true;const t=curTeam();if(t)t.creator=true;saveSync();if(myPid())state.admin=myPid();
   addEvents([['team',`${sync.me||'Un partecipante'} ${how}`]]);persist();render();snack('Ora hai i permessi da creatore')}
 $('admin-claim-toggle').onclick=()=>{$('admin-claim-form').hidden=!$('admin-claim-form').hidden;if(!$('admin-claim-form').hidden)$('admin-pw').focus()};
 $('admin-claim-go').onclick=async()=>{const pw=$('admin-pw').value,m=t=>{$('admin-msg').textContent=t};
   if(!sync.code)return;
+  if(!state.adminHash&&state.admin){m('Questa squadra ha già un amministratore.');return}
+  if(state.admin===myPid()&&!myPid()){m('Scegli prima il tuo nome in questa squadra.');return}
   if(!state.adminHash){if(pw.length<6){m('Scegli una password di almeno 6 caratteri.');return}
     state.adminHash=await hashPw(pw);$('admin-pw').value='';becomeAdmin('ha impostato la password amministratore e recuperato i permessi da creatore');return}
-  if(await hashPw(pw)===state.adminHash){$('admin-pw').value='';becomeAdmin('ha recuperato i permessi da creatore con la password')}
+  if(await hashPw(pw)===state.adminHash){$('admin-pw').value='';
+    if(state.admin&&state.admin===myPid()){becomeAdmin('è il nuovo amministratore della squadra');$('admin-set').open=true;$('admin-pw-new').focus();snack('Ora sei amministratore: scegli una tua password');return}
+    becomeAdmin('ha recuperato i permessi da creatore con la password')}
   else m('Password non corretta.')};
 $('admin-pw').onkeydown=e=>{if(e.key==='Enter')$('admin-claim-go').click()};
 $('admin-pw-save').onclick=async()=>{const pw=$('admin-pw-new').value,m=t=>{$('admin-set-msg').textContent=t};
   if(!sync.creator||!sync.code)return;if(pw.length<6){m('Almeno 6 caratteri.');return}
   state.adminHash=await hashPw(pw);$('admin-pw-new').value='';addEvents([['team','Password amministratore aggiornata']]);persist();render();m('Password salvata.')};
+
+// ===================== Amministratore: delega e eliminazione della squadra =====================
+// state.admin = id di chi è amministratore (se assegnato). Su ogni telefono i permessi seguono questo campo:
+// chi non è più amministratore li perde; chi è stato nominato li ottiene inserendo il codice ricevuto.
+let admNotified='';
+function setCreator(v){sync.creator=v;const t=curTeam();if(t)t.creator=v;saveSync();window.__startLocked=!!(sync.code&&!sync.creator)}
+function adminCheck(){if(!sync.code||!state.admin)return;const me=myPid();
+  if(sync.creator&&me!==state.admin){setCreator(false);render();snack(`Ora l'amministratore è ${name(state.admin)}`)}
+  else if(!sync.creator&&me&&me===state.admin&&admNotified!==sync.code){admNotified=sync.code;snack('Sei stato nominato amministratore: inserisci il codice nella pagina della squadra');render()}}
+const randCode=()=>{const a=new Uint32Array(1);try{crypto.getRandomValues(a)}catch(e){a[0]=Math.random()*4294967295}return String(a[0]%1000000).padStart(6,'0')};
+$('adm-give').onclick=async e=>{const m=t=>{$('adm-msg').textContent=t},to=$('adm-to').value,btn=e.target;
+  if(!sync.creator||!sync.code)return;if(!to){m('Scegli il nuovo amministratore.');return}
+  if(!myPid()){m('Scegli prima il tuo nome in questa squadra.');return}
+  if(!btn.dataset.c){btn.dataset.c=1;btn.textContent=`Conferma: ${name(to)} diventa amministratore`;m('Dopo la conferma non potrai più gestire la squadra.');return}
+  delete btn.dataset.c;btn.textContent='Nomina amministratore';m('');
+  const code=randCode();state.admin=to;state.adminBy=name(myPid());state.adminHash=await hashPw(code);
+  addEvents([['team',`${state.adminBy} ha nominato ${name(to)} nuovo amministratore`]]);
+  setCreator(false);persist();render();
+  $('adm-who').textContent=`Manda questo codice a ${name(to)}: lo inserirà nella sua app, nella pagina della squadra, per diventare amministratore.`;
+  $('adm-code').textContent=code;$('adm-sheet').hidden=false};
+$('adm-share').onclick=async()=>{const code=$('adm-code').textContent,txt=`CollegAuto: sei il nuovo amministratore della squadra "${teamLabel(curTeam())}". Apri l'app, vai nella pagina della squadra e inserisci il codice ${code}`;
+  try{if(navigator.share){await navigator.share({text:txt});return}}catch(e){return}
+  try{await navigator.clipboard.writeText(txt);snack('Messaggio copiato: incollalo in WhatsApp o Telegram')}catch(e){snack('Codice: '+code)}};
+$('adm-close').onclick=()=>{$('adm-sheet').hidden=true};
+$('team-delete').onclick=async e=>{const m=t=>{$('team-del-msg').textContent=t},btn=e.target;
+  if(!sync.creator||!sync.code)return;
+  const want=teamLabel(curTeam()).trim().toLowerCase();
+  if($('team-del-name').value.trim().toLowerCase()!==want){m(`Scrivi esattamente "${teamLabel(curTeam())}" per confermare.`);return}
+  if(!btn.dataset.c){btn.dataset.c=1;btn.textContent='Tocca di nuovo: elimina per sempre';m('Ultima conferma.');return}
+  delete btn.dataset.c;btn.textContent='Elimina la squadra per tutti';
+  if(!fsdb){m('Serve la connessione a internet per eliminare la squadra.');return}
+  m('Eliminazione in corso…');
+  try{const g=gref(),t=new Date().toISOString(),by=sync.me||'',ops=[];
+    (remoteTrips?[...remoteTrips.keys()]:[]).concat(state.trips.map(x=>x.id)).forEach(id=>ops.push([g.collection('viaggi').doc(id),{deleted:true,t}]));
+    (state.bookings||[]).forEach(b=>ops.push([g.collection('prenotazioni').doc(b.id),{deleted:true,date:b.date,pid:b.pid,t}]));
+    ops.push([g.collection('meta').doc('stato'),{closed:true,teamName:teamLabel(curTeam()),by,at:t}]);
+    for(let i=0;i<ops.length;i+=400){const bt=fsdb.batch();ops.slice(i,i+400).forEach(([r,d])=>bt.set(r,d));await bt.commit()}
+    const nm=teamLabel(curTeam());$('team-del-name').value='';m('');
+    sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];sync.metaDirty=false;
+    dropTeam(`Squadra "${nm}" eliminata`,'',true);location.hash='squadra'}
+  catch(err){m('Eliminazione non riuscita: controlla la connessione e riprova.')}};
+// la squadra è stata eliminata dall'amministratore (visto da un altro telefono)
+function teamClosed(meta){const nm=meta.teamName||teamLabel(curTeam());
+  sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];sync.metaDirty=false;
+  dropTeam(`La squadra "${nm}" è stata eliminata dall'amministratore`,'',true)}
 </script>
