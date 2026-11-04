@@ -380,13 +380,22 @@ body.wz-on{overflow:hidden}
 .bk-note{font-size:14px;color:var(--muted)}
 .bk-n{display:inline-block;min-width:22px;padding:0 6px;border-radius:999px;background:var(--chip);color:var(--fg);font-size:12.5px;margin-left:4px}
 [aria-selected="true"] .bk-n{background:var(--amber);color:#16120a}
+
+/* prenotazioni in verde acqua, per distinguerle dall'inserimento dei viaggi (ambra) */
+.bk{border-color:color-mix(in srgb,var(--teal) 55%,var(--line))!important;background:color-mix(in srgb,var(--teal) 6%,var(--panel))}
+.bk h2{color:var(--teal)}
+#bk-add,#bk-save{background:var(--teal);border-color:var(--teal);color:var(--bg);font-weight:700}
+#bk-plan{border-color:var(--teal);color:var(--teal);font-weight:600;background:none}
+.bk [aria-selected="true"] .bk-n{background:var(--teal);color:var(--bg)}
+.bk-row.mine{background:color-mix(in srgb,var(--teal) 14%,var(--panel))}
+.bk .chip[aria-pressed="true"]{border-color:var(--teal);color:var(--teal)}
 </style>
 
 <div class="m-app">
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span> <em>mobile</em></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.5</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v2.6</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div></div>
 </header>
@@ -631,7 +640,7 @@ body.wz-on{overflow:hidden}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='2.5';
+const APP_VERSION='2.6';
 const KEY='turni-auto-v2';
 const IMPORTED={"people": [], "groups": [], "start": null, "trips": []};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
