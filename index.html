@@ -701,6 +701,27 @@ a.tr-h{text-decoration:none}
 .shift+.shift{margin-top:6px}
 .shift-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--teal);letter-spacing:.02em}
 .shift-h i{font-style:normal;font-size:12px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:color-mix(in srgb,var(--teal) 18%,transparent);display:inline-flex;align-items:center;justify-content:center}
+/* grafico punti v6.0: nome in colonna propria */
+.dv-row{grid-template-columns:minmax(0,34%) 1fr 1fr 40px!important;column-gap:0}
+.dv-lab{padding:0 10px 0 0!important;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left}
+.dv-row.is-next .dv-lab::after{content:none!important}
+.dv-row.is-next .dv-lab b::after{content:" · guida";font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--amber)}
+.dv-v{text-align:right!important}
+.dv-v.neg{color:var(--neg)}.dv-v.pos{color:var(--teal)}
+.drv-zone{display:block;font-size:12px;font-weight:600;color:var(--muted)}
+.gstack{display:flex;flex-direction:column;gap:12px}
+.ztab{width:100%;table-layout:fixed;box-sizing:border-box;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.ztab th{text-align:left;padding:6px 10px;background:color-mix(in srgb,var(--fg) 5%,var(--panel));border-bottom:1px solid var(--line)}
+.ztab td{padding:0 6px 0 14px;height:46px;border-bottom:1px solid var(--line);font-size:16px}
+.ztab tbody tr:last-child td{border-bottom:1px solid var(--line)}
+.ztab tfoot td{border-bottom:none;padding:8px 10px;height:auto}
+.ztab tfoot select{width:100%;max-width:100%;box-sizing:border-box;min-height:42px;color:var(--muted)}
+.ztab .gc-h input{min-width:0;width:100%;box-sizing:border-box}
+.ztab td:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ztab-x{width:52px!important}
+.ztab-x{width:44px;text-align:right}
+.ztab-empty{color:var(--muted);font-size:14px!important}
+.ztab-n{flex:none;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--chip);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -708,7 +729,7 @@ a.tr-h{text-decoration:none}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.9</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.1</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -908,8 +929,8 @@ a.tr-h{text-decoration:none}
 <!-- GRUPPI -->
 <section class="view" data-view="gruppi" aria-labelledby="t-groups" hidden>
   <div class="panel">
-    <div class="row between"><h2 id="t-groups">Gruppi</h2><button id="add-group">+ Nuovo gruppo</button></div>
-    <p class="hint" style="margin:0">Chi è nello stesso gruppo viaggia insieme quando organizzi le auto, se c'è posto. Non è obbligatorio far parte di un gruppo e si può stare in più gruppi. Tutti possono modificarli.</p>
+    <div class="row between"><h2 id="t-groups">Zone</h2><button id="add-group">+ Nuova zona</button></div>
+    <p class="hint" style="margin:0">Chi è nella stessa zona viaggia insieme quando si compongono le auto, se c'è posto. Non è obbligatorio far parte di una zona e si può stare in più zone. Tutti possono modificarle.</p>
   </div>
   <div id="groups" class="gstack"></div>
 </section>
@@ -933,7 +954,7 @@ a.tr-h{text-decoration:none}
 <section class="view" data-view="backup" aria-label="Dati e backup" hidden>
   <div class="panel">
     <h2 id="t-data">Dati e backup</h2>
-    <p class="hint" style="margin:0">Il file JSON contiene persone, gruppi, punti di partenza e tutti i viaggi. È lo stesso formato della versione desktop: esporta da una e importa nell'altra.</p>
+    <p class="hint" style="margin:0">Il file JSON contiene persone, zone, punti di partenza e tutti i viaggi. È lo stesso formato della versione desktop: esporta da una e importa nell'altra.</p>
     <button class="primary wide" id="export">Esporta JSON</button>
     <label class="filebtn wide" for="import-file">Importa JSON</label>
     <input type="file" id="import-file" accept=".json,application/json" hidden>
@@ -979,7 +1000,7 @@ a.tr-h{text-decoration:none}
   <a href="#punti" data-tab="punti"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M12 7H6M12 11h8M12 15H8M12 19h5"/></svg>Punti</a>
   <a href="#conferma" data-tab="conferma" class="tab-pend"><span class="tab-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/></svg><b class="tab-badge" id="tab-badge" hidden></b></span>Conferma</a>
   <a href="#registro" data-tab="registro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v16H6zM9 8h6M9 12h6M9 16h4"/></svg>Registro</a>
-  <a href="#gruppi" data-tab="gruppi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2 20c.5-3 2.5-5 5-5s4.5 2 5 5M12 20c.5-3 2.5-5 5-5s4.5 2 5 5"/></svg>Gruppi</a>
+  <a href="#gruppi" data-tab="gruppi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="9" r="3"/><circle cx="17" cy="9" r="3"/><path d="M2 20c.5-3 2.5-5 5-5s4.5 2 5 5M12 20c.5-3 2.5-5 5-5s4.5 2 5 5"/></svg>Zone</a>
   <a href="#squadra" data-tab="squadra"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="8" r="2.5"/><circle cx="12" cy="15" r="2.5"/><path d="M4 21c.5-2 2-3 4-3M20 21c-.5-2-2-3-4-3"/></svg>Squadra</a>
 </nav>
 
@@ -1069,7 +1090,7 @@ a.tr-h{text-decoration:none}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='5.9';
+const APP_VERSION='6.1';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1142,16 +1163,19 @@ function renderGroups(){
   const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
   $('groups').innerHTML=state.groups.length?state.groups.map(g=>{
     const mem=ppl.filter(p=>(g.members||[]).includes(p.id));
-    return `<div class="panel gcard">
-      <div class="gc-h">${gDot(g.id)}<input id="gn-${g.id}" data-gname="${g.id}" value="${esc(g.name)}" aria-label="Nome del gruppo"><span class="hint">${mem.length} ${mem.length===1?'membro':'membri'}</span></div>
-      <div class="chips">${ppl.map(p=>`<button class="chip gm" data-gm="${g.id}" data-id="${p.id}" aria-pressed="${(g.members||[]).includes(p.id)}">${esc(p.name)}</button>`).join('')}</div>
-      <div class="row between"><span class="hint">Tocca un nome per aggiungerlo o toglierlo</span><button class="x" data-gdel="${g.id}">elimina gruppo</button></div>
-    </div>`}).join('')
-    :'<div class="panel"><p class="hint" style="margin:0">Questa squadra non ha ancora gruppi. Tocca "+ Nuovo gruppo" per crearne uno.</p></div>';
+    const out=ppl.filter(p=>!(g.members||[]).includes(p.id));
+    return `<div class="panel gcard"><table class="ztab">
+      <thead><tr><th colspan="2"><div class="gc-h">${gDot(g.id)}<input id="gn-${g.id}" data-gname="${g.id}" value="${esc(g.name)}" aria-label="Nome della zona"><span class="ztab-n">${mem.length}</span></div></th></tr></thead>
+      <tbody>${mem.length?mem.map(p=>`<tr><td>${esc(p.name)}</td><td class="ztab-x"><button class="pc-rm gm" data-gm="${g.id}" data-id="${p.id}" aria-label="Togli ${esc(p.name)} dalla zona">✕</button></td></tr>`).join('')
+        :'<tr><td colspan="2" class="ztab-empty">Nessuno in questa zona</td></tr>'}</tbody>
+      <tfoot><tr><td colspan="2">${out.length?`<select data-gadd="${g.id}" aria-label="Aggiungi persona alla zona"><option value="">+ Aggiungi persona</option>${out.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`:'<span class="hint">Ci sono già tutti</span>'}</td></tr></tfoot>
+    </table><div class="row between"><span class="hint">${mem.length} ${mem.length===1?'persona':'persone'}</span><button class="x" data-gdel="${g.id}">elimina zona</button></div></div>`}).join('')
+    :'<div class="panel"><p class="hint" style="margin:0">Questa squadra non ha ancora zone. Tocca "+ Nuova zona" per crearne una.</p></div>';
 }
-$('add-group').onclick=()=>{let k=state.groups.length+1;while(state.groups.some(g=>g.name==='Gruppo '+k))k++;
-  const g={id:uid(),name:'Gruppo '+k,members:[]};state.groups.push(g);persist();render();const i=$('gn-'+g.id);if(i){i.focus();i.select()}};
-$('groups').onchange=e=>{const i=e.target.closest('[data-gname]');if(!i)return;const g=state.groups.find(x=>x.id===i.dataset.gname);const n=i.value.trim();
+$('add-group').onclick=()=>{let k=state.groups.length+1;while(state.groups.some(g=>g.name==='Zona '+k))k++;
+  const g={id:uid(),name:'Zona '+k,members:[]};state.groups.push(g);persist();render();const i=$('gn-'+g.id);if(i){i.focus();i.select()}};
+$('groups').onchange=e=>{const a=e.target.closest('[data-gadd]');if(a){if(!a.value)return;const g=state.groups.find(x=>x.id===a.dataset.gadd);g.members=[...(g.members||[]),a.value];persist();render();return}
+  const i=e.target.closest('[data-gname]');if(!i)return;const g=state.groups.find(x=>x.id===i.dataset.gname);const n=i.value.trim();
   if(!n){i.value=g.name;return}g.name=n;persist();render()};
 $('groups').onkeydown=e=>{if(e.key==='Enter'&&e.target.dataset.gname)e.target.blur()};
 $('groups').onclick=e=>{
@@ -1285,10 +1309,10 @@ function personPanel(p,c){
       <button class="danger" data-act="m-del" data-id="${p.id}"><span>${window.__inTeam?'Espelli dalla squadra':'Elimina'}</span><span class="pm-val">›</span></button>`}
     </div>`;
   }else if(pMode==='group'){
-    h+=`<b>Gruppo di ${esc(p.name)}</b><div class="pmenu">
+    h+=`<b>Zona di ${esc(p.name)}</b><div class="pmenu">
       ${state.groups.map(x=>`<button data-act="setg" data-g="${x.id}" data-id="${p.id}" aria-pressed="${g===x.id}"><span>${gDot(x.id)} ${esc(x.name)}</span><span class="pm-val">${g===x.id?'✓':''}</span></button>`).join('')}
-      <button data-act="setg" data-g="" data-id="${p.id}" aria-pressed="${!g}"><span>Nessun gruppo</span><span class="pm-val">${!g?'✓':''}</span></button>
-      <button data-act="newg" data-id="${p.id}"><span>+ Nuovo gruppo con ${esc(p.name)}</span><span class="pm-val"></span></button>
+      <button data-act="setg" data-g="" data-id="${p.id}" aria-pressed="${!g}"><span>Nessuna zona</span><span class="pm-val">${!g?'✓':''}</span></button>
+      <button data-act="newg" data-id="${p.id}"><span>+ Nuova zona con ${esc(p.name)}</span><span class="pm-val"></span></button>
     </div><button class="ghost" data-act="back" data-id="${p.id}">Indietro</button>`;
   }else if(pMode==='rename'){
     h+=`<label class="f">Nuovo nome<input type="text" id="pren-${p.id}" data-ren="${p.id}" value="${esc(p.name)}" autocomplete="off"></label>
@@ -1321,8 +1345,8 @@ $('people').onclick=e=>{const b=e.target.closest('[data-act]');if(!b)return;cons
   if(a==='m-del'){pMode='del';render();reveal();return}
   if(a==='back'){pMode='';render();return}
   if(a==='ren'){renamePerson(id);return}
-  if(a==='setg'){if(b.dataset.g)p.group=b.dataset.g;else delete p.group;done(b.dataset.g?`${p.name} → ${state.groups[gIndex(b.dataset.g)].name}`:`${p.name} senza gruppo`);return}
-  if(a==='newg'){let k=state.groups.length+1;while(state.groups.some(x=>x.name==='Gruppo '+k))k++;const g={id:uid(),name:'Gruppo '+k};state.groups.push(g);p.group=g.id;done(`Creato ${g.name} con ${p.name}`);return}
+  if(a==='setg'){if(b.dataset.g)p.group=b.dataset.g;else delete p.group;done(b.dataset.g?`${p.name} → ${state.groups[gIndex(b.dataset.g)].name}`:`${p.name} senza zona`);return}
+  if(a==='newg'){let k=state.groups.length+1;while(state.groups.some(x=>x.name==='Zona '+k))k++;const g={id:uid(),name:'Zona '+k};state.groups.push(g);p.group=g.id;done(`Creato ${g.name} con ${p.name}`);return}
   if(a==='arch'){p.archived=true;unDraft();done(p.name+' archiviato');return}
   if(a==='rest'){delete p.archived;done(p.name+' ripristinato');return}
   if(a==='del'){p.deleted=true;delete p.archived;state.groups.forEach(g=>{g.members=(g.members||[]).filter(x=>x!==id)});unDraft();done(p.name+(window.__inTeam?' espulso dalla squadra':' eliminato'));return}
@@ -1334,18 +1358,15 @@ function renderBalances(){
   const all=state.people.map(p=>({...p,v:b[p.id]}));
   const arr=all.filter(x=>!x.archived&&!x.deleted).sort((a,c)=>a.v-c.v||tie(a.id)-tie(c.id)||a.name.localeCompare(c.name));
   const max=Math.max(1,...arr.map(x=>Math.abs(x.v)));
-  // classifica a barre: linea centrale; a sinistra posizione e nome, a destra il gruppo;
-  // le barre partono dalla linea: verso sinistra i punti negativi, verso destra i positivi, lunghe in proporzione
-  const rk=[...arr].reverse();let pos=0,prev=null;const nextId=arr.length?arr[0].id:null;
-  $('bars').innerHTML=rk.map((x,i)=>{
-    if(x.v!==prev){pos=i+1;prev=x.v}
-    const w=Math.abs(x.v)/max*100,gs=groupsOf(x.id);
-    const grp=gs.length?gs.map(g=>`<span>${gDot(g)}${esc(state.groups[gIndex(g)].name)}</span>`).join(''):'';
+  // classifica a barre: a sinistra il nome (in una colonna sua, così non tocca le barre),
+  // poi la linea centrale: verso sinistra i punti negativi, verso destra i positivi, lunghe in proporzione; in fondo il punteggio
+  const rk=[...arr].reverse();const nextId=arr.length?arr[0].id:null;
+  $('bars').innerHTML=rk.map(x=>{const w=Math.abs(x.v)/max*100;
     return `<div class="dv-row${x.id===nextId?' is-next':''}">
-      <span class="dv-v neg">${x.v<0?fmt(x.v):''}</span>
-      <div class="dv-l">${x.v<0?`<i class="dv-bar neg" style="width:${w}%"></i>`:''}<span class="dv-lab"><em>${pos}°</em> <b>${esc(x.name)}</b></span></div>
-      <div class="dv-r">${x.v>0?`<i class="dv-bar pos" style="width:${w}%"></i>`:''}<span class="dv-grp">${grp}</span></div>
-      <span class="dv-v ${x.v>0?'pos':''}">${x.v>=0?(fmt(x.v)||'0'):''}</span></div>`}).join('');
+      <span class="dv-lab"><b>${esc(x.name)}</b></span>
+      <div class="dv-l">${x.v<0?`<i class="dv-bar neg" style="width:${w}%"></i>`:''}</div>
+      <div class="dv-r">${x.v>0?`<i class="dv-bar pos" style="width:${w}%"></i>`:''}</div>
+      <span class="dv-v ${x.v>0?'pos':x.v<0?'neg':''}">${fmt(x.v)||'0'}</span></div>`}).join('');
   const startSum=Object.values((state.start&&state.start.points)||{}).reduce((a,v)=>a+(+v||0),0);
   const total=all.reduce((s,x)=>s+x.v,0)-startSum;
   $('zero').className='zero'+(total?' bad':'');$('zero').innerHTML=`Σ punti <b>${fmt(total)||'0'}</b>`;
@@ -1524,18 +1545,13 @@ async function buildImage(){
   const max=Math.max(1,...arr.map(a=>Math.abs(a.v)));
   const gcol=gid=>cs.getPropertyValue('--g'+(gIndex(gid)%6+1)).trim()||C.mu;
   const rr=(X,Y,w,h,r)=>{x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()};
-  y+=24;const top=y;const rk=[...arr].reverse();let pos=0,prev=null;
-  const vw=46,mid=W/2,half=mid-P-vw;
-  rk.forEach((a,i)=>{const cy=top+i*rowH+rowH/2;if(a.v!==prev){pos=i+1;prev=a.v}
+  y+=24;const top=y;const rk=[...arr].reverse();
+  const nameW=300,vw=60,cx0=P+nameW,cx1=W-P-vw,mid=(cx0+cx1)/2,half=(cx1-cx0)/2-6;
+  rk.forEach((a,i)=>{const cy=top+i*rowH+rowH/2;
     const w=Math.abs(a.v)/max*half;
     if(a.v){x.save();x.globalAlpha=0.32;x.fillStyle=a.v>0?C.te:C.ne;rr(a.v>0?mid:mid-w,cy-17,w,34,7);x.fill();x.restore()}
-    x.font=`700 20px ${F}`;const pw=x.measureText(pos+'° ').width;
-    const nm=fit(a.name,`600 21px ${F}`,half-pw-14);x.font=`600 21px ${F}`;const nw=x.measureText(nm).width;
-    txt(nm,mid-12,cy,`600 21px ${F}`,C.fg,'right');txt(pos+'°',mid-12-nw-8,cy,`700 20px ${F}`,pos<=3?C.am:C.mu,'right');
-    let gx=mid+14;groupsOf(a.id).slice(0,2).forEach(g=>{const gn=state.groups[gIndex(g)].name;x.fillStyle=gcol(g);rr(gx,cy-6,12,12,3);x.fill();
-      const t=fit(gn,`500 17px ${F}`,150);txt(t,gx+18,cy,`500 17px ${F}`,C.mu);x.font=`500 17px ${F}`;gx+=18+x.measureText(t).width+14});
-    if(a.v<0)txt(fmt(a.v),P,cy,`700 22px ${F}`,C.ne);
-    else txt(fmt(a.v)||'0',W-P,cy,`700 22px ${F}`,a.v>0?C.te:C.fg,'right')});
+    txt(fit(a.name,`600 21px ${F}`,nameW-16),P,cy,`600 21px ${F}`,i===rk.length-1?C.am:C.fg);
+    txt(fmt(a.v)||'0',W-P,cy,`700 22px ${F}`,a.v>0?C.te:a.v<0?C.ne:C.fg,'right')});
   x.fillStyle=C.fg;x.globalAlpha=0.5;x.fillRect(mid-1,top-4,2,rk.length*rowH+8);x.globalAlpha=1;
   y=top+arr.length*rowH+24;
   if(arr.length){txt('Prossimo a guidare: ',P,y,`400 20px ${F}`,C.mu);x.font=`400 20px ${F}`;txt(arr[0].name,P+x.measureText('Prossimo a guidare: ').width,y,`700 20px ${F}`,C.am)}
@@ -1842,11 +1858,11 @@ function diffEvents(a,b){
   });
   a.people.forEach(p=>{if(!b.people.some(x=>x.id===p.id))ev.push(['del',`Rimosso viaggiatore ${p.name}`])});
   const GA=new Map(a.groups.map(g=>[g.id,g]));
-  b.groups.forEach(g=>{const o=GA.get(g.id);if(!o)ev.push(['group',`Creato gruppo ${g.name}`]);else if(o.name!==g.name)ev.push(['group',`Gruppo rinominato ${o.name} → ${g.name}`]);
+  b.groups.forEach(g=>{const o=GA.get(g.id);if(!o)ev.push(['group',`Creata zona ${g.name}`]);else if(o.name!==g.name)ev.push(['group',`Zona rinominata ${o.name} → ${g.name}`]);
     const was=new Set((o&&o.members)||[]),now=new Set(g.members||[]);
     now.forEach(id=>{if(!was.has(id))ev.push(['group',`${nmB(id)} aggiunto a ${g.name}`])});
     was.forEach(id=>{if(!now.has(id)&&b.people.some(p=>p.id===id&&!p.deleted))ev.push(['group',`${nmB(id)} tolto da ${g.name}`])})});
-  a.groups.forEach(g=>{if(!b.groups.some(x=>x.id===g.id))ev.push(['group',`Eliminato gruppo ${g.name}`])});
+  a.groups.forEach(g=>{if(!b.groups.some(x=>x.id===g.id))ev.push(['group',`Eliminata zona ${g.name}`])});
   const sa=(a.start&&a.start.points)||{},sb=(b.start&&b.start.points)||{},ch=[];
   new Set([...Object.keys(sa),...Object.keys(sb)]).forEach(id=>{const x=sa[id]||0,y=sb[id]||0;if(x!==y)ch.push(`${nmB(id)} ${fmt(x)||'0'} → ${fmt(y)||'0'}`)});
   if(ch.length)ev.push(['start',`Punti di partenza modificati: ${ch.join(', ')}`]);
@@ -2091,8 +2107,9 @@ function renderBookings(){
   const d=tripDay(),L=bkLayout(d),me=myPid(),edit=id=>isAdmin()||id===me,cn=id=>L.cars.findIndex(c=>c.driver===id)+1;
   // composizione suggerita (non modificabile): per ogni auto prima il guidatore, poi i passeggeri
   const bal=balances(),sc=id=>{const v=bal[id]||0;return `${v>0?'+':v<0?'−':''}${Math.abs(v)}`};
+  const zoneOf=id=>groupsOf(id).map(g=>state.groups[gIndex(g)].name).join(', ');
   const crow=(id,role)=>`<div class="ul-row cmp-${role}${(bal[id]||0)<0?' ul-neg':''}${id===me?' me':''}">
-      <span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></div>`;
+      <span class="ul-n"><b>${esc(name(id))}</b>${role==='drv'&&zoneOf(id)?`<small class="drv-zone">Zona ${esc(zoneOf(id))}</small>`:''}</span><span class="ul-v">${sc(id)}</span><span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></div>`;
   // la tabella resta sempre la stessa: i posti liberi hanno "—" e si riempiono man mano che arrivano i presenti
   const slot=role=>`<div class="ul-row cmp-${role} cmp-free"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">${role==='drv'?'Guida':'Passeggero'}</span></div>`;
   const carH=(c,lbl)=>`<div class="cmp-car">${lbl?`<div class="cmp-h">${lbl}</div>`:''}<div class="cmp-list">${c.driver?crow(c.driver,'drv'):slot('drv')}${c.pax.map(x=>crow(x,'pax')).join('')}${Array.from({length:Math.max(0,c.seats-c.pax.length)},()=>slot('pax')).join('')}</div></div>`;
@@ -4657,6 +4674,8 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['6.1','Pagina Zone: ogni zona è una tabella con i suoi membri; ✕ per togliere qualcuno, "+ Aggiungi persona" per aggiungerlo.'],
+ ['6.0','Grafico dei punti più pulito: senza posizione né gruppo, con il nome in una colonna separata dalle barre. I gruppi si chiamano ora Zone; nella pagina Viaggio accanto al guidatore compare la sua zona.'],
  ['5.9','Aggiunto "Orario normale (8:00–16:30)" tra l\'orario flessibile e altro orario.'],
  ['5.8','Scelta dell\'orario semplificata: orario flessibile (7:30–16:00), altro orario (con inizio e fine) oppure vado da solo.'],
  ['5.7','"Presente" chiede l\'orario: flessibile (7:30–16:00), regolare (8:00–16:30), CFI o straordinario (con inizio e fine), oppure "vado da solo". Le auto si compongono separatamente per ogni orario.'],
