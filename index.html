@@ -729,7 +729,7 @@ a.tr-h{text-decoration:none}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.1</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.2</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -1090,7 +1090,7 @@ a.tr-h{text-decoration:none}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.1';
+const APP_VERSION='6.2';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1159,7 +1159,8 @@ $('all-off').onclick=()=>{draft.who.clear();draft.cars=draft.cars.map(()=>({driv
 
 // Distribuisci: i saldi più bassi guidano, passeggeri a rotazione partendo dai punti più alti
 // --- gruppi
-function renderGroups(){
+const selBusy=box=>{const a=document.activeElement;return !!(a&&a.tagName==='SELECT'&&box&&box.contains(a))};
+function renderGroups(){if(selBusy($('groups')))return;
   const ppl=active().sort((a,c)=>a.name.localeCompare(c.name));
   $('groups').innerHTML=state.groups.length?state.groups.map(g=>{
     const mem=ppl.filter(p=>(g.members||[]).includes(p.id));
@@ -1174,7 +1175,7 @@ function renderGroups(){
 }
 $('add-group').onclick=()=>{let k=state.groups.length+1;while(state.groups.some(g=>g.name==='Zona '+k))k++;
   const g={id:uid(),name:'Zona '+k,members:[]};state.groups.push(g);persist();render();const i=$('gn-'+g.id);if(i){i.focus();i.select()}};
-$('groups').onchange=e=>{const a=e.target.closest('[data-gadd]');if(a){if(!a.value)return;const g=state.groups.find(x=>x.id===a.dataset.gadd);g.members=[...(g.members||[]),a.value];persist();render();return}
+$('groups').onchange=e=>{const a=e.target.closest('[data-gadd]');if(a){a.blur();if(!a.value)return;const g=state.groups.find(x=>x.id===a.dataset.gadd);g.members=[...(g.members||[]),a.value];persist();render();return}
   const i=e.target.closest('[data-gname]');if(!i)return;const g=state.groups.find(x=>x.id===i.dataset.gname);const n=i.value.trim();
   if(!n){i.value=g.name;return}g.name=n;persist();render()};
 $('groups').onkeydown=e=>{if(e.key==='Enter'&&e.target.dataset.gname)e.target.blur()};
@@ -1962,8 +1963,9 @@ $('sync-me').onchange=$('sync-me2').onchange=e=>{sync.me=e.target.value;const t=
 const DEV=(()=>{let d='';try{d=localStorage.getItem('ca-dev')||'';if(!d){d=Math.random().toString(36).slice(2,10);localStorage.setItem('ca-dev',d)}}catch(e){d='x'}return d})();
 // segna "unito" il nome scelto su questo telefono (e lo toglie dal nome scelto prima, se cambiato)
 function joinCheck(){if(!fsdb||!sync.code)return;const me=myPid(),col=gref().collection('iscritti');
-  Object.values(joined).forEach(x=>{if(x.dev===DEV&&x.pid!==me)col.doc(x.pid).set({pid:x.pid,left:true,dev:DEV,at:new Date().toISOString()}).catch(()=>{})});
-  if(me&&!(joined[me]&&joined[me].dev===DEV)){const x={pid:me,name:name(me),dev:DEV,at:new Date().toISOString()};joined[me]=x;col.doc(me).set(x).catch(()=>{})}}
+  Object.values(joined).forEach(x=>{if(x.dev===DEV&&x.pid!==me){delete joined[x.pid];col.doc(x.pid).set({pid:x.pid,left:true,dev:DEV,at:new Date().toISOString()}).catch(()=>{})}});
+  // scrive solo se quel nome non risulta ancora unito (anche da un altro telefono): niente scritture continue
+  if(me&&!joined[me]){const x={pid:me,name:name(me),dev:DEV,at:new Date().toISOString()};joined[me]=x;col.doc(me).set(x).catch(()=>{})}}
 // nome della squadra: lo decide chi l'ha creata, viaggia con i dati condivisi
 $('team-rename').onchange=()=>{const n=$('team-rename').value.trim().slice(0,40);if(!n||!sync.creator)return;state.teamName=n;const t=curTeam();if(t)t.name=n;persist();render();smsg('Nome della squadra aggiornato.')};
 $('team-rename').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
@@ -2243,6 +2245,7 @@ function renderPending(){const ds=pendingDates();
   $('trip-rows').innerHTML=[...ds].reverse().map(pendRow).join('')+last.map(t=>doneCard(t,trOpen.has('t:'+t.id))).join('');
   if(drag)return;
   if($('pend-list').closest('.view').hidden&&location.hash!=='#conferma')return;
+  if(selBusy($('pend-list')))return;
   $('pend-list').innerHTML=ds.length?ds.map(pendCard).join(''):'<div class="panel"><p class="hint" style="margin:0">Nessun viaggio da confermare.</p></div>';
 }
 // --- modifiche alla composizione (salvate subito, uguali su tutti i telefoni)
@@ -2274,7 +2277,7 @@ function tripClick(e){const go=e.target.closest('[data-go]');
     state.trips.push({id:uid(),date:d,weight:1,note:'',cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
     state.trips.sort((a,b)=>a.date.localeCompare(b.date));savePlan(d,cars,{done:true});persist();render();snack(`Viaggio di ${bkLong(d)} registrato`)}}
 $('trip-rows').onclick=tripClick;$('pend-list').onclick=tripClick;
-$('pend-list').onchange=e=>{const s=e.target.closest('[data-add]');if(!s||!s.value)return;const d=s.closest('[data-d]').dataset.d;if(!pendCan(d))return;
+$('pend-list').onchange=e=>{const s=e.target.closest('[data-add]');if(s)s.blur();if(!s||!s.value)return;const d=s.closest('[data-d]').dataset.d;if(!pendCan(d))return;
   const [i,role]=s.dataset.add.split('|'),cars=pendingCars(d),c=cars[+i],id=s.value;if(!c)return;
   if(role==='drv')c.driver=id;else{if(c.passengers.length>=SEATS_DEF){snack('Quell\'auto è piena');return}c.passengers.push(id)}
   pendSave(d,cars);snack(`${name(id)} aggiunto`)};
@@ -4674,6 +4677,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['6.2','Corretto: i menu a tendina (zone e viaggi da confermare) si chiudevano da soli perché l\'app si aggiornava di continuo quando lo stesso nome era scelto su due telefoni.'],
  ['6.1','Pagina Zone: ogni zona è una tabella con i suoi membri; ✕ per togliere qualcuno, "+ Aggiungi persona" per aggiungerlo.'],
  ['6.0','Grafico dei punti più pulito: senza posizione né gruppo, con il nome in una colonna separata dalle barre. I gruppi si chiamano ora Zone; nella pagina Viaggio accanto al guidatore compare la sua zona.'],
  ['5.9','Aggiunto "Orario normale (8:00–16:30)" tra l\'orario flessibile e altro orario.'],
