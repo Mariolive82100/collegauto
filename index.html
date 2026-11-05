@@ -693,6 +693,14 @@ a.tr-h{text-decoration:none}
 .tag.joined,.tag.notjoined{display:inline-block;padding:2px 9px;border-radius:999px;font-size:12px;line-height:1.4}
 .tag.joined{background:color-mix(in srgb,var(--teal) 18%,transparent);color:var(--teal);border-color:transparent;font-weight:700}
 .tag.notjoined{background:none;color:var(--muted);border:1px dashed var(--line)}
+.shift-opts{display:flex;flex-direction:column;gap:8px}
+.shift-opts button{display:flex!important;align-items:baseline;justify-content:space-between;gap:10px;min-height:54px!important;padding:10px 14px!important;text-align:left}
+.shift-opts b{font-size:16px}.shift-opts small{font-size:13px;color:var(--muted);font-weight:500}
+.shift-opts [data-sh="solo"]{border-style:dashed!important}
+.shift{display:flex;flex-direction:column;gap:6px}
+.shift+.shift{margin-top:6px}
+.shift-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--teal);letter-spacing:.02em}
+.shift-h i{font-style:normal;font-size:12px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:color-mix(in srgb,var(--teal) 18%,transparent);display:inline-flex;align-items:center;justify-content:center}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -700,7 +708,7 @@ a.tr-h{text-decoration:none}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.6</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.7</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -1004,6 +1012,26 @@ a.tr-h{text-decoration:none}
     <button class="ghost wide" id="ask-no">Annulla</button>
   </div>
 </div>
+<div class="sheet" id="shift-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="shift-t">
+  <div class="sheet-card">
+    <h2 id="shift-t">Che orario fai?</h2>
+    <p class="hint" style="margin:0" id="shift-d"></p>
+    <div class="shift-opts" id="shift-step1">
+      <button data-sh="flex"><b>Orario flessibile</b><small>7:30 – 16:00</small></button>
+      <button data-sh="reg"><b>Orario regolare</b><small>8:00 – 16:30</small></button>
+      <button data-sh="cfi"><b>CFI</b><small>scegli tu gli orari</small></button>
+      <button data-sh="str"><b>Straordinario</b><small>scegli tu gli orari</small></button>
+      <button data-sh="solo"><b>Vado da solo</b><small>non entro nelle auto</small></button>
+    </div>
+    <div id="shift-step2" hidden>
+      <div class="m-grid2"><label class="f">Inizio<input type="time" id="sh-from" step="300"></label><label class="f">Fine<input type="time" id="sh-to" step="300"></label></div>
+      <span class="msg" id="sh-msg" role="status"></span>
+      <button class="wide bk-main" id="sh-ok">Conferma presenza</button>
+      <button class="ghost wide" id="sh-back">‹ Indietro</button>
+    </div>
+    <button class="ghost wide" id="shift-cancel">Annulla</button>
+  </div>
+</div>
 <div class="sheet" id="whoami" hidden role="dialog" aria-modal="true" aria-labelledby="who-t">
   <div class="sheet-card">
     <h2 id="who-t">Chi sei in questa squadra?</h2>
@@ -1042,7 +1070,7 @@ a.tr-h{text-decoration:none}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='5.6';
+const APP_VERSION='5.7';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -2021,8 +2049,20 @@ function bkWrite(b,del){
 //    (prima chi copre un gruppo rimasto senza guidatore, poi chi ha meno punti). Chi ha risposto "no" non guida mai.
 // 2) si aggiungono auto solo finché i posti non bastano per tutti (posti di ogni auto: scelti dal guidatore, di base 4)
 // 3) ogni passeggero va nell'auto con più persone del suo gruppo; un'auto rimasta senza passeggeri viene sciolta se possibile
-function bkLayout(date){
-  const list=bkList(date),bal=balances();
+// turni: chi fa lo stesso orario viaggia insieme; "vado da solo" non entra nelle auto
+const SHIFTS={flex:{t:'Orario flessibile',from:'07:30',to:'16:00'},reg:{t:'Orario regolare',from:'08:00',to:'16:30'},cfi:{t:'CFI',custom:true},str:{t:'Straordinario',custom:true},solo:{t:'Vado da solo'},nd:{t:'Orario non indicato'}};
+const SHIFT_ORDER=['flex','reg','cfi','str','nd'];
+const bkShift=b=>SHIFTS[b.shift]?b.shift:'nd';
+const hhmm=t=>String(t||'').replace(/^0(\d)/,'$1');
+const shiftLabel=b=>{const k=bkShift(b),S=SHIFTS[k];if(S.custom)return `${S.t} ${hhmm(b.from)}–${hhmm(b.to)}`;if(S.from)return `${S.t} ${hhmm(S.from)}–${hhmm(S.to)}`;return S.t};
+function bkLayout(date){const all=bkList(date),groups=[],buckets=new Map();
+  all.filter(b=>bkShift(b)!=='solo').forEach(b=>{const k=bkShift(b),key=SHIFTS[k].custom?`${k}|${b.from}|${b.to}`:k;
+    if(!buckets.has(key))buckets.set(key,{key,k,label:shiftLabel(b),from:SHIFTS[k].custom?b.from:SHIFTS[k].from||'',list:[]});buckets.get(key).list.push(b)});
+  [...buckets.values()].sort((a,b)=>SHIFT_ORDER.indexOf(a.k)-SHIFT_ORDER.indexOf(b.k)||String(a.from).localeCompare(String(b.from))).forEach(g=>{
+    const L=bkLayoutList(g.list);L.cars.forEach(c=>c.grp=g.label);groups.push({...g,cars:L.cars,wait:L.wait,extraYes:L.extraYes})});
+  return {groups,cars:groups.flatMap(g=>g.cars),wait:groups.flatMap(g=>g.wait),list:all,solo:all.filter(b=>bkShift(b)==='solo').map(b=>b.pid),extraYes:groups.flatMap(g=>g.extraYes)}}
+function bkLayoutList(list){
+  const bal=balances();
   const byPts=(x,y)=>(bal[x.pid]||0)-(bal[y.pid]||0)||tie(x.pid)-tie(y.pid)||name(x.pid).localeCompare(name(y.pid));
   const cap=b=>Math.max(1,Math.min(SEATS_MAX,+b.seats||SEATS_DEF));
   const yes=list.filter(b=>bkDrive(b)==='si').sort(byPts),maybe=list.filter(b=>bkDrive(b)==='forse').sort(byPts);
@@ -2056,32 +2096,36 @@ function renderBookings(){
       <span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${role==='drv'?'Guida':role==='wait'?'Senza posto':'Passeggero'}</span></div>`;
   // la tabella resta sempre la stessa: i posti liberi hanno "—" e si riempiono man mano che arrivano i presenti
   const slot=role=>`<div class="ul-row cmp-${role} cmp-free"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">${role==='drv'?'Guida':'Passeggero'}</span></div>`;
-  let cars=L.cars.map(c=>({driver:c.driver,seats:c.seats,pax:[...c.pax]})),wait=[...L.wait];
-  if(!cars.length)cars=[{driver:'',seats:SEATS_DEF,pax:wait.splice(0,SEATS_DEF)}];
-  const carH=(c,i)=>`<div class="cmp-car">${cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">${c.driver?crow(c.driver,'drv'):slot('drv')}${c.pax.map(x=>crow(x,'pax')).join('')}${Array.from({length:Math.max(0,c.seats-c.pax.length)},()=>slot('pax')).join('')}</div></div>`;
-  $('bk-days-view').innerHTML=cars.map(carH).join('')
-    +(wait.length?`<div class="cmp-car"><div class="cmp-h">Senza posto</div><div class="cmp-list">${wait.map(x=>crow(x,'wait')).join('')}</div></div>`:'');
+  const carH=(c,lbl)=>`<div class="cmp-car">${lbl?`<div class="cmp-h">${lbl}</div>`:''}<div class="cmp-list">${c.driver?crow(c.driver,'drv'):slot('drv')}${c.pax.map(x=>crow(x,'pax')).join('')}${Array.from({length:Math.max(0,c.seats-c.pax.length)},()=>slot('pax')).join('')}</div></div>`;
+  const waitH=w=>w.length?`<div class="cmp-car"><div class="cmp-h">Senza posto</div><div class="cmp-list">${w.map(x=>crow(x,'wait')).join('')}</div></div>`:'';
+  let n=0;
+  $('bk-days-view').innerHTML=L.groups.length
+    ?L.groups.map(g=>{let cars=g.cars.map(c=>({driver:c.driver,seats:c.seats,pax:[...c.pax]})),w=[...g.wait];
+        if(!cars.length)cars=[{driver:'',seats:SEATS_DEF,pax:w.splice(0,SEATS_DEF)}];
+        return `<div class="shift"><div class="shift-h">${esc(g.label)}<i>${g.list.length}</i></div>${cars.map(c=>carH(c,L.cars.length+(g.cars.length?0:1)>1?`Auto ${++n}`:'')).join('')}${waitH(w)}</div>`}).join('')
+    :carH({driver:'',seats:SEATS_DEF,pax:[]},'');
   const abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
   const done1=state.trips.some(t=>!t.hist&&t.date===d),can=L.cars.some(c=>c.pax.length);
   // due liste minimal: assenti e nessuna conferma (prima chi ha meno punti)
   const byPts=(x,y)=>(bal[x]||0)-(bal[y]||0)||tie(x)-tie(y)||name(x).localeCompare(name(y));
   const absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
   const mini=(t,ids)=>`<div class="mini"><span class="mini-h">${t} <i>${ids.length}</i></span><span class="mini-l">${ids.length?ids.map(id=>`<span class="mn${id===me?' me':''}">${esc(name(id))}</span>`).join(''):'<span class="mn-none">—</span>'}</span></div>`;
-  $('bk-abs').innerHTML=mini('Assenti',absIds)+mini('Nessuna conferma',missIds);
+  $('bk-abs').innerHTML=(L.solo.length?mini('Vado da solo',[...L.solo].sort(byPts)):'')+mini('Assenti',absIds)+mini('Nessuna conferma',missIds);
   $('hm-day').textContent=bkLong(d);
   // i due tasti della pagina principale
   const mineB=me&&L.list.find(b=>b.pid===me),meAbs=me&&abs.some(b=>b.pid===me);
   $('bk-open-t').textContent=mineB?'Presente ✓':'Presente';
-  const sub={};L.cars.forEach((c,i)=>{const k=L.cars.length>1?` ${i+1}`:'';sub[c.driver]=k?`Guidi l'auto${k}`:'Guidi tu';c.pax.forEach(x=>{sub[x]=`Passeggero${k?' auto'+k:''}`})});L.wait.forEach(x=>{sub[x]='Senza posto'});
+  const sub={};L.cars.forEach((c,i)=>{const k=L.cars.length>1?` ${i+1}`:'';sub[c.driver]=k?`Guidi l'auto${k}`:'Guidi tu';c.pax.forEach(x=>{sub[x]=`Passeggero${k?' auto'+k:''}`})});L.wait.forEach(x=>{sub[x]='Senza posto'});L.solo.forEach(x=>{sub[x]='Vai da solo'});
+  if(mineB)sub[me]=[bkShift(mineB)==='solo'?'':shiftLabel(mineB),sub[me]].filter(Boolean).join(' · ');
   $('bk-open-s').textContent=mineB?(sub[me]?`${sub[me]} · tocca per annullare`:'tocca per annullare'):'al prossimo viaggio';
   $('bk-away-t').textContent=meAbs?'Assente ✓':'Assente';$('bk-away-s').textContent=meAbs?'tocca per annullare':'al prossimo viaggio';
   $('bk-open').classList.toggle('on',!!mineB);$('bk-away').classList.toggle('on',!!meAbs);
 }
 // --- risposte: presente (con "Sarai guidatore?"), assente, nessuna risposta
-function bkSet(pid,what,drive){const d=tripDay(),id=d+'_'+pid,cur=(state.bookings||[]).find(b=>b.id===id),t=new Date().toISOString();
+function bkSet(pid,what,drive,sh){const d=tripDay(),id=d+'_'+pid,cur=(state.bookings||[]).find(b=>b.id===id),t=new Date().toISOString();
   if(what==='none'){if(cur)bkWrite({id,date:d,pid},true)}
   else if(what==='abs')bkWrite({id,date:d,pid,absent:true,by:sync.me||'',t});
-  else{const b={id,date:d,pid,present:true,drive,by:sync.me||'',t};if(cur&&cur.seats)b.seats=cur.seats;bkWrite(b)}
+  else{const b={id,date:d,pid,present:true,drive,by:sync.me||'',t,...(sh||{})};if(cur&&cur.seats)b.seats=cur.seats;bkWrite(b)}
   render()}
 let askPid='';
 // toccando un nome si risponde per quel collega: presente, assente o nessuna risposta
@@ -2095,7 +2139,25 @@ $('ask-seat').onclick=e=>{if(e.target.id==='ask-seat')$('ask-seat').hidden=true}
 const needMe=()=>{if(sync.code){whoLater=false;maybeAskWho()}else snack('Per confermare la presenza entra nella tua squadra: menu › Squadra')};
 $('bk-open').onclick=()=>{const me=myPid();if(!me){needMe();return}
   if(bkList(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Presenza annullata');return}
-  bkSet(me,'pres','forse');snack(`Presente ${bkLong(tripDay())}`)};
+  shiftOpen()};
+
+// --- "Presente": scelta dell'orario (CFI e straordinario chiedono inizio e fine)
+let shPick='';
+function shiftOpen(){shPick='';$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?';
+  $('shift-d').textContent=`Prossimo viaggio: ${bkLong(tripDay())}.`;$('shift-sheet').hidden=false}
+function shiftDone(sh){const me=myPid();$('shift-sheet').hidden=true;if(!me)return;bkSet(me,'pres','forse',sh);snack(`Presente · ${shiftLabel(sh)}`)}
+$('shift-step1').onclick=e=>{const b=e.target.closest('[data-sh]');if(!b)return;const k=b.dataset.sh;
+  if(!SHIFTS[k].custom){shiftDone({shift:k});return}
+  shPick=k;const last=(state.bookings||[]).filter(x=>x.pid===myPid()&&x.shift===k&&x.from).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
+  $('sh-from').value=last?last.from:'08:00';$('sh-to').value=last?last.to:(k==='str'?'18:00':'12:00');$('sh-msg').textContent='';
+  $('shift-t').textContent=`${SHIFTS[k].t}: da che ora a che ora?`;$('shift-step1').hidden=true;$('shift-step2').hidden=false};
+$('sh-ok').onclick=()=>{const f=$('sh-from').value,t=$('sh-to').value;
+  if(!f||!t){$('sh-msg').textContent='Indica inizio e fine.';return}
+  if(t<=f){$('sh-msg').textContent='La fine deve essere dopo l\'inizio.';return}
+  shiftDone({shift:shPick,from:f,to:t})};
+$('sh-back').onclick=()=>{$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?'};
+$('shift-cancel').onclick=()=>{$('shift-sheet').hidden=true};
+$('shift-sheet').onclick=e=>{if(e.target.id==='shift-sheet')$('shift-sheet').hidden=true};
 $('bk-away').onclick=()=>{const me=myPid();if(!me){needMe();return}
   if(bkAbsent(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Assenza annullata');return}
   bkSet(me,'abs');snack(`Assente ${bkLong(tripDay())}`)};
@@ -2119,9 +2181,9 @@ const planOf=d=>(state.bookings||[]).find(b=>b.id===planId(d));
 function pendingDates(){const td=tripDay(),reg=new Set(state.trips.filter(t=>!t.hist).map(t=>t.date)),ds=new Set();
   (state.bookings||[]).forEach(b=>{if(b.date<td&&((b.pid&&!b.absent&&state.people.some(p=>p.id===b.pid))||b.plan))ds.add(b.date)});
   return [...ds].filter(d=>{const p=planOf(d);return !(p&&(p.done||p.discarded))&&!reg.has(d)}).sort()}
-function pendingCars(d){const p=planOf(d);if(p&&Array.isArray(p.cars))return p.cars.map(c=>({driver:c.driver,passengers:[...(c.passengers||[])]}));
-  return bkLayout(d).cars.map(c=>({driver:c.driver,passengers:[...c.pax]}))}
-function savePlan(d,cars,extra={}){bkWrite({id:planId(d),date:d,plan:true,cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]})),by:sync.me||'',t:new Date().toISOString(),...extra})}
+function pendingCars(d){const p=planOf(d);if(p&&Array.isArray(p.cars))return p.cars.map(c=>({driver:c.driver,passengers:[...(c.passengers||[])],grp:c.grp||''}));
+  return bkLayout(d).cars.map(c=>({driver:c.driver,passengers:[...c.pax],grp:c.grp||''}))}
+function savePlan(d,cars,extra={}){bkWrite({id:planId(d),date:d,plan:true,cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers],grp:c.grp||''})),by:sync.me||'',t:new Date().toISOString(),...extra})}
 // può confermare, modificare o eliminare un viaggio solo chi ne fa parte (in auto o presente quel giorno)
 function pendCan(d){const me=myPid();if(!me)return false;
   return pendingCars(d).some(c=>c.driver===me||c.passengers.includes(me))||bkList(d).some(b=>b.pid===me)}
@@ -2142,7 +2204,7 @@ function pendCard(d){const cars=pendingCars(d),can=pendCan(d),ed=can&&pendEdit==
       ${ed?`<span class="pc-grip" data-grip="1" aria-label="Trascina ${esc(name(id))}">⋮⋮</span>`:''}<span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${drv?'Guida':'Passeggero'}</span>
       ${ed?`<button class="pc-rm" data-rm="${i}|${id}" aria-label="Togli ${esc(name(id))}">✕</button>`:''}</div>`};
   const body=cars.map((c,i)=>{const pax=ed?[...c.passengers,...Array(Math.max(0,SEATS_DEF-c.passengers.length)).fill('')]:c.passengers;
-    return `<div class="pc">${cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
+    return `<div class="pc">${cars.length>1||c.grp?`<div class="cmp-h">Auto ${i+1}${c.grp?' · '+esc(c.grp):''}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
       ${!ed&&c.driver&&!c.passengers.length?'<p class="hint" style="margin:0">Senza passeggeri: questa auto non verrà registrata.</p>':''}</div>`}).join('')||'<p class="hint" style="margin:0">Nessuno in questo viaggio.</p>';
   const foot=!can?'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può confermarlo o modificarlo.</p>'
     :ed?`<p class="hint" style="margin:0">Trascina ⋮⋮ per spostare (anche al posto del guidatore), ✕ per togliere, "+ Aggiungi persona" nei posti liberi.</p>
@@ -4596,6 +4658,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['5.7','"Presente" chiede l\'orario: flessibile (7:30–16:00), regolare (8:00–16:30), CFI o straordinario (con inizio e fine), oppure "vado da solo". Le auto si compongono separatamente per ogni orario.'],
  ['5.6','Nella pagina della squadra, accanto a ogni partecipante, compare "unito" quando si è collegato con il codice e ha scelto il suo nome, altrimenti "non ancora".'],
  ['5.5','I viaggi da confermare si aprono nella pagina Conferma, con i tasti Conferma e Modifica. In modifica si trascinano le persone (anche al posto del guidatore), si tolgono con ✕ e si aggiungono nei posti liberi.'],
  ['5.4','Se il prossimo viaggio cade di sabato o domenica, si passa direttamente al lunedì.'],
