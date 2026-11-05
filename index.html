@@ -685,7 +685,7 @@ button.ul-row{cursor:pointer;width:100%;text-align:left;border:none;border-radiu
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.3</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.4</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -1027,7 +1027,7 @@ button.ul-row{cursor:pointer;width:100%;text-align:left;border:none;border-radiu
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='5.3';
+const APP_VERSION='5.4';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1976,7 +1976,9 @@ if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')
 // state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, present:true, drive:'si'|'no'|'forse', seats?, by, t}  oppure  {.., absent:true}]
 // su Firebase: gruppi/{codice}/prenotazioni/{id}
 const BK_CUTOFF=8,SEATS_DEF=POSTI,SEATS_MAX=8;
-const tripDay=()=>new Date().getHours()<BK_CUTOFF?todayISO():isoShift(todayISO(),1);
+// prossimo viaggio: oggi fino alle 8:00, poi domani; sabato e domenica si saltano (si passa al lunedì)
+const skipWeekend=d=>{let x=d;for(let i=0;i<2;i++){const w=new Date(x+'T12:00').getDay();if(w===6||w===0)x=isoShift(x,1)}return x};
+const tripDay=()=>skipWeekend(new Date().getHours()<BK_CUTOFF?todayISO():isoShift(todayISO(),1));
 const bkAll=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
 const bkList=date=>bkAll(date).filter(b=>!b.absent);   // presenti
 const bkAbsent=date=>bkAll(date).filter(b=>b.absent);  // assenti
@@ -4535,6 +4537,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['5.4','Se il prossimo viaggio cade di sabato o domenica, si passa direttamente al lunedì.'],
  ['5.3','Pagina Viaggio: il prossimo viaggio sempre aperto in cima, poi i viaggi da confermare (compressi, con l\'avviso "Modifica e conferma") e gli ultimi 3 viaggi registrati, che si aprono toccandoli. Nei viaggi da confermare basta toccare un nome per toglierlo o farlo guidare.'],
  ['5.2','"Conferma" è una scheda in basso, dopo Punti, con il numero dei viaggi in attesa. Solo chi ha partecipato a un viaggio può confermarlo, modificarlo o eliminarlo.'],
  ['5.1','Nuova pagina "Viaggi da confermare": alle 8:00 il prossimo viaggio passa lì e nella pagina principale compare l\'avviso. Si possono togliere persone, cambiare guidatore, registrare o eliminare il viaggio. Tolto il tasto "Conferma e registra" dalla pagina principale.'],
