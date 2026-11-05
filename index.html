@@ -678,6 +678,18 @@ button.ul-row{cursor:pointer;width:100%;text-align:left;border:none;border-radiu
 #pend-list .tr{border:none;background:none}
 #pend-list .panel{padding-top:4px}
 #pend-list .tr-chev{display:none}
+a.tr-h{text-decoration:none}
+.pend .pend-day{text-transform:none;letter-spacing:0;font-size:18px;color:var(--fg)}
+.pend.is-edit{border-color:var(--amber)}
+.cmp-list.editing .ul-row{grid-template-columns:28px minmax(0,1fr) auto 92px 34px!important}
+.cmp-list.editing .cmp-free{grid-template-columns:minmax(0,1fr) 92px!important}
+.cmp-list.editing .cmp-free>.ul-v,.cmp-list.editing .cmp-free>span:last-child:not(.ul-s){display:none}
+.pend-list{gap:14px}
+.pc-grip{display:flex;align-items:center;justify-content:center;height:40px;font-size:16px;letter-spacing:-2px;color:var(--muted);cursor:grab;touch-action:none;user-select:none}
+.pc-add{width:100%;min-height:38px;font-size:15px;color:var(--muted)}
+.ul-row.dragging{opacity:.35}
+.ul-row.drop-over{outline:2px dashed var(--amber);outline-offset:-3px;background:color-mix(in srgb,var(--amber) 14%,var(--panel))!important}
+.drag-ghost{position:fixed;z-index:90;pointer-events:none;background:var(--panel)!important;border:1px solid var(--amber)!important;border-radius:10px!important;box-shadow:0 12px 30px -8px rgba(0,0,0,.45);display:grid!important;grid-template-columns:28px minmax(0,1fr) auto 92px 34px;align-items:center;gap:10px;padding:8px 12px}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -685,7 +697,7 @@ button.ul-row{cursor:pointer;width:100%;text-align:left;border:none;border-radiu
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.4</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.5</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -761,7 +773,7 @@ button.ul-row{cursor:pointer;width:100%;text-align:left;border:none;border-radiu
 <section class="view" data-view="conferma" aria-labelledby="t-pend" hidden>
   <div class="panel">
     <h2 id="t-pend">Viaggi da confermare</h2>
-    <p class="hint" style="margin:0">Alle 8:00 il viaggio del giorno arriva qui. Tocca un nome per toglierlo o farlo guidare, poi conferma.</p>
+    <p class="hint" style="margin:0">Alle 8:00 il viaggio del giorno arriva qui. Se è andato così, tocca Conferma; altrimenti Modifica.</p>
   </div>
   <div id="pend-list" class="pend-list"></div>
 </section>
@@ -1027,7 +1039,7 @@ button.ul-row{cursor:pointer;width:100%;text-align:left;border:none;border-radiu
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='5.4';
+const APP_VERSION='5.5';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -2101,23 +2113,30 @@ function savePlan(d,cars,extra={}){bkWrite({id:planId(d),date:d,plan:true,cars:c
 // può confermare, modificare o eliminare un viaggio solo chi ne fa parte (in auto o presente quel giorno)
 function pendCan(d){const me=myPid();if(!me)return false;
   return pendingCars(d).some(c=>c.driver===me||c.passengers.includes(me))||bkList(d).some(b=>b.pid===me)}
-let pendArm='',pendSel='';const trOpen=new Set();
+let pendArm='',pendEdit='',drag=null;const trOpen=new Set();
 const cap1=t=>t.charAt(0).toUpperCase()+t.slice(1);
 const shortD=d=>cap1(new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'}));
-// riga di un viaggio da confermare: compressa con l'avviso, si apre toccandola
-function pendCard(d,open){const cars=pendingCars(d),can=pendCan(d),bal=balances(),sc=id=>{const v=bal[id]||0;return `${v>0?'+':v<0?'−':''}${Math.abs(v)}`};
-  const n=cars.reduce((s,c)=>s+(c.driver?1:0)+c.passengers.length,0);
-  const head=`<button class="tr-h" data-tog="p:${d}" aria-expanded="${open}"><span class="tr-d"><b>${esc(shortD(d))}</b><small>${n} ${n===1?'persona':'persone'}</small></span><span class="tr-badge">Modifica e conferma</span><span class="tr-chev" aria-hidden="true">›</span></button>`;
-  if(!open)return `<div class="tr tr-pend" data-d="${d}">${head}</div>`;
-  const body=cars.map((c,i)=>{const mem=[c.driver,...c.passengers].filter(Boolean);
-    return `<div class="pc">${cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">${mem.map(id=>{const drv=id===c.driver,key=`${d}|${i}|${id}`,sel=can&&pendSel===key;
-      return `<${can?'button':'div'} class="ul-row ${drv?'cmp-drv':'cmp-pax'}${(bal[id]||0)<0?' ul-neg':''}${sel?' sel':''}"${can?` data-ps="${i}|${id}"`:''}><span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${drv?'Guida':'Passeggero'}</span></${can?'button':'div'}>`
-        +(sel?`<div class="ps-act">${drv?'':`<button data-mk="${i}|${id}">Fai guidare</button>`}<button class="danger" data-rm="${i}|${id}">Togli</button></div>`:'')}).join('')||'<p class="hint" style="margin:8px 12px">Auto vuota</p>'}</div>
-      ${mem.length&&!c.passengers.length?'<p class="hint" style="margin:0">Senza passeggeri: questa auto non verrà registrata.</p>':''}</div>`}).join('')||'<p class="hint" style="margin:0">Nessuno in questo viaggio.</p>';
-  const foot=can?`<p class="hint" style="margin:0">Tocca un nome per toglierlo o farlo guidare.</p>
-      <div class="pend-act"><button class="ghost danger" data-del="1">${pendArm==='del'+d?'Tocca di nuovo':'Elimina'}</button><button class="bk-main" data-ok="1">Conferma e registra</button></div>`
-    :'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può confermarlo o modificarlo.</p>';
-  return `<div class="tr tr-pend open" data-d="${d}">${head}<div class="tr-body">${body}${foot}</div></div>`}
+// riga compressa nella pagina Viaggi: toccandola si va alla pagina di conferma
+function pendRow(d){const cars=pendingCars(d),n=cars.reduce((s,c)=>s+(c.driver?1:0)+c.passengers.length,0);
+  return `<div class="tr tr-pend"><a class="tr-h" href="#conferma" data-go="${d}"><span class="tr-d"><b>${esc(shortD(d))}</b><small>${n} ${n===1?'persona':'persone'}</small></span><span class="tr-badge">Modifica e conferma</span><span class="tr-chev" aria-hidden="true">›</span></a></div>`}
+// scheda nella pagina di conferma: vista con Modifica / Conferma, oppure modifica (trascina, ✕, aggiungi)
+function pendCard(d){const cars=pendingCars(d),can=pendCan(d),ed=can&&pendEdit===d,bal=balances(),sc=id=>{const v=bal[id]||0;return `${v>0?'+':v<0?'−':''}${Math.abs(v)}`};
+  const inTrip=new Set(cars.flatMap(c=>[c.driver,...c.passengers]).filter(Boolean));
+  const free=active().filter(p=>!inTrip.has(p.id)).sort((a,b)=>a.name.localeCompare(b.name));
+  const addSel=(i,role)=>free.length?`<select class="pc-add" data-add="${i}|${role}" aria-label="Aggiungi persona"><option value="">+ Aggiungi persona</option>${free.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select>`:'<span class="hint">—</span>';
+  const row=(i,role,k,id)=>{const drv=role==='drv';
+    if(!id)return ed?`<div class="ul-row pc-slot ${drv?'cmp-drv':'cmp-pax'} cmp-free" data-slot="${i}|${role}|${k}"><span class="ul-n">${addSel(i,role)}</span><span class="ul-v"></span><span class="ul-s">${drv?'Guida':'Passeggero'}</span><span></span></div>`:'';
+    return `<div class="ul-row pc-slot ${drv?'cmp-drv':'cmp-pax'}${(bal[id]||0)<0?' ul-neg':''}" data-slot="${i}|${role}|${k}">
+      ${ed?`<span class="pc-grip" data-grip="1" aria-label="Trascina ${esc(name(id))}">⋮⋮</span>`:''}<span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${drv?'Guida':'Passeggero'}</span>
+      ${ed?`<button class="pc-rm" data-rm="${i}|${id}" aria-label="Togli ${esc(name(id))}">✕</button>`:''}</div>`};
+  const body=cars.map((c,i)=>{const pax=ed?[...c.passengers,...Array(Math.max(0,SEATS_DEF-c.passengers.length)).fill('')]:c.passengers;
+    return `<div class="pc">${cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
+      ${!ed&&c.driver&&!c.passengers.length?'<p class="hint" style="margin:0">Senza passeggeri: questa auto non verrà registrata.</p>':''}</div>`}).join('')||'<p class="hint" style="margin:0">Nessuno in questo viaggio.</p>';
+  const foot=!can?'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può confermarlo o modificarlo.</p>'
+    :ed?`<p class="hint" style="margin:0">Trascina ⋮⋮ per spostare (anche al posto del guidatore), ✕ per togliere, "+ Aggiungi persona" nei posti liberi.</p>
+      <div class="pend-act"><button class="ghost danger" data-del="1">${pendArm==='del'+d?'Tocca di nuovo':'Elimina viaggio'}</button><button class="bk-main" data-done="1">Fine modifiche</button></div>`
+    :`<div class="pend-act"><button class="ghost" data-edit="1">Modifica</button><button class="bk-main" data-ok="1">Conferma</button></div>`;
+  return `<div class="panel pend${ed?' is-edit':''}" data-d="${d}"><div class="row between"><h2 class="pend-day">${esc(shortD(d))}</h2>${ed?'<span class="hint">modifica</span>':''}</div>${body}${foot}</div>`}
 // riga di un viaggio registrato: data e guidatori, si apre per vedere i partecipanti
 function doneCard(t,open){const n=t.cars.reduce((s,c)=>s+1+c.passengers.length,0);
   const head=`<button class="tr-h" data-tog="t:${t.id}" aria-expanded="${open}"><span class="tr-d"><b>${esc(shortD(t.date))}</b><small>${t.cars.map(c=>'guida '+esc(name(c.driver))).join(' · ')} · ${n} persone</small></span><span class="tr-ok">✓</span><span class="tr-chev" aria-hidden="true">›</span></button>`;
@@ -2127,31 +2146,59 @@ function doneCard(t,open){const n=t.cars.reduce((s,c)=>s+1+c.passengers.length,0
       ${c.passengers.map(x=>`<div class="ul-row cmp-pax"><span class="ul-n"><b>${esc(name(x))}</b></span><span class="ul-v">−1</span><span class="ul-s">Passeggero</span></div>`).join('')}</div></div>`).join('')}</div></div>`}
 function renderPending(){const ds=pendingDates();
   ds.forEach(d=>{if(!planOf(d))savePlan(d,pendingCars(d))});   // la composizione si fissa al momento in cui scade
+  if(pendEdit&&!ds.includes(pendEdit))pendEdit='';
   $('tab-badge').hidden=!ds.length;$('tab-badge').textContent=ds.length;
   $('dm-pend').textContent=ds.length?`${ds.length} ${ds.length===1?'viaggio':'viaggi'} in attesa`:'Nessun viaggio in attesa';
   const last=[...state.trips].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  $('trip-rows').innerHTML=[...ds].reverse().map(d=>pendCard(d,trOpen.has('p:'+d))).join('')+last.map(t=>doneCard(t,trOpen.has('t:'+t.id))).join('');
+  $('trip-rows').innerHTML=[...ds].reverse().map(pendRow).join('')+last.map(t=>doneCard(t,trOpen.has('t:'+t.id))).join('');
+  if(drag)return;
   if($('pend-list').closest('.view').hidden&&location.hash!=='#conferma')return;
-  $('pend-list').innerHTML=ds.length?ds.map(d=>`<div class="panel">${pendCard(d,true)}</div>`).join(''):'<div class="panel"><p class="hint" style="margin:0">Nessun viaggio da confermare.</p></div>';
+  $('pend-list').innerHTML=ds.length?ds.map(pendCard).join(''):'<div class="panel"><p class="hint" style="margin:0">Nessun viaggio da confermare.</p></div>';
 }
-function tripClick(e){const tog=e.target.closest('[data-tog]');
-  if(tog&&!tog.closest('#pend-list')){const k=tog.dataset.tog;trOpen.has(k)?trOpen.delete(k):trOpen.add(k);pendSel='';renderPending();return}
+// --- modifiche alla composizione (salvate subito, uguali su tutti i telefoni)
+function pendSave(d,cars){savePlan(d,cars.filter(c=>c.driver||c.passengers.length));renderPending()}
+function slotGet(cars,[i,role,k]){const c=cars[+i];if(!c)return '';return role==='drv'?c.driver:(c.passengers[+k]||'')}
+function slotSet(cars,[i,role,k],v){const c=cars[+i];if(!c)return;if(role==='drv')c.driver=v;else{c.passengers[+k]=v}}
+function moveSlot(d,from,to){const cars=pendingCars(d),a=from.split('|'),b=to.split('|');if(from===to)return;
+  const x=slotGet(cars,a),y=slotGet(cars,b);if(!x)return;
+  if(b[1]==='pax'&&!y&&a[0]!==b[0]&&cars[+b[0]].passengers.filter(Boolean).length>=SEATS_DEF){snack('Quell\'auto è piena');return}
+  slotSet(cars,a,y);slotSet(cars,b,x);   // scambio: chi era al posto di arrivo prende il posto di partenza
+  cars.forEach(c=>{c.passengers=c.passengers.filter(Boolean)});
+  pendSave(d,cars);snack(b[1]==='drv'?`Guida ${name(x)}`:`${name(x)} spostato`)}
+function tripClick(e){const go=e.target.closest('[data-go]');
+  if(go){e.preventDefault();const d=go.dataset.go;location.hash='conferma';setTimeout(()=>{const c=document.querySelector(`#pend-list [data-d="${d}"]`);if(c)c.scrollIntoView({block:'start',behavior:'smooth'})},120);return}
+  const tog=e.target.closest('[data-tog]');
+  if(tog){const k=tog.dataset.tog;trOpen.has(k)?trOpen.delete(k):trOpen.add(k);renderPending();return}
   const card=e.target.closest('[data-d]');if(!card)return;const d=card.dataset.d;if(!pendCan(d))return;
-  const ps=e.target.closest('[data-ps]');if(ps){const k=d+'|'+ps.dataset.ps;pendSel=pendSel===k?'':k;renderPending();return}
-  const mk=e.target.closest('[data-mk]');
-  if(mk){const [i,id]=mk.dataset.mk.split('|'),cars=pendingCars(d),c=cars[+i];if(!c)return;
-    c.passengers=[c.driver,...c.passengers.filter(x=>x!==id)].filter(Boolean);c.driver=id;pendSel='';savePlan(d,cars);renderPending();snack(`Guida ${name(id)}`);return}
+  if(e.target.closest('[data-edit]')){pendEdit=d;pendArm='';renderPending();return}
+  if(e.target.closest('[data-done]')){pendEdit='';pendArm='';renderPending();return}
   const rm=e.target.closest('[data-rm]');
   if(rm){const [i,id]=rm.dataset.rm.split('|'),cars=pendingCars(d),c=cars[+i];if(!c)return;
-    if(c.driver===id){c.driver=c.passengers.shift()||''}else c.passengers=c.passengers.filter(x=>x!==id);
-    pendSel='';savePlan(d,cars.filter(x=>x.driver||x.passengers.length));renderPending();snack(`${name(id)} tolto dal viaggio`);return}
+    if(c.driver===id)c.driver='';else c.passengers=c.passengers.filter(x=>x!==id);
+    pendSave(d,cars);snack(`${name(id)} tolto dal viaggio`);return}
   if(e.target.closest('[data-del]')){if(pendArm!=='del'+d){pendArm='del'+d;renderPending();setTimeout(()=>{if(pendArm==='del'+d){pendArm='';renderPending()}},4000);return}
-    pendArm='';savePlan(d,pendingCars(d),{discarded:true});render();snack(`Viaggio di ${bkLong(d)} eliminato`);return}
-  if(e.target.closest('[data-ok]')){const cars=pendingCars(d).filter(c=>c.driver&&c.passengers.length);
+    pendArm='';pendEdit='';savePlan(d,pendingCars(d),{discarded:true});render();snack(`Viaggio di ${bkLong(d)} eliminato`);return}
+  if(e.target.closest('[data-ok]')){const all=pendingCars(d),cars=all.filter(c=>c.driver&&c.passengers.length);
+    if(all.some(c=>!c.driver&&c.passengers.length)){snack('Un\'auto non ha il guidatore: tocca Modifica');return}
     if(!cars.length){snack('Serve almeno un\'auto con guidatore e passeggeri');return}
-    const id=uid();state.trips.push({id,date:d,weight:1,note:'',cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
-    state.trips.sort((a,b)=>a.date.localeCompare(b.date));savePlan(d,cars,{done:true});trOpen.delete('p:'+d);persist();render();snack(`Viaggio di ${bkLong(d)} registrato`)}}
+    state.trips.push({id:uid(),date:d,weight:1,note:'',cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
+    state.trips.sort((a,b)=>a.date.localeCompare(b.date));savePlan(d,cars,{done:true});persist();render();snack(`Viaggio di ${bkLong(d)} registrato`)}}
 $('trip-rows').onclick=tripClick;$('pend-list').onclick=tripClick;
+$('pend-list').onchange=e=>{const s=e.target.closest('[data-add]');if(!s||!s.value)return;const d=s.closest('[data-d]').dataset.d;if(!pendCan(d))return;
+  const [i,role]=s.dataset.add.split('|'),cars=pendingCars(d),c=cars[+i],id=s.value;if(!c)return;
+  if(role==='drv')c.driver=id;else{if(c.passengers.length>=SEATS_DEF){snack('Quell\'auto è piena');return}c.passengers.push(id)}
+  pendSave(d,cars);snack(`${name(id)} aggiunto`)};
+// trascinamento con il dito (o il mouse) dalla maniglia ⋮⋮
+$('pend-list').addEventListener('pointerdown',e=>{const g=e.target.closest('[data-grip]');if(!g)return;const row=g.closest('[data-slot]'),card=g.closest('[data-d]');if(!row||!card)return;
+  e.preventDefault();const r=row.getBoundingClientRect(),ghost=row.cloneNode(true);ghost.classList.add('drag-ghost');
+  Object.assign(ghost.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px'});document.body.appendChild(ghost);row.classList.add('dragging');
+  drag={d:card.dataset.d,from:row.dataset.slot,row,ghost,dy:e.clientY-r.top,over:null}});
+addEventListener('pointermove',e=>{if(!drag)return;e.preventDefault();drag.ghost.style.top=(e.clientY-drag.dy)+'px';
+  const el=document.elementFromPoint(e.clientX,e.clientY),t=el&&el.closest(`[data-d="${drag.d}"] [data-slot]`);
+  if(drag.over&&drag.over!==t)drag.over.classList.remove('drop-over');if(t&&t!==drag.row)t.classList.add('drop-over');drag.over=t},{passive:false});
+function dragEnd(){if(!drag)return;const {d,from,over,ghost,row}=drag;drag=null;ghost.remove();row.classList.remove('dragging');
+  if(over){over.classList.remove('drop-over');moveSlot(d,from,over.dataset.slot)}else renderPending()}
+addEventListener('pointerup',dragEnd);addEventListener('pointercancel',dragEnd);
 const _render4=render;render=function(){_render4();renderBookings();renderPending()};
 renderBookings();
 setInterval(()=>{if(!document.hidden)renderBookings()},60000);   // alle 8:00 la tabella si azzera da sola
@@ -4537,6 +4584,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['5.5','I viaggi da confermare si aprono nella pagina Conferma, con i tasti Conferma e Modifica. In modifica si trascinano le persone (anche al posto del guidatore), si tolgono con ✕ e si aggiungono nei posti liberi.'],
  ['5.4','Se il prossimo viaggio cade di sabato o domenica, si passa direttamente al lunedì.'],
  ['5.3','Pagina Viaggio: il prossimo viaggio sempre aperto in cima, poi i viaggi da confermare (compressi, con l\'avviso "Modifica e conferma") e gli ultimi 3 viaggi registrati, che si aprono toccandoli. Nei viaggi da confermare basta toccare un nome per toglierlo o farlo guidare.'],
  ['5.2','"Conferma" è una scheda in basso, dopo Punti, con il numero dei viaggi in attesa. Solo chi ha partecipato a un viaggio può confermarlo, modificarlo o eliminarlo.'],
