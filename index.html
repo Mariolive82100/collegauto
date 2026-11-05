@@ -708,7 +708,7 @@ a.tr-h{text-decoration:none}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.7</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v5.8</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -1018,9 +1018,7 @@ a.tr-h{text-decoration:none}
     <p class="hint" style="margin:0" id="shift-d"></p>
     <div class="shift-opts" id="shift-step1">
       <button data-sh="flex"><b>Orario flessibile</b><small>7:30 – 16:00</small></button>
-      <button data-sh="reg"><b>Orario regolare</b><small>8:00 – 16:30</small></button>
-      <button data-sh="cfi"><b>CFI</b><small>scegli tu gli orari</small></button>
-      <button data-sh="str"><b>Straordinario</b><small>scegli tu gli orari</small></button>
+      <button data-sh="alt"><b>Altro orario</b><small>scegli inizio e fine</small></button>
       <button data-sh="solo"><b>Vado da solo</b><small>non entro nelle auto</small></button>
     </div>
     <div id="shift-step2" hidden>
@@ -1070,7 +1068,7 @@ a.tr-h{text-decoration:none}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='5.7';
+const APP_VERSION='5.8';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -2050,8 +2048,8 @@ function bkWrite(b,del){
 // 2) si aggiungono auto solo finché i posti non bastano per tutti (posti di ogni auto: scelti dal guidatore, di base 4)
 // 3) ogni passeggero va nell'auto con più persone del suo gruppo; un'auto rimasta senza passeggeri viene sciolta se possibile
 // turni: chi fa lo stesso orario viaggia insieme; "vado da solo" non entra nelle auto
-const SHIFTS={flex:{t:'Orario flessibile',from:'07:30',to:'16:00'},reg:{t:'Orario regolare',from:'08:00',to:'16:30'},cfi:{t:'CFI',custom:true},str:{t:'Straordinario',custom:true},solo:{t:'Vado da solo'},nd:{t:'Orario non indicato'}};
-const SHIFT_ORDER=['flex','reg','cfi','str','nd'];
+const SHIFTS={flex:{t:'Orario flessibile',from:'07:30',to:'16:00'},alt:{t:'Orario',custom:true},reg:{t:'Orario regolare',from:'08:00',to:'16:30'},cfi:{t:'CFI',custom:true},str:{t:'Straordinario',custom:true},solo:{t:'Vado da solo'},nd:{t:'Orario non indicato'}};
+const SHIFT_ORDER=['flex','alt','reg','cfi','str','nd'];
 const bkShift=b=>SHIFTS[b.shift]?b.shift:'nd';
 const hhmm=t=>String(t||'').replace(/^0(\d)/,'$1');
 const shiftLabel=b=>{const k=bkShift(b),S=SHIFTS[k];if(S.custom)return `${S.t} ${hhmm(b.from)}–${hhmm(b.to)}`;if(S.from)return `${S.t} ${hhmm(S.from)}–${hhmm(S.to)}`;return S.t};
@@ -2149,8 +2147,8 @@ function shiftDone(sh){const me=myPid();$('shift-sheet').hidden=true;if(!me)retu
 $('shift-step1').onclick=e=>{const b=e.target.closest('[data-sh]');if(!b)return;const k=b.dataset.sh;
   if(!SHIFTS[k].custom){shiftDone({shift:k});return}
   shPick=k;const last=(state.bookings||[]).filter(x=>x.pid===myPid()&&x.shift===k&&x.from).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
-  $('sh-from').value=last?last.from:'08:00';$('sh-to').value=last?last.to:(k==='str'?'18:00':'12:00');$('sh-msg').textContent='';
-  $('shift-t').textContent=`${SHIFTS[k].t}: da che ora a che ora?`;$('shift-step1').hidden=true;$('shift-step2').hidden=false};
+  $('sh-from').value=last?last.from:'08:00';$('sh-to').value=last?last.to:'16:30';$('sh-msg').textContent='';
+  $('shift-t').textContent='Da che ora a che ora?';$('shift-step1').hidden=true;$('shift-step2').hidden=false};
 $('sh-ok').onclick=()=>{const f=$('sh-from').value,t=$('sh-to').value;
   if(!f||!t){$('sh-msg').textContent='Indica inizio e fine.';return}
   if(t<=f){$('sh-msg').textContent='La fine deve essere dopo l\'inizio.';return}
@@ -4658,6 +4656,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['5.8','Scelta dell\'orario semplificata: orario flessibile (7:30–16:00), altro orario (con inizio e fine) oppure vado da solo.'],
  ['5.7','"Presente" chiede l\'orario: flessibile (7:30–16:00), regolare (8:00–16:30), CFI o straordinario (con inizio e fine), oppure "vado da solo". Le auto si compongono separatamente per ogni orario.'],
  ['5.6','Nella pagina della squadra, accanto a ogni partecipante, compare "unito" quando si è collegato con il codice e ha scelto il suo nome, altrimenti "non ancora".'],
  ['5.5','I viaggi da confermare si aprono nella pagina Conferma, con i tasti Conferma e Modifica. In modifica si trascinano le persone (anche al posto del guidatore), si tolgono con ✕ e si aggiungono nei posti liberi.'],
