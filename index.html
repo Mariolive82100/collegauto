@@ -746,7 +746,7 @@ button.tr-static{cursor:default}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.5</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.6</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -1107,7 +1107,7 @@ button.tr-static{cursor:default}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.5';
+const APP_VERSION='6.6';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1797,13 +1797,15 @@ async function syncStart(){
       // cache locale: alla riapertura i documenti già scaricati si leggono dal telefono e il server invia solo le novità
       try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
   }catch(e){setSync('pending',e&&e.code||'');setTimeout(syncStart,15000);return}
-  unsubs.push(gref().collection('viaggi').onSnapshot(snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
+  // includeMetadataChanges: con la cache attiva il primo aggiornamento arriva dal telefono (fromCache);
+  // senza questa opzione, se i dati sul server sono uguali, la conferma del server non arriverebbe mai e resterebbe "In attesa di rete"
+  unsubs.push(gref().collection('viaggi').onSnapshot({includeMetadataChanges:true},snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
   // solo le ultime due settimane, filtrate dal server (le prenotazioni vecchie non vengono più scaricate)
   unsubs.push(gref().collection('prenotazioni').where('date','>=',isoShift(todayISO(),-14)).onSnapshot(snap=>{const list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted)list.push({...b,id:d.id})});
     state.bookings=list;persistLocal();if(typeof renderBookings==='function'){renderBookings();renderPending()}},()=>{}));
   unsubs.push(gref().collection('iscritti').onSnapshot(snap=>{const j={};snap.forEach(d=>{const x=d.data();if(x&&!x.left&&x.pid)j[x.pid]=x});joined=j;joinCheck();render()},()=>{}));
-  unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
+  unsubs.push(gref().collection('meta').doc('stato').onSnapshot({includeMetadataChanges:true},d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
   syncPaused=false;lazySync();
 }
 // --- ascolti "su richiesta": registro delle modifiche e suggerimenti solo mentre la loro pagina è aperta
@@ -4724,6 +4726,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['6.6','Corretto: con la cache attiva lo stato poteva restare "In attesa di rete" anche se i dati erano già sincronizzati.'],
  ['6.5','Meno letture su Firebase: cache sul telefono, prenotazioni filtrate dal server (ultime 2 settimane), registro e suggerimenti scaricati solo quando si aprono le loro pagine, ascolti chiusi quando l\'app resta in background.'],
  ['6.4','Se ci sono viaggi da confermare anche il prossimo viaggio è compresso (si apre toccandolo). I viaggi registrati riportano "Confermato".'],
  ['6.3','Il viaggio del giorno si può confermare dalle 7:00 (da quell\'ora la presenza vale per il viaggio successivo). Con più orari gli elenchi sono compressi e si aprono toccandoli; ogni orario ha un colore diverso.'],
