@@ -734,6 +734,11 @@ a.tr-h{text-decoration:none}
 .shift-chev{font-size:20px;color:var(--muted);transition:transform .15s}
 .shift.open .shift-chev{transform:rotate(90deg)}
 .grp-l{font-weight:800;text-transform:none;letter-spacing:0}
+.tr-next.closed .tr-body{display:none}
+.tr-next .tr-h{width:100%}
+.tr-next.closed .tr-h{padding-bottom:12px!important}
+button.tr-static{cursor:default}
+.tr-ok{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--teal) 16%,transparent);color:var(--teal)!important}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -741,7 +746,7 @@ a.tr-h{text-decoration:none}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.3</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.4</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -781,7 +786,7 @@ a.tr-h{text-decoration:none}
   <div class="panel hm-rs">
     <div class="row between"><h2>Viaggi</h2><a class="more-link" href="#registro">Registro ›</a></div>
     <div class="trip-rows">
-      <div class="tr tr-next open"><div class="tr-h tr-static"><span class="tr-d"><b>Prossimo viaggio</b><small id="hm-day"></small></span></div>
+      <div class="tr tr-next open" id="tr-next"><button class="tr-h tr-static" id="tr-next-h" aria-expanded="true"><span class="tr-d"><b>Prossimo viaggio</b><small id="hm-day"></small></span><span class="tr-chev" id="tr-next-chev" aria-hidden="true" hidden>›</span></button>
         <div class="tr-body"><div id="bk-days-view" class="cmp"></div><div class="mini-wrap" id="bk-abs"></div></div></div>
       <div id="trip-rows" class="trip-rows"></div>
     </div>
@@ -1102,7 +1107,7 @@ a.tr-h{text-decoration:none}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.3';
+const APP_VERSION='6.4';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -2253,7 +2258,7 @@ function pendCard(d){const cars=pendingCars(d),can=pendCan(d),ed=can&&pendEdit==
   return `<div class="panel pend${ed?' is-edit':''}" data-d="${d}"><div class="row between"><h2 class="pend-day">${esc(shortD(d))}</h2>${ed?'<span class="hint">modifica</span>':''}</div>${body}${foot}</div>`}
 // riga di un viaggio registrato: data e guidatori, si apre per vedere i partecipanti
 function doneCard(t,open){const n=t.cars.reduce((s,c)=>s+1+c.passengers.length,0);
-  const head=`<button class="tr-h" data-tog="t:${t.id}" aria-expanded="${open}"><span class="tr-d"><b>${esc(shortD(t.date))}</b><small>${t.cars.map(c=>'guida '+esc(name(c.driver))).join(' · ')} · ${n} persone</small></span><span class="tr-ok">✓</span><span class="tr-chev" aria-hidden="true">›</span></button>`;
+  const head=`<button class="tr-h" data-tog="t:${t.id}" aria-expanded="${open}"><span class="tr-d"><b>${esc(shortD(t.date))}</b><small>${t.cars.map(c=>'guida '+esc(name(c.driver))).join(' · ')} · ${n} persone</small></span><span class="tr-ok">Confermato</span><span class="tr-chev" aria-hidden="true">›</span></button>`;
   if(!open)return `<div class="tr tr-done">${head}</div>`;
   return `<div class="tr tr-done open">${head}<div class="tr-body">${t.cars.map((c,i)=>`<div class="pc">${t.cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">
       <div class="ul-row cmp-drv"><span class="ul-n"><b>${esc(name(c.driver))}</b></span><span class="ul-v">+${c.passengers.length}</span><span class="ul-s">Guida</span></div>
@@ -2263,6 +2268,9 @@ function renderPending(){const ds=pendingDates();
   if(pendEdit&&!ds.includes(pendEdit))pendEdit='';
   $('tab-badge').hidden=!ds.length;$('tab-badge').textContent=ds.length;
   $('dm-pend').textContent=ds.length?`${ds.length} ${ds.length===1?'viaggio':'viaggi'} in attesa`:'Nessun viaggio in attesa';
+  // se ci sono viaggi da confermare anche il prossimo viaggio è compresso (si apre toccandolo)
+  const nextOpen=!ds.length||trOpen.has('next');$('tr-next').classList.toggle('open',nextOpen);$('tr-next').classList.toggle('closed',!nextOpen);
+  $('tr-next-h').setAttribute('aria-expanded',nextOpen);$('tr-next-chev').hidden=!ds.length;$('tr-next-h').classList.toggle('tr-static',!ds.length);
   const last=[...state.trips].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
   $('trip-rows').innerHTML=[...ds].reverse().map(pendRow).join('')+last.map(t=>doneCard(t,trOpen.has('t:'+t.id))).join('');
   if(drag)return;
@@ -2299,6 +2307,7 @@ function tripClick(e){const go=e.target.closest('[data-go]');
     state.trips.push({id:uid(),date:d,weight:1,note:'',cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
     state.trips.sort((a,b)=>a.date.localeCompare(b.date));savePlan(d,cars,{done:true});persist();render();snack(`Viaggio di ${bkLong(d)} registrato`)}}
 $('trip-rows').onclick=tripClick;$('pend-list').onclick=tripClick;
+$('tr-next-h').onclick=()=>{if(!pendingDates().length)return;trOpen.has('next')?trOpen.delete('next'):trOpen.add('next');renderPending()};
 $('pend-list').onchange=e=>{const s=e.target.closest('[data-add]');if(s)s.blur();if(!s||!s.value)return;const d=s.closest('[data-d]').dataset.d;if(!pendCan(d))return;
   const [i,role]=s.dataset.add.split('|'),cars=pendingCars(d),c=cars[+i],id=s.value;if(!c)return;
   if(role==='drv')c.driver=id;else{if(c.passengers.length>=SEATS_DEF){snack('Quell\'auto è piena');return}c.passengers.push(id)}
@@ -4699,6 +4708,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['6.4','Se ci sono viaggi da confermare anche il prossimo viaggio è compresso (si apre toccandolo). I viaggi registrati riportano "Confermato".'],
  ['6.3','Il viaggio del giorno si può confermare dalle 7:00 (da quell\'ora la presenza vale per il viaggio successivo). Con più orari gli elenchi sono compressi e si aprono toccandoli; ogni orario ha un colore diverso.'],
  ['6.2','Corretto: i menu a tendina (zone e viaggi da confermare) si chiudevano da soli perché l\'app si aggiornava di continuo quando lo stesso nome era scelto su due telefoni.'],
  ['6.1','Pagina Zone: ogni zona è una tabella con i suoi membri; ✕ per togliere qualcuno, "+ Aggiungi persona" per aggiungerlo.'],
