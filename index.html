@@ -722,6 +722,18 @@ a.tr-h{text-decoration:none}
 .ztab-x{width:44px;text-align:right}
 .ztab-empty{color:var(--muted);font-size:14px!important}
 .ztab-n{flex:none;min-width:26px;height:26px;padding:0 8px;border-radius:999px;background:var(--chip);font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+.shift-h{color:var(--sc,var(--teal))!important}
+.shift-h .shift-l{font-size:15px;font-weight:800;color:var(--sc,var(--teal))}
+.shift-h i{background:color-mix(in srgb,var(--sc,var(--teal)) 20%,transparent)!important;color:var(--sc,var(--teal))}
+.shift{border-left:3px solid var(--sc,var(--teal));padding-left:8px}
+.shift-tog{display:flex!important;align-items:center;gap:8px;width:100%;background:color-mix(in srgb,var(--sc) 9%,var(--panel))!important;border:1px solid color-mix(in srgb,var(--sc) 40%,var(--line))!important;border-radius:12px!important;padding:10px 12px!important;min-height:50px!important;text-align:left}
+.shift-sub{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.shift-tog .shift-l{flex:1;min-width:0;line-height:1.25}
+.shift-tog i,.shift-tog .shift-me,.shift-tog .shift-chev{flex:none}
+.shift-me{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:1px 7px;border-radius:999px;background:var(--sc);color:var(--bg)}
+.shift-chev{font-size:20px;color:var(--muted);transition:transform .15s}
+.shift.open .shift-chev{transform:rotate(90deg)}
+.grp-l{font-weight:800;text-transform:none;letter-spacing:0}
 #bk-add:disabled{opacity:.45}
 </style>
 
@@ -729,7 +741,7 @@ a.tr-h{text-decoration:none}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.2</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.3</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -805,7 +817,7 @@ a.tr-h{text-decoration:none}
 <section class="view" data-view="conferma" aria-labelledby="t-pend" hidden>
   <div class="panel">
     <h2 id="t-pend">Viaggi da confermare</h2>
-    <p class="hint" style="margin:0">Alle 8:00 il viaggio del giorno arriva qui. Se è andato così, tocca Conferma; altrimenti Modifica.</p>
+    <p class="hint" style="margin:0">Dalle 7:00 il viaggio del giorno arriva qui. Se è andato così, tocca Conferma; altrimenti Modifica.</p>
   </div>
   <div id="pend-list" class="pend-list"></div>
 </section>
@@ -1090,7 +1102,7 @@ a.tr-h{text-decoration:none}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.2';
+const APP_VERSION='6.3';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -2041,11 +2053,11 @@ const _render3=render;render=function(){_render3();renderWelcome()};
 renderInstall();renderWelcome();
 if(isWeb&&'serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 // ===================== Prenotazioni: presenze e auto composte in automatico =====================
-// Una sola prenotazione per il prossimo viaggio: prima delle 8:00 è quello di oggi, dopo le 8:00 quello di domani.
+// Una sola prenotazione per il prossimo viaggio: prima delle 7:00 è quello di oggi, dopo le 7:00 quello di domani.
 // state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, present:true, drive:'si'|'no'|'forse', seats?, by, t}  oppure  {.., absent:true}]
 // su Firebase: gruppi/{codice}/prenotazioni/{id}
-const BK_CUTOFF=8,SEATS_DEF=POSTI,SEATS_MAX=8;
-// prossimo viaggio: oggi fino alle 8:00, poi domani; sabato e domenica si saltano (si passa al lunedì)
+const BK_CUTOFF=7,SEATS_DEF=POSTI,SEATS_MAX=8;   // alle 7:00 il viaggio del giorno passa tra quelli da confermare
+// prossimo viaggio: oggi fino alle 7:00, poi domani; sabato e domenica si saltano (si passa al lunedì)
 const skipWeekend=d=>{let x=d;for(let i=0;i<2;i++){const w=new Date(x+'T12:00').getDay();if(w===6||w===0)x=isoShift(x,1)}return x};
 const tripDay=()=>skipWeekend(new Date().getHours()<BK_CUTOFF?todayISO():isoShift(todayISO(),1));
 const bkAll=date=>(state.bookings||[]).filter(b=>b.date===date&&state.people.some(p=>p.id===b.pid&&!p.deleted));
@@ -2068,6 +2080,11 @@ function bkWrite(b,del){
 // 3) ogni passeggero va nell'auto con più persone del suo gruppo; un'auto rimasta senza passeggeri viene sciolta se possibile
 // turni: chi fa lo stesso orario viaggia insieme; "vado da solo" non entra nelle auto
 const SHIFTS={flex:{t:'Orario flessibile',from:'07:30',to:'16:00'},alt:{t:'Orario',custom:true},reg:{t:'Orario normale',from:'08:00',to:'16:30'},cfi:{t:'CFI',custom:true},str:{t:'Straordinario',custom:true},solo:{t:'Vado da solo'},nd:{t:'Orario non indicato'}};
+// colori diversi per ogni orario (il flessibile è sempre verde acqua, il normale ambra)
+const SH_COL=['var(--g3)','var(--g4)','var(--g5)','var(--g6)','var(--g1)'];
+function shiftColor(label,all){if(/^Orario flessibile/.test(label))return 'var(--teal)';if(/^Orario normale/.test(label))return 'var(--amber)';
+  const others=[...new Set(all.filter(l=>!/^Orario (flessibile|normale)/.test(l)))];return SH_COL[Math.max(0,others.indexOf(label))%SH_COL.length]}
+const shOpen=new Set();
 const SHIFT_ORDER=['flex','reg','alt','cfi','str','nd'];
 const bkShift=b=>SHIFTS[b.shift]?b.shift:'nd';
 const hhmm=t=>String(t||'').replace(/^0(\d)/,'$1');
@@ -2116,11 +2133,15 @@ function renderBookings(){
   const slot=role=>`<div class="ul-row cmp-${role} cmp-free"><span class="ul-n"><b>—</b></span><span class="ul-v"></span><span class="ul-s">${role==='drv'?'Guida':'Passeggero'}</span></div>`;
   const carH=(c,lbl)=>`<div class="cmp-car">${lbl?`<div class="cmp-h">${lbl}</div>`:''}<div class="cmp-list">${c.driver?crow(c.driver,'drv'):slot('drv')}${c.pax.map(x=>crow(x,'pax')).join('')}${Array.from({length:Math.max(0,c.seats-c.pax.length)},()=>slot('pax')).join('')}</div></div>`;
   const waitH=w=>w.length?`<div class="cmp-car"><div class="cmp-h">Senza posto</div><div class="cmp-list">${w.map(x=>crow(x,'wait')).join('')}</div></div>`:'';
-  let n=0;
+  let n=0;const many=L.groups.length>1;
+  // con più orari ogni elenco è compresso: si apre toccando la sua intestazione
   $('bk-days-view').innerHTML=L.groups.length
-    ?L.groups.map(g=>{let cars=g.cars.map(c=>({driver:c.driver,seats:c.seats,pax:[...c.pax]})),w=[...g.wait];
+    ?L.groups.map((g,gi)=>{let cars=g.cars.map(c=>({driver:c.driver,seats:c.seats,pax:[...c.pax]})),w=[...g.wait];
         if(!cars.length)cars=[{driver:'',seats:SEATS_DEF,pax:w.splice(0,SEATS_DEF)}];
-        return `<div class="shift"><div class="shift-h">${esc(g.label)}<i>${g.list.length}</i></div>${cars.map(c=>carH(c,L.cars.length+(g.cars.length?0:1)>1?`Auto ${++n}`:'')).join('')}${waitH(w)}</div>`}).join('')
+        const col=shiftColor(g.label,L.groups.map(x=>x.label)),open=!many||shOpen.has(g.key),mine=g.list.some(b=>b.pid===me);
+        const nc=cars.length,ac=cars.map(c=>carH(c,L.cars.length+(g.cars.length?0:1)>1?`Auto ${++n}`:'')).join('');
+        const head=`<span class="shift-l">${esc(g.label)}</span><i>${g.list.length}</i>${mine?'<small class="shift-me">tu</small>':''}${many?`<small class="shift-sub">${nc} ${nc===1?'auto':'auto'}</small><span class="shift-chev" aria-hidden="true">›</span>`:''}`;
+        return `<div class="shift${open?' open':''}" style="--sc:${col}">${many?`<button class="shift-h shift-tog" data-shk="${esc(g.key)}" aria-expanded="${open}">${head}</button>`:`<div class="shift-h">${head}</div>`}${open?ac+waitH(w):''}</div>`}).join('')
     :carH({driver:'',seats:SEATS_DEF,pax:[]},'');
   const abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
   const done1=state.trips.some(t=>!t.hist&&t.date===d),can=L.cars.some(c=>c.pax.length);
@@ -2176,6 +2197,7 @@ $('sh-ok').onclick=()=>{const f=$('sh-from').value,t=$('sh-to').value;
 $('sh-back').onclick=()=>{$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?'};
 $('shift-cancel').onclick=()=>{$('shift-sheet').hidden=true};
 $('shift-sheet').onclick=e=>{if(e.target.id==='shift-sheet')$('shift-sheet').hidden=true};
+$('bk-days-view').addEventListener('click',e=>{const t=e.target.closest('[data-shk]');if(!t)return;const k=t.dataset.shk;shOpen.has(k)?shOpen.delete(k):shOpen.add(k);renderBookings()});
 $('bk-away').onclick=()=>{const me=myPid();if(!me){needMe();return}
   if(bkAbsent(tripDay()).some(b=>b.pid===me)){bkSet(me,'none');snack('Assenza annullata');return}
   bkSet(me,'abs');snack(`Assente ${bkLong(tripDay())}`)};
@@ -2191,7 +2213,7 @@ function planDay(){fillDraft();$('dist-note').textContent='Composizione suggerit
 const dayGroup=id=>groupOf(id);
 
 // ===================== Viaggi da confermare =====================
-// Alle 8:00 la tabella del prossimo viaggio "scade" e diventa un viaggio da confermare.
+// Alle 7:00 la tabella del prossimo viaggio "scade" e diventa un viaggio da confermare.
 // La composizione viene fissata in un documento prenotazioni/plan_AAAA-MM-GG {plan:true, cars, done?, discarded?}
 // così resta uguale su tutti i telefoni e si può modificare prima di registrarla.
 const planId=d=>'plan_'+d;
@@ -2222,7 +2244,7 @@ function pendCard(d){const cars=pendingCars(d),can=pendCan(d),ed=can&&pendEdit==
       ${ed?`<span class="pc-grip" data-grip="1" aria-label="Trascina ${esc(name(id))}">⋮⋮</span>`:''}<span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${drv?'Guida':'Passeggero'}</span>
       ${ed?`<button class="pc-rm" data-rm="${i}|${id}" aria-label="Togli ${esc(name(id))}">✕</button>`:''}</div>`};
   const body=cars.map((c,i)=>{const pax=ed?[...c.passengers,...Array(Math.max(0,SEATS_DEF-c.passengers.length)).fill('')]:c.passengers;
-    return `<div class="pc">${cars.length>1||c.grp?`<div class="cmp-h">Auto ${i+1}${c.grp?' · '+esc(c.grp):''}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
+    return `<div class="pc">${cars.length>1||c.grp?`<div class="cmp-h">Auto ${i+1}${c.grp?` · <span class="grp-l" style="color:${shiftColor(c.grp,cars.map(x=>x.grp||''))}">${esc(c.grp)}</span>`:''}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
       ${!ed&&c.driver&&!c.passengers.length?'<p class="hint" style="margin:0">Senza passeggeri: questa auto non verrà registrata.</p>':''}</div>`}).join('')||'<p class="hint" style="margin:0">Nessuno in questo viaggio.</p>';
   const foot=!can?'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può confermarlo o modificarlo.</p>'
     :ed?`<p class="hint" style="margin:0">Trascina ⋮⋮ per spostare (anche al posto del guidatore), ✕ per togliere, "+ Aggiungi persona" nei posti liberi.</p>
@@ -2294,7 +2316,7 @@ function dragEnd(){if(!drag)return;const {d,from,over,ghost,row}=drag;drag=null;
 addEventListener('pointerup',dragEnd);addEventListener('pointercancel',dragEnd);
 const _render4=render;render=function(){_render4();renderBookings();renderPending()};
 renderBookings();
-setInterval(()=>{if(!document.hidden)renderBookings()},60000);   // alle 8:00 la tabella si azzera da sola
+setInterval(()=>{if(!document.hidden)renderBookings()},60000);   // alle 7:00 la tabella si azzera da sola
 
 // --- libreria QR code (qrcode-generator 1.4.4, Kazuhiko Arase, licenza MIT)
 //---------------------------------------------------------------------
@@ -4677,6 +4699,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['6.3','Il viaggio del giorno si può confermare dalle 7:00 (da quell\'ora la presenza vale per il viaggio successivo). Con più orari gli elenchi sono compressi e si aprono toccandoli; ogni orario ha un colore diverso.'],
  ['6.2','Corretto: i menu a tendina (zone e viaggi da confermare) si chiudevano da soli perché l\'app si aggiornava di continuo quando lo stesso nome era scelto su due telefoni.'],
  ['6.1','Pagina Zone: ogni zona è una tabella con i suoi membri; ✕ per togliere qualcuno, "+ Aggiungi persona" per aggiungerlo.'],
  ['6.0','Grafico dei punti più pulito: senza posizione né gruppo, con il nome in una colonna separata dalle barre. I gruppi si chiamano ora Zone; nella pagina Viaggio accanto al guidatore compare la sua zona.'],
