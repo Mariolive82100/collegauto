@@ -746,7 +746,7 @@ button.tr-static{cursor:default}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.4</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.5</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -1107,7 +1107,7 @@ button.tr-static{cursor:default}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.4';
+const APP_VERSION='6.5';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1752,7 +1752,7 @@ function showView(){const h=location.hash.slice(1);
   const tv=TAB_OF[v]||v;document.querySelectorAll('[data-tab]').forEach(a=>{if(a.dataset.tab===tv)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
   if(!$('drawer').hidden)closeMenu();
   window.scrollTo(0,0);
-  setTimeout(()=>{if(v==='conferma')renderPending();if(v==='condividi')renderShare();if(v==='info')renderInfo();if(v==='suggerimenti')renderSug()},0)}
+  setTimeout(()=>{if(v==='conferma')renderPending();if(v==='condividi')renderShare();if(v==='info')renderInfo();if(v==='suggerimenti')renderSug();if(typeof lazySync==='function')lazySync()},0)}
 window.addEventListener('hashchange',showView);
 document.querySelectorAll('[data-tab]').forEach(a=>a.addEventListener('click',e=>{if(location.hash==='#'+a.dataset.tab){e.preventDefault();window.scrollTo(0,0)}}));
 if(['#nuovo','#prenota'].includes(location.hash))history.replaceState(null,'','#viaggio');
@@ -1793,17 +1793,33 @@ async function syncStart(){
   try{
     if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
     if(!firebase.auth().currentUser)await firebase.auth().signInAnonymously();
-    fsdb=firebase.firestore();
+    if(!fsdb){fsdb=firebase.firestore();
+      // cache locale: alla riapertura i documenti già scaricati si leggono dal telefono e il server invia solo le novità
+      try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
   }catch(e){setSync('pending',e&&e.code||'');setTimeout(syncStart,15000);return}
   unsubs.push(gref().collection('viaggi').onSnapshot(snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
-  unsubs.push(gref().collection('prenotazioni').onSnapshot(snap=>{const today=todayISO(),list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted&&b.date>=isoShift(today,-14))list.push({...b,id:d.id})});
+  // solo le ultime due settimane, filtrate dal server (le prenotazioni vecchie non vengono più scaricate)
+  unsubs.push(gref().collection('prenotazioni').where('date','>=',isoShift(todayISO(),-14)).onSnapshot(snap=>{const list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted)list.push({...b,id:d.id})});
     state.bookings=list;persistLocal();if(typeof renderBookings==='function'){renderBookings();renderPending()}},()=>{}));
   unsubs.push(gref().collection('iscritti').onSnapshot(snap=>{const j={};snap.forEach(d=>{const x=d.data();if(x&&!x.left&&x.pid)j[x.pid]=x});joined=j;joinCheck();render()},()=>{}));
-  unsubs.push(gref().collection('suggerimenti').onSnapshot(snap=>{sugRemote=[];snap.forEach(d=>sugRemote.push({...d.data(),id:d.id}));if(!$('sug-list').closest('.view').hidden)renderSug()},()=>{}));
-  unsubs.push(gref().collection('eventi').orderBy('t','desc').limit(200).onSnapshot(snap=>{remoteEvents=[];snap.forEach(d=>remoteEvents.push(d.data()));renderEvents()},()=>{}));
   unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
+  syncPaused=false;lazySync();
 }
+// --- ascolti "su richiesta": registro delle modifiche e suggerimenti solo mentre la loro pagina è aperta
+let lazyUn={ev:null,sug:null},lazyKey={ev:'',sug:''},evLimit=50,syncPaused=false,hideTimer=null;
+function lazySync(){const on=!!(fsdb&&sync.code&&!syncPaused),h=location.hash.slice(1);
+  const wantEv=on&&h==='registro'&&!$('pane-modifiche').hidden,wantSug=on&&h==='suggerimenti';
+  const kEv=wantEv?sync.code+'|'+evLimit:'',kSug=wantSug?sync.code:'';
+  if(kEv!==lazyKey.ev){if(lazyUn.ev){lazyUn.ev();lazyUn.ev=null}lazyKey.ev=kEv;
+    if(wantEv)lazyUn.ev=gref().collection('eventi').orderBy('t','desc').limit(evLimit).onSnapshot(snap=>{remoteEvents=[];snap.forEach(d=>remoteEvents.push(d.data()));renderEvents()},()=>{})}
+  if(kSug!==lazyKey.sug){if(lazyUn.sug){lazyUn.sug();lazyUn.sug=null}lazyKey.sug=kSug;
+    if(wantSug)lazyUn.sug=gref().collection('suggerimenti').orderBy('t','desc').limit(30).onSnapshot(snap=>{sugRemote=[];snap.forEach(d=>sugRemote.push({...d.data(),id:d.id}));renderSug()},()=>{})}}
+function lazyStop(){['ev','sug'].forEach(k=>{if(lazyUn[k]){try{lazyUn[k]()}catch(e){}lazyUn[k]=null}lazyKey[k]=''})}
+// --- app in background: dopo 1 minuto si chiudono tutti gli ascolti; al ritorno si riaprono (prima dalla cache del telefono)
+document.addEventListener('visibilitychange',()=>{clearTimeout(hideTimer);
+  if(document.hidden){if(sync.code&&!syncPaused)hideTimer=setTimeout(()=>{if(!document.hidden)return;syncPaused=true;lazyStop();unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[]},60000)}
+  else if(syncPaused&&sync.code){syncStart()}});
 // unisce i dati remoti con quelli locali non ancora inviati
 function syncMerge(fromCache){
   if(remoteTrips===null||remoteMeta===undefined)return;
@@ -1899,20 +1915,20 @@ function renderEvents(){
   if(sync.code&&remoteEvents){const ids=new Set(remoteEvents.map(e=>e.id));list=[...sync.pendingEv.filter(e=>!ids.has(e.id)),...remoteEvents]}
   list=[...list].sort((x,y)=>String(y.t).localeCompare(String(x.t)));
   if($('ev-only-start').checked)list=list.filter(e=>e.kind==='start');
-  $('ev-sum').textContent=list.length?`${list.length}${remoteEvents&&remoteEvents.length>=200?'+':''} modifiche`:'';
+  $('ev-sum').textContent=list.length?`${list.length}${remoteEvents&&remoteEvents.length>=evLimit?'+':''} modifiche`:'';
   if(!list.length){box.innerHTML='<p class="hint" style="margin:0">Nessuna modifica registrata finora.</p>';return}
   let lastD='';
   box.innerHTML=list.slice(0,evShown).map(e=>{const d=new Date(e.t),day=d.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
     const head=day!==lastD?`<h3 class="lm">${day}</h3>`:'';lastD=day;
     return head+`<div class="ev ${esc(e.kind||'')}"><span class="ev-t">${d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}</span>
       <div class="ev-b"><div class="ev-x">${esc(e.text)}</div><div class="ev-who">${e.by?esc(e.by):'nome non indicato'}${e.dev?' · dispositivo '+esc(e.dev):''}</div></div></div>`}).join('')
-    +(list.length>evShown?'<button class="ghost wide" id="ev-more">Mostra altre</button>':'');
+    +(list.length>evShown||(remoteEvents&&remoteEvents.length>=evLimit)?'<button class="ghost wide" id="ev-more">Mostra altre</button>':'');
 }
-$('events').onclick=e=>{if(e.target.id==='ev-more'){evShown+=60;renderEvents()}};
+$('events').onclick=e=>{if(e.target.id==='ev-more'){evShown+=50;if(remoteEvents&&remoteEvents.length>=evLimit){evLimit+=50;lazySync()}renderEvents()}};
 $('ev-only-start').onchange=renderEvents;
 document.querySelectorAll('[data-seg]').forEach(b=>b.onclick=()=>{const m=b.dataset.seg==='modifiche';
   $('pane-viaggi').hidden=m;$('pane-modifiche').hidden=!m;
-  document.querySelectorAll('[data-seg]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));if(m)renderEvents()});
+  document.querySelectorAll('[data-seg]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));if(m)renderEvents();lazySync()});
 // ogni modifica locale passa da persist(): qui capiamo cosa inviare
 const persistLocal=persist;
 persist=function(){persistLocal();
@@ -1935,7 +1951,7 @@ const teamLabel=t=>t&&t.name?t.name:'Squadra senza nome';
 function rememberTeam(){const t=curTeam();if(!t)return;t.me=sync.me||'';t.creator=!!sync.creator;if(state.teamName)t.name=state.teamName;
   try{localStorage.setItem(CACHE_PREFIX+sync.code,JSON.stringify(state))}catch(e){}saveSync()}
 const hasPending=()=>sync.pendingEv.length||sync.pendingDel.length||sync.dirty.length||sync.metaDirty;
-function stopSync(){joined={};unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteEvents=null}
+function stopSync(){joined={};lazyStop();unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteEvents=null}
 // passa a un'altra squadra (già nota o nuova); i dati arrivano da Firebase, nel frattempo si mostra la copia salvata
 function openTeam(code,{me='',creator=false,name='',fresh:newState=null}={}){
   if(sync.code){if(hasPending()){smsg('Ci sono modifiche non ancora inviate: aspetta che il pallino diventi verde e riprova.');return false}rememberTeam()}
@@ -4708,6 +4724,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['6.5','Meno letture su Firebase: cache sul telefono, prenotazioni filtrate dal server (ultime 2 settimane), registro e suggerimenti scaricati solo quando si aprono le loro pagine, ascolti chiusi quando l\'app resta in background.'],
  ['6.4','Se ci sono viaggi da confermare anche il prossimo viaggio è compresso (si apre toccandolo). I viaggi registrati riportano "Confermato".'],
  ['6.3','Il viaggio del giorno si può confermare dalle 7:00 (da quell\'ora la presenza vale per il viaggio successivo). Con più orari gli elenchi sono compressi e si aprono toccandoli; ogni orario ha un colore diverso.'],
  ['6.2','Corretto: i menu a tendina (zone e viaggi da confermare) si chiudevano da soli perché l\'app si aggiornava di continuo quando lo stesso nome era scelto su due telefoni.'],
