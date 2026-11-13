@@ -697,6 +697,10 @@ a.tr-h{text-decoration:none}
 .shift-opts button{display:flex!important;align-items:baseline;justify-content:space-between;gap:10px;min-height:54px!important;padding:10px 14px!important;text-align:left}
 .shift-opts b{font-size:16px}.shift-opts small{font-size:13px;color:var(--muted);font-weight:500}
 .shift-opts [data-sh="solo"]{border-style:dashed!important}
+.shift-reg{display:flex;flex-direction:column;gap:6px}
+.shift-flex{display:flex;align-items:center;gap:10px;padding:2px 6px 0 14px;font-size:15px;cursor:pointer}
+.shift-flex input{width:22px;height:22px;flex:none;accent-color:var(--teal)}
+.shift-flex small{font-size:13px;color:var(--muted)}
 .shift{display:flex;flex-direction:column;gap:6px}
 .shift+.shift{margin-top:6px}
 .shift-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--teal);letter-spacing:.02em}
@@ -746,7 +750,7 @@ button.tr-static{cursor:default}
 <header class="m-top">
   <div class="m-brand">
     <h1>Colleg<span>Auto</span></h1>
-    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.6</span><button class="team-name" id="team-name" type="button"></button></small>
+    <small class="by">by M.T. · <span class="ver" id="app-ver">v6.5</span><button class="team-name" id="team-name" type="button"></button></small>
   </div>
   <div class="row" style="gap:8px;flex-wrap:nowrap"><span class="sync-dot off" id="sync-dot" title="Non condiviso"></span><div class="zero" id="zero"></div>
     <button class="hdr-menu" id="menu-open" type="button" aria-label="Menu" aria-controls="drawer" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
@@ -822,7 +826,7 @@ button.tr-static{cursor:default}
 <section class="view" data-view="conferma" aria-labelledby="t-pend" hidden>
   <div class="panel">
     <h2 id="t-pend">Viaggi da confermare</h2>
-    <p class="hint" style="margin:0">Dalle 7:00 il viaggio del giorno arriva qui. Se è andato così, tocca Conferma; altrimenti Modifica.</p>
+    <p class="hint" style="margin:0">Dalle 7:00 il viaggio del giorno arriva qui. Se è andato così, tocca Conferma; altrimenti Modifica. Solo il creatore della squadra può confermare.</p>
   </div>
   <div id="pend-list" class="pend-list"></div>
 </section>
@@ -887,10 +891,12 @@ button.tr-static{cursor:default}
       <p class="hint" style="margin:0">Collega l'app a una squadra: i viaggi registrati da chiunque compaiono su tutti i telefoni, anche quando sei in ferie.</p>
       <label class="f">Codice ricevuto da un collega<input type="text" id="sync-join-code" placeholder="COL-XXXX-XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off" spellcheck="false"></label>
       <button class="primary wide" id="sync-join">Entra nella squadra</button>
+      <div id="sync-create-box">
       <div class="sync-or">oppure crea una squadra con i dati di questo telefono</div>
       <label class="f">Nome della squadra<input type="text" id="team-name-new" placeholder="es. Ufficio Napoli" maxlength="40"></label>
       <label class="f">Il tuo nome<select id="sync-me"></select></label>
       <button class="wide" id="sync-create">Crea una squadra con i miei dati</button>
+      </div>
     </div>
     <span class="msg" id="sync-msg" role="status"></span>
   </div>
@@ -935,10 +941,12 @@ button.tr-static{cursor:default}
     <div class="sp-actions" id="start-actions" hidden><span class="msg" id="start-msg" role="status"></span><button class="ghost" id="start-cancel">Annulla</button><button class="primary" id="start-save">Salva</button></div>
   </div>
   <div class="panel share-code" id="sync-on" hidden>
+    <div id="sync-share-box">
     <h2>Codice di condivisione</h2>
     <div class="sync-code" id="sync-code"></div>
     <div class="m-grid2"><button id="sync-copy">Copia codice</button><button class="primary" id="sync-share">Invia ai colleghi</button></div>
     <p class="hint" style="margin:0">Chi ha il codice entra nella squadra e vede tutti i dati: mandalo solo ai colleghi.</p>
+    </div>
     <button class="ghost wide" id="sync-leave">Esci da questa squadra</button>
   </div>
 </section>
@@ -1055,8 +1063,10 @@ button.tr-static{cursor:default}
     <h2 id="shift-t">Che orario fai?</h2>
     <p class="hint" style="margin:0" id="shift-d"></p>
     <div class="shift-opts" id="shift-step1">
-      <button data-sh="flex"><b>Orario flessibile</b><small>7:30 – 16:00</small></button>
-      <button data-sh="reg"><b>Orario normale</b><small>8:00 – 16:30</small></button>
+      <div class="shift-reg">
+        <button data-sh="reg"><b>Orario normale</b><small id="sh-reg-t">8:00 – 16:30</small></button>
+        <label class="shift-flex"><input type="checkbox" id="sh-flex"><b>FLEX</b><small>flessibile 7:30 – 16:00</small></label>
+      </div>
       <button data-sh="alt"><b>Altro orario</b><small>scegli inizio e fine</small></button>
       <button data-sh="solo"><b>Vado da solo</b><small>non entro nelle auto</small></button>
     </div>
@@ -1107,7 +1117,7 @@ button.tr-static{cursor:default}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.6';
+const APP_VERSION='6.8';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1131,6 +1141,14 @@ state.trips.forEach(t=>t.weight=Math.max(1,Math.round(+t.weight||1)));
 const active=()=>state.people.filter(p=>!p.archived&&!p.deleted);
 // chi gestisce i componenti: chi ha creato la squadra (o chiunque, se l'app non è collegata a una squadra)
 const isAdmin=()=>!window.__startLocked;
+// false: nessuno può creare nuove squadre (si può solo entrare con un codice). Rimetti true per riattivare la creazione.
+const ALLOW_NEW_TEAMS=false;
+// condividere l'app e il codice della squadra: solo il creatore della squadra
+const canShare=()=>isAdmin();
+// chi può eliminare un viaggio registrato: il creatore (o chiunque se l'app non è in una squadra); gli altri solo se hanno partecipato e il viaggio non è dello storico importato
+const canDelTrip=t=>{if(!t)return false;if(isAdmin())return true;if(t.hist)return false;
+  const me=state.people.find(x=>!x.deleted&&x.name===sync.me);if(!me)return false;
+  return t.cars.some(c=>c.driver===me.id||c.passengers.includes(me.id))};
 // persone visibili (attive + archiviate); chi è eliminato resta solo nei viaggi già registrati
 const listed=()=>state.people.filter(p=>!p.deleted);
 persist();
@@ -1140,7 +1158,7 @@ function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){
 function carPoints(car,w){const pts={};pts[car.driver]=w*car.passengers.length;car.passengers.forEach(p=>pts[p]=-w);return pts}
 function balances(){
   const st=state.start||{points:{}};const b={};state.people.forEach(p=>b[p.id]=st.points[p.id]||0);
-  state.trips.forEach(t=>!t.hist&&t.cars.forEach(c=>{const pts=carPoints(c,t.weight);for(const k in pts)if(k in b)b[k]+=pts[k]}));
+  state.trips.forEach(t=>!t.hist&&!t.pend&&t.cars.forEach(c=>{const pts=carPoints(c,t.weight);for(const k in pts)if(k in b)b[k]+=pts[k]}));
     return b;
 }
 // parità: a pari punti guida prima chi era più indietro nella graduatoria originale
@@ -1294,10 +1312,10 @@ function renderComposer(){
 }
 $('save').onclick=()=>{const v=validate();if(v){setMsg(v);return}
   if(state.sample){state={people:state.people,trips:[]}}
-  state.trips.push({id:uid(),date:$('trip-date').value,weight:+$('trip-weight').value,note:$('trip-note').value.trim(),
+  state.trips.push({id:uid(),...(sync.me?{by:sync.me}:{}),...(isAdmin()?{}:{pend:true}),date:$('trip-date').value,weight:+$('trip-weight').value,note:$('trip-note').value.trim(),
     cars:draft.cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
   state.trips.sort((a,b)=>a.date.localeCompare(b.date));
-  persist();draft={who:new Set(),cars:[{driver:'',passengers:[]}]};$('trip-note').value='';$('trip-weight').value=1;render()};
+  persist();draft={who:new Set(),cars:[{driver:'',passengers:[]}]};$('trip-note').value='';$('trip-weight').value=1;render();if(!isAdmin())snack('Viaggio inserito: lo conferma il creatore della squadra')};
 $('clear').onclick=()=>{$('dist-note').textContent='';draft={who:new Set(),cars:[{driver:'',passengers:[]}]};render()};
 
 // --- persone
@@ -1372,7 +1390,7 @@ $('people').onclick=e=>{const b=e.target.closest('[data-act]');if(!b)return;cons
 
 // --- saldi
 function renderBalances(){
-  const b=balances();const cnt={};state.people.forEach(p=>cnt[p.id]={g:0,p:0});state.trips.forEach(t=>t.cars.forEach(c=>{if(cnt[c.driver])cnt[c.driver].g++;c.passengers.forEach(x=>{if(cnt[x])cnt[x].p++})}));
+  const b=balances();const cnt={};state.people.forEach(p=>cnt[p.id]={g:0,p:0});state.trips.forEach(t=>t.pend||t.cars.forEach(c=>{if(cnt[c.driver])cnt[c.driver].g++;c.passengers.forEach(x=>{if(cnt[x])cnt[x].p++})}));
   const all=state.people.map(p=>({...p,v:b[p.id]}));
   const arr=all.filter(x=>!x.archived&&!x.deleted).sort((a,c)=>a.v-c.v||tie(a.id)-tie(c.id)||a.name.localeCompare(c.name));
   const max=Math.max(1,...arr.map(x=>Math.abs(x.v)));
@@ -1390,7 +1408,7 @@ function renderBalances(){
   $('zero').className='zero'+(total?' bad':'');$('zero').innerHTML=`Σ punti <b>${fmt(total)||'0'}</b>`;
   const pool=draft.who.size?arr.filter(x=>draft.who.has(x.id)):arr;
   $('next').innerHTML=pool.length?`<span class="hint">Prossimo a guidare${draft.who.size?' tra chi viaggia':''}</span> <b>${esc(pool[0].name)}</b> <span class="hint">${fmt(pool[0].v)||'0'}${pool[1]?` · poi ${esc(pool[1].name)} (${fmt(pool[1].v)||'0'})`:''}</span>`:'<span class="hint">Nessuna persona</span>';
-  $('trips-count').textContent=`${state.trips.length} viaggi nel registro`;
+  $('trips-count').textContent=`${state.trips.filter(t=>!t.pend).length} viaggi nel registro`;
   const btn=p=>inLog(p.id)?`<button class="x" data-act="arch" data-id="${p.id}" aria-label="Archivia ${esc(p.name)}">archivia</button>`:`<button class="x" data-act="del" data-id="${p.id}" aria-label="Elimina ${esc(p.name)}">×</button>`;
   // tabella viaggiatori: 4 nomi per colonna, attivi in ordine alfabetico e poi archiviati
   const act=all.filter(x=>!x.archived&&!x.deleted).sort((a,c)=>a.name.localeCompare(c.name));
@@ -1436,7 +1454,8 @@ function renderLog(){
     let mine='';
     if(pf){const v=t.cars.reduce((a,c)=>a+(c.driver===pf?t.weight*c.passengers.length:c.passengers.includes(pf)?-t.weight:0),0);
       mine=`<span class="lpill ${v>0?'pos':'neg'}">${esc(name(pf))} ${fmt(v)}</span>`}
-    const meta=[t.note?`<span>${esc(t.note)}</span>`:'',t.weight!==1?`<span class="tag">peso ×${t.weight}</span>`:'',t.hist?'<span class="tag">storico</span>':'',t.by&&!t.hist?`<span>inserito da ${esc(t.by)}</span>`:'',mine].filter(Boolean).join('');
+    const meta=[t.note?`<span>${esc(t.note)}</span>`:'',t.weight!==1?`<span class="tag">peso ×${t.weight}</span>`:'',t.hist?'<span class="tag">storico</span>':'',t.pend?'<span class="tag" style="color:var(--amber)">da confermare</span>':'',t.by&&!t.hist?`<span>inserito da ${esc(t.by)}</span>`:'',mine].filter(Boolean).join('');
+    const bConf=t.pend&&isAdmin()?`<button class="x" data-conf="${t.id}">conferma</button>`:'',bDel=canDelTrip(t)?`<button class="x" data-trip="${t.id}" aria-label="Elimina il viaggio del ${d.toLocaleDateString('it-IT')}">elimina</button>`:'';
     return head+`<article class="lt${t.hist?' hist':''}">
       <div class="lt-date"><b>${d.getDate()}</b><span>${d.toLocaleDateString('it-IT',{weekday:'short'})}</span></div>
       <div class="lt-main">
@@ -1445,14 +1464,18 @@ function renderLog(){
           <div class="lt-drv"><span class="lt-ico" aria-hidden="true">🚗</span>${nm(c.driver)}<span class="lpill pos">${fmt(t.weight*c.passengers.length)}</span></div>
           <div class="lt-pax">${c.passengers.map(nm).join(', ')} <span class="neg">${fmt(-t.weight)} ${c.passengers.length>1?'a testa':''}</span></div>
         </div>`).join('')}
-        <div class="lt-foot"><button class="x" data-trip="${t.id}" aria-label="Elimina il viaggio del ${d.toLocaleDateString('it-IT')}">elimina</button></div>
+        ${bConf||bDel?`<div class="lt-foot" style="gap:16px">${bConf}${bDel}</div>`:''}
       </div>
     </article>`}).join('');
   const end=shown>=list.length;
   $('more').hidden=end;
   $('log-count').textContent=`${Math.min(shown,list.length)} di ${list.length}`+((!sh&&nH)?` · ${nH} storici nascosti`:'');
 }
-$('log').onclick=e=>{const b=e.target.closest('[data-trip]');if(!b)return;
+$('log').onclick=e=>{const cf=e.target.closest('[data-conf]');
+  if(cf){if(!isAdmin()){snack('Solo il creatore della squadra può confermare i viaggi');return}
+    const t=state.trips.find(x=>x.id===cf.dataset.conf);if(t){delete t.pend;persist();render();snack('Viaggio confermato')}return}
+  const b=e.target.closest('[data-trip]');if(!b)return;
+  if(!canDelTrip(state.trips.find(t=>t.id===b.dataset.trip))){snack('Solo chi ha partecipato al viaggio o il creatore della squadra può eliminarlo');render();return}
   if(b.dataset.confirm){state.trips=state.trips.filter(t=>t.id!==b.dataset.trip);persist();render()}
   else{b.dataset.confirm='1';b.textContent='conferma?';b.style.color='var(--neg)'}};
 
@@ -1545,7 +1568,7 @@ async function buildImage(){
   const F=tk('--sans');
   const b=balances();
   const arr=active().map(p=>({...p,v:b[p.id]})).sort((a,c)=>a.v-c.v||tie(a.id)-tie(c.id)||a.name.localeCompare(c.name));
-  const trips=[...state.trips].sort((a,c)=>a.date.localeCompare(c.date)).slice(-5).reverse();
+  const trips=state.trips.filter(t=>!t.pend).sort((a,c)=>a.date.localeCompare(c.date)).slice(-5).reverse();
   const W=1080,P=56,rowH=46,S=2;
   const tripH=t=>40+t.cars.length*34+18;
   const H=P+70+40+arr.length*rowH+60+44+trips.reduce((s,t)=>s+tripH(t),0)+(trips.length?0:40)+P;
@@ -1725,15 +1748,15 @@ $('wz-open').onclick=wzOpen;
 $('wz-next').onclick=()=>{const steps=wzSteps();
   if(steps[wz.k]!=='fine'){wz.k++;wzRender();return}
   if(state.sample){state={people:state.people,trips:[]}}
-  state.trips.push({id:uid(),...(sync.me?{by:sync.me}:{}),date:wz.date,weight:wz.weight,note:wz.note.trim(),cars:wz.cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
+  state.trips.push({id:uid(),...(sync.me?{by:sync.me}:{}),...(isAdmin()?{}:{pend:true}),date:wz.date,weight:wz.weight,note:wz.note.trim(),cars:wz.cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
   state.trips.sort((a,b)=>a.date.localeCompare(b.date));persist();
-  const msg=`Viaggio del ${new Date(wz.date+'T12:00').toLocaleDateString('it-IT')} registrato`;
+  const msg=`Viaggio del ${new Date(wz.date+'T12:00').toLocaleDateString('it-IT')} ${isAdmin()?'registrato':'inserito: lo conferma il creatore della squadra'}`;
   wz=null;wzClose();render();snack(msg);
 };
 let snackT;function snack(t){$('snack').textContent=t;$('snack').hidden=false;clearTimeout(snackT);snackT=setTimeout(()=>$('snack').hidden=true,3200)}
 // ultimi viaggi nella schermata iniziale
 function renderRecent(){
-  const list=[...state.trips].sort((a,c)=>a.date.localeCompare(c.date)).slice(-5).reverse();
+  const list=state.trips.filter(t=>!t.pend).sort((a,c)=>a.date.localeCompare(c.date)).slice(-5).reverse();
   $('recent').innerHTML=list.length?list.map(t=>`<div class="rc"><span class="d">${new Date(t.date+'T12:00').toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</span><span class="who">${t.cars.map(c=>`<b>${esc(name(c.driver))}</b> con ${c.passengers.length}`).join(' · ')}</span>${t.hist?'<span class="tag">storico</span>':''}</div>`).join(''):'<p class="hint">Ancora nessun viaggio.</p>';
 }
 const _render=render;render=function(){_render();renderRecent()};
@@ -1774,7 +1797,7 @@ const syncSupported=()=>!inViewer&&!!window.firebase;
 let fsdb=null,remoteTrips=null,remoteMeta,applying=false,unsubs=[],lastMeta='',pushing=false,pushAgain=false,syncState='off';
 const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null,teamName:state.teamName||'',adminHash:state.adminHash||''});
 const clean=o=>JSON.parse(JSON.stringify(o));
-const core=t=>JSON.stringify({date:t.date,weight:t.weight||1,note:t.note||'',cars:t.cars||[],hist:!!t.hist});
+const core=t=>JSON.stringify({date:t.date,weight:t.weight||1,note:t.note||'',cars:t.cars||[],hist:!!t.hist,pend:!!t.pend});
 const gref=()=>fsdb.collection('gruppi').doc(sync.code);
 function newCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=new Uint32Array(16);crypto.getRandomValues(r);
   const c=[...r].map(x=>A[x%A.length]).join('');return 'COL-'+c.match(/.{4}/g).join('-')}
@@ -1797,15 +1820,13 @@ async function syncStart(){
       // cache locale: alla riapertura i documenti già scaricati si leggono dal telefono e il server invia solo le novità
       try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
   }catch(e){setSync('pending',e&&e.code||'');setTimeout(syncStart,15000);return}
-  // includeMetadataChanges: con la cache attiva il primo aggiornamento arriva dal telefono (fromCache);
-  // senza questa opzione, se i dati sul server sono uguali, la conferma del server non arriverebbe mai e resterebbe "In attesa di rete"
-  unsubs.push(gref().collection('viaggi').onSnapshot({includeMetadataChanges:true},snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
+  unsubs.push(gref().collection('viaggi').onSnapshot(snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
   // solo le ultime due settimane, filtrate dal server (le prenotazioni vecchie non vengono più scaricate)
   unsubs.push(gref().collection('prenotazioni').where('date','>=',isoShift(todayISO(),-14)).onSnapshot(snap=>{const list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted)list.push({...b,id:d.id})});
     state.bookings=list;persistLocal();if(typeof renderBookings==='function'){renderBookings();renderPending()}},()=>{}));
   unsubs.push(gref().collection('iscritti').onSnapshot(snap=>{const j={};snap.forEach(d=>{const x=d.data();if(x&&!x.left&&x.pid)j[x.pid]=x});joined=j;joinCheck();render()},()=>{}));
-  unsubs.push(gref().collection('meta').doc('stato').onSnapshot({includeMetadataChanges:true},d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
+  unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
   syncPaused=false;lazySync();
 }
 // --- ascolti "su richiesta": registro delle modifiche e suggerimenti solo mentre la loro pagina è aperta
@@ -1830,7 +1851,7 @@ function syncMerge(fromCache){
     const tt=sync.teams&&sync.teams.find(x=>x.code===sync.code);if(tt&&tt.name!==state.teamName){tt.name=state.teamName;saveSync()}}
   const del=new Set(sync.pendingDel),dirty=new Set(sync.dirty),localById=new Map(state.trips.map(t=>[t.id,t])),out=[];
   remoteTrips.forEach((d,id)=>{if(dirty.has(id)&&localById.has(id)){out.push(localById.get(id));return}
-    if(!d.deleted&&!del.has(id)){const t={id,date:d.date,weight:d.weight||1,note:d.note||'',cars:d.cars||[]};if(d.hist)t.hist=true;if(d.by)t.by=d.by;out.push(t)}});
+    if(!d.deleted&&!del.has(id)){const t={id,date:d.date,weight:d.weight||1,note:d.note||'',cars:d.cars||[]};if(d.hist)t.hist=true;if(d.pend)t.pend=true;if(d.by)t.by=d.by;out.push(t)}});
   state.trips.forEach(t=>{if(!remoteTrips.has(t.id)&&!del.has(t.id))out.push(t)});
   out.sort((a,b)=>a.date.localeCompare(b.date));
   state.trips=out;delete state.sample;
@@ -1847,7 +1868,7 @@ async function syncPush(){
   if(pushing){pushAgain=true;return}
   const ops=[],by=sync.me||'',at=firebase.firestore.FieldValue.serverTimestamp();
   const upd=[...sync.dirty];
-  state.trips.forEach(t=>{if(!remoteTrips.has(t.id)||upd.includes(t.id)){const d=clean({date:t.date,weight:t.weight,note:t.note||'',cars:t.cars,by:t.by||by});if(t.hist)d.hist=true;d.at=at;ops.push(['viaggi',t.id,d,false])}});
+  state.trips.forEach(t=>{if(!remoteTrips.has(t.id)||upd.includes(t.id)){const d=clean({date:t.date,weight:t.weight,note:t.note||'',cars:t.cars,by:t.by||by});if(t.hist)d.hist=true;if(t.pend)d.pend=true;d.at=at;ops.push(['viaggi',t.id,d,false])}});
   const dels=[...sync.pendingDel];dels.forEach(id=>ops.push(['viaggi',id,{deleted:true,delBy:by,at},true]));
   const meta=sync.metaDirty||(remoteMeta===null&&sync.creator);if(meta)ops.push(['meta','stato',{...clean(metaOf()),by,at},false]);
   const evs=sync.pendingEv.slice(0,400);
@@ -1879,11 +1900,13 @@ function diffEvents(a,b){
   const A=new Map(a.trips.map(t=>[t.id,t])),B=new Map(b.trips.map(t=>[t.id,t]));
   const added=b.trips.filter(t=>!A.has(t.id)),removed=a.trips.filter(t=>!B.has(t.id)),changed=b.trips.filter(t=>A.has(t.id)&&core(t)!==core(A.get(t.id)));
   if(added.length>10)ev.push(['bulk',`Aggiunti ${added.length} viaggi in blocco (importazione o ripristino)`]);
-  else added.forEach(t=>ev.push(['trip',`Viaggio aggiunto · ${tripText(t,nmB)}${t.weight>1?' · peso ×'+t.weight:''}`]));
+  else added.forEach(t=>ev.push(['trip',`Viaggio aggiunto · ${tripText(t,nmB)}${t.weight>1?' · peso ×'+t.weight:''}${t.pend?' · da confermare':''}`]));
   if(removed.length>10)ev.push(['bulk',`Eliminati ${removed.length} viaggi in blocco`]);
   else removed.forEach(t=>ev.push(['del',`Viaggio eliminato · ${tripText(t,nmA)}`]));
   if(changed.length>10)ev.push(['bulk',`Modificati ${changed.length} viaggi in blocco`]);
-  else changed.forEach(t=>ev.push(['trip',`Viaggio modificato · prima ${tripText(A.get(t.id),nmA)} → ora ${tripText(t,nmB)}`]));
+  else changed.forEach(t=>{const o=A.get(t.id);
+    if(o.pend&&!t.pend&&core({...o,pend:false})===core(t))ev.push(['trip',`Viaggio confermato · ${tripText(t,nmB)}`]);
+    else ev.push(['trip',`Viaggio modificato · prima ${tripText(o,nmA)} → ora ${tripText(t,nmB)}`])});
   const PA=new Map(a.people.map(p=>[p.id,p]));
   b.people.forEach(p=>{const o=PA.get(p.id);
     if(!o){ev.push(['person',`Aggiunto viaggiatore ${p.name}`]);return}
@@ -1968,6 +1991,14 @@ function openTeam(code,{me='',creator=false,name='',fresh:newState=null}={}){
 }
 function renderSync(){
   window.__startLocked=!!(sync.code&&!sync.creator);window.__inTeam=!!sync.code;
+  // permessi: condivisione solo al creatore, nuove squadre disattivate
+  const shareOk=canShare();
+  $('sync-share-box').hidden=!shareOk;
+  document.querySelectorAll('.dm[href="#condividi"]').forEach(a=>{a.style.display=shareOk?'':'none'});
+  $('team-new').style.display=ALLOW_NEW_TEAMS?'':'none';
+  if(!ALLOW_NEW_TEAMS)$('team-new-box').hidden=true;
+  $('sync-create-box').hidden=!ALLOW_NEW_TEAMS;
+  if(location.hash==='#condividi'&&!shareOk)location.replace('#viaggio');
   const on=!!sync.code,sup=syncSupported(),t=curTeam();
   $('sync-off').hidden=on||!sup;$('sync-on').hidden=!on;$('sync-na').hidden=sup;
   const opts=active().map(p=>p.name).sort((a,b)=>a.localeCompare(b));
@@ -1980,10 +2011,10 @@ function renderSync(){
     return `<button class="tm${x.code===sync.code?' cur':''}" data-team="${esc(x.code)}"><span><b>${esc(teamLabel(x))}</b><small>${x.creator?'creata da te':'creata da un collega'}${x.code===sync.code?' · aperta':''}</small></span><span class="tm-n">${n==null?'—':n}<small>${n===1?'iscritto':'iscritti'}</small></span><span class="tm-go">›</span></button>`}).join('');
   if(!on)rows=`<button class="tm cur" data-team=""><span><b>Su questo telefono</b><small>non condivisa</small></span><span class="tm-n">${active().length}<small>persone</small></span><span class="tm-go">›</span></button>`+rows;
   $('teams-list').innerHTML=rows;
-  $('teams-hint').textContent=on?'Tocca una squadra per vedere i partecipanti e il codice di condivisione.':'Non sei ancora in una squadra condivisa: entra con un codice ricevuto o creane una.';
+  $('teams-hint').textContent=on?'Tocca una squadra per vedere i partecipanti e il codice di condivisione.':(ALLOW_NEW_TEAMS?'Non sei ancora in una squadra condivisa: entra con un codice ricevuto o creane una.':'Non sei ancora in una squadra condivisa: entra con un codice ricevuto.');
   // pagina della squadra aperta
   $('team-title').textContent=on?teamLabel(t):'Su questo telefono';
-  $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".';
+  $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:(ALLOW_NEW_TEAMS?'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".':'Dati non condivisi: per condividerli entra in una squadra da "Le mie squadre".');
   $('team-rename-box').hidden=!on||!sync.creator;$('me-box').hidden=!on;
   $('admin-claim').hidden=!on||!!sync.creator;$('admin-set').hidden=!on||!sync.creator;
   if(on){$('admin-set-sum').textContent=state.adminHash?'Password amministratore · impostata':'Password amministratore · non ancora impostata';
@@ -2006,6 +2037,7 @@ $('team-rename').onchange=()=>{const n=$('team-rename').value.trim().slice(0,40)
 $('team-rename').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
 // dal telefono non collegato: i dati attuali diventano una squadra
 $('sync-create').onclick=()=>{
+  if(!ALLOW_NEW_TEAMS)return;
   if(!sync.me){smsg('Scegli prima il tuo nome.');return}
   const n=$('team-name-new').value.trim().slice(0,40)||'La mia squadra';
   state.teamName=n;persistLocal();
@@ -2023,8 +2055,9 @@ function joinTeam(raw,btn,replacesLocal){
   if(openTeam(c,{fresh:null}))smsg('Collegamento alla squadra…');
 }
 // nuova squadra vuota: parte da zero, con te come primo viaggiatore
-$('team-new').onclick=()=>{$('team-new-box').hidden=!$('team-new-box').hidden;if(!$('team-new-box').hidden)$('team-new-name').focus()};
+$('team-new').onclick=()=>{if(!ALLOW_NEW_TEAMS)return;$('team-new-box').hidden=!$('team-new-box').hidden;if(!$('team-new-box').hidden)$('team-new-name').focus()};
 $('team-new-ok').onclick=()=>{
+  if(!ALLOW_NEW_TEAMS)return;
   const n=$('team-new-name').value.trim().slice(0,40),me=$('team-new-me').value.trim().slice(0,40);
   if(!n){smsg('Dai un nome alla nuova squadra.');return}
   if(!me){smsg('Scrivi il tuo nome: sarai il primo viaggiatore.');return}
@@ -2034,10 +2067,10 @@ $('team-new-ok').onclick=()=>{
     addEvents([['team',`Creata la squadra ${n}`]]);syncPush();smsg(`Squadra "${n}" creata: manda il codice ai colleghi.`)}};
 $('teams-list').onclick=e=>{const b=e.target.closest('[data-team]');if(!b)return;const c=b.dataset.team;
   if(c&&c!==sync.code&&!openTeam(c))return;location.hash='membri'};
-$('sync-copy').onclick=()=>{const t=sync.code;
+$('sync-copy').onclick=()=>{if(!canShare())return;const t=sync.code;
   const ok=()=>smsg('Codice copiato'),ko=()=>{const r=document.createRange();r.selectNodeContents($('sync-code'));const s=getSelection();s.removeAllRanges();s.addRange(r);smsg('Codice selezionato: copialo')};
   try{navigator.clipboard?navigator.clipboard.writeText(t).then(ok,ko):ko()}catch(e){ko()}};
-$('sync-share').onclick=()=>{const txt=`Entra nella squadra "${teamLabel(curTeam())}" su CollegAuto con questo codice:\n${sync.code}\n\nApri ${location.protocol==='https:'?location.origin+location.pathname:'CollegAuto'} → Dati → Entra nella squadra`;
+$('sync-share').onclick=()=>{if(!canShare())return;const txt=`Entra nella squadra "${teamLabel(curTeam())}" su CollegAuto con questo codice:\n${sync.code}\n\nApri ${location.protocol==='https:'?location.origin+location.pathname:'CollegAuto'} → Dati → Entra nella squadra`;
   if(navigator.share){navigator.share({text:txt}).catch(()=>{});return}
   $('sync-copy').click()};
 // esci da questa squadra: se ne hai altre passi a quella, altrimenti resti con la copia sul telefono
@@ -2167,7 +2200,7 @@ function renderBookings(){
         return `<div class="shift${open?' open':''}" style="--sc:${col}">${many?`<button class="shift-h shift-tog" data-shk="${esc(g.key)}" aria-expanded="${open}">${head}</button>`:`<div class="shift-h">${head}</div>`}${open?ac+waitH(w):''}</div>`}).join('')
     :carH({driver:'',seats:SEATS_DEF,pax:[]},'');
   const abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
-  const done1=state.trips.some(t=>!t.hist&&t.date===d),can=L.cars.some(c=>c.pax.length);
+  const done1=state.trips.some(t=>!t.hist&&!t.pend&&t.date===d),can=L.cars.some(c=>c.pax.length);
   // due liste minimal: assenti e nessuna conferma (prima chi ha meno punti)
   const byPts=(x,y)=>(bal[x]||0)-(bal[y]||0)||tie(x)-tie(y)||name(x).localeCompare(name(y));
   const absIds=abs.map(b=>b.pid).sort(byPts),missIds=missP.map(p=>p.id).sort(byPts);
@@ -2205,10 +2238,15 @@ $('bk-open').onclick=()=>{const me=myPid();if(!me){needMe();return}
 
 // --- "Presente": scelta dell'orario (CFI e straordinario chiedono inizio e fine)
 let shPick='';
-function shiftOpen(){shPick='';$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?';
+const shRegTxt=()=>{$('sh-reg-t').textContent=$('sh-flex').checked?'FLEX · 7:30 – 16:00':'8:00 – 16:30'};
+$('sh-flex').onchange=shRegTxt;
+function shiftOpen(){shPick='';
+  const lastSh=(state.bookings||[]).filter(x=>x.pid===myPid()&&x.shift).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
+  $('sh-flex').checked=!!(lastSh&&lastSh.shift==='flex');shRegTxt();$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?';
   $('shift-d').textContent=`Prossimo viaggio: ${bkLong(tripDay())}.`;$('shift-sheet').hidden=false}
 function shiftDone(sh){const me=myPid();$('shift-sheet').hidden=true;if(!me)return;bkSet(me,'pres','forse',sh);snack(`Presente · ${shiftLabel(sh)}`)}
-$('shift-step1').onclick=e=>{const b=e.target.closest('[data-sh]');if(!b)return;const k=b.dataset.sh;
+$('shift-step1').onclick=e=>{const b=e.target.closest('[data-sh]');if(!b)return;let k=b.dataset.sh;
+  if(k==='reg'&&$('sh-flex').checked)k='flex';
   if(!SHIFTS[k].custom){shiftDone({shift:k});return}
   shPick=k;const last=(state.bookings||[]).filter(x=>x.pid===myPid()&&x.shift===k&&x.from).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
   $('sh-from').value=last?last.from:'08:00';$('sh-to').value=last?last.to:'16:30';$('sh-msg').textContent='';
@@ -2241,21 +2279,21 @@ const dayGroup=id=>groupOf(id);
 // così resta uguale su tutti i telefoni e si può modificare prima di registrarla.
 const planId=d=>'plan_'+d;
 const planOf=d=>(state.bookings||[]).find(b=>b.id===planId(d));
-function pendingDates(){const td=tripDay(),reg=new Set(state.trips.filter(t=>!t.hist).map(t=>t.date)),ds=new Set();
+function pendingDates(){const td=tripDay(),reg=new Set(state.trips.filter(t=>!t.hist&&!t.pend).map(t=>t.date)),ds=new Set();
   (state.bookings||[]).forEach(b=>{if(b.date<td&&((b.pid&&!b.absent&&state.people.some(p=>p.id===b.pid))||b.plan))ds.add(b.date)});
   return [...ds].filter(d=>{const p=planOf(d);return !(p&&(p.done||p.discarded))&&!reg.has(d)}).sort()}
 function pendingCars(d){const p=planOf(d);if(p&&Array.isArray(p.cars))return p.cars.map(c=>({driver:c.driver,passengers:[...(c.passengers||[])],grp:c.grp||''}));
   return bkLayout(d).cars.map(c=>({driver:c.driver,passengers:[...c.pax],grp:c.grp||''}))}
 function savePlan(d,cars,extra={}){bkWrite({id:planId(d),date:d,plan:true,cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers],grp:c.grp||''})),by:sync.me||'',t:new Date().toISOString(),...extra})}
 // può confermare, modificare o eliminare un viaggio solo chi ne fa parte (in auto o presente quel giorno)
-function pendCan(d){const me=myPid();if(!me)return false;
+function pendCan(d){if(isAdmin())return true;const me=myPid();if(!me)return false;
   return pendingCars(d).some(c=>c.driver===me||c.passengers.includes(me))||bkList(d).some(b=>b.pid===me)}
 let pendArm='',pendEdit='',drag=null;const trOpen=new Set();
 const cap1=t=>t.charAt(0).toUpperCase()+t.slice(1);
 const shortD=d=>cap1(new Date(d+'T12:00').toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'short'}));
 // riga compressa nella pagina Viaggi: toccandola si va alla pagina di conferma
 function pendRow(d){const cars=pendingCars(d),n=cars.reduce((s,c)=>s+(c.driver?1:0)+c.passengers.length,0);
-  return `<div class="tr tr-pend"><a class="tr-h" href="#conferma" data-go="${d}"><span class="tr-d"><b>${esc(shortD(d))}</b><small>${n} ${n===1?'persona':'persone'}</small></span><span class="tr-badge">Modifica e conferma</span><span class="tr-chev" aria-hidden="true">›</span></a></div>`}
+  return `<div class="tr tr-pend"><a class="tr-h" href="#conferma" data-go="${d}"><span class="tr-d"><b>${esc(shortD(d))}</b><small>${n} ${n===1?'persona':'persone'}</small></span><span class="tr-badge">${isAdmin()?'Modifica e conferma':'Da confermare'}</span><span class="tr-chev" aria-hidden="true">›</span></a></div>`}
 // scheda nella pagina di conferma: vista con Modifica / Conferma, oppure modifica (trascina, ✕, aggiungi)
 function pendCard(d){const cars=pendingCars(d),can=pendCan(d),ed=can&&pendEdit===d,bal=balances(),sc=id=>{const v=bal[id]||0;return `${v>0?'+':v<0?'−':''}${Math.abs(v)}`};
   const inTrip=new Set(cars.flatMap(c=>[c.driver,...c.passengers]).filter(Boolean));
@@ -2269,10 +2307,11 @@ function pendCard(d){const cars=pendingCars(d),can=pendCan(d),ed=can&&pendEdit==
   const body=cars.map((c,i)=>{const pax=ed?[...c.passengers,...Array(Math.max(0,SEATS_DEF-c.passengers.length)).fill('')]:c.passengers;
     return `<div class="pc">${cars.length>1||c.grp?`<div class="cmp-h">Auto ${i+1}${c.grp?` · <span class="grp-l" style="color:${shiftColor(c.grp,cars.map(x=>x.grp||''))}">${esc(c.grp)}</span>`:''}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
       ${!ed&&c.driver&&!c.passengers.length?'<p class="hint" style="margin:0">Senza passeggeri: questa auto non verrà registrata.</p>':''}</div>`}).join('')||'<p class="hint" style="margin:0">Nessuno in questo viaggio.</p>';
-  const foot=!can?'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può confermarlo o modificarlo.</p>'
+  const foot=!can?'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può modificarlo. Lo conferma il creatore della squadra.</p>'
     :ed?`<p class="hint" style="margin:0">Trascina ⋮⋮ per spostare (anche al posto del guidatore), ✕ per togliere, "+ Aggiungi persona" nei posti liberi.</p>
       <div class="pend-act"><button class="ghost danger" data-del="1">${pendArm==='del'+d?'Tocca di nuovo':'Elimina viaggio'}</button><button class="bk-main" data-done="1">Fine modifiche</button></div>`
-    :`<div class="pend-act"><button class="ghost" data-edit="1">Modifica</button><button class="bk-main" data-ok="1">Conferma</button></div>`;
+    :isAdmin()?`<div class="pend-act"><button class="ghost" data-edit="1">Modifica</button><button class="bk-main" data-ok="1">Conferma</button></div>`
+    :`<div class="pend-act"><button class="ghost" data-edit="1">Modifica</button></div><p class="pend-ro">Lo conferma il creatore della squadra.</p>`;
   return `<div class="panel pend${ed?' is-edit':''}" data-d="${d}"><div class="row between"><h2 class="pend-day">${esc(shortD(d))}</h2>${ed?'<span class="hint">modifica</span>':''}</div>${body}${foot}</div>`}
 // riga di un viaggio registrato: data e guidatori, si apre per vedere i partecipanti
 function doneCard(t,open){const n=t.cars.reduce((s,c)=>s+1+c.passengers.length,0);
@@ -2281,20 +2320,35 @@ function doneCard(t,open){const n=t.cars.reduce((s,c)=>s+1+c.passengers.length,0
   return `<div class="tr tr-done open">${head}<div class="tr-body">${t.cars.map((c,i)=>`<div class="pc">${t.cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">
       <div class="ul-row cmp-drv"><span class="ul-n"><b>${esc(name(c.driver))}</b></span><span class="ul-v">+${c.passengers.length}</span><span class="ul-s">Guida</span></div>
       ${c.passengers.map(x=>`<div class="ul-row cmp-pax"><span class="ul-n"><b>${esc(name(x))}</b></span><span class="ul-v">−1</span><span class="ul-s">Passeggero</span></div>`).join('')}</div></div>`).join('')}</div></div>`}
-function renderPending(){const ds=pendingDates();
+// viaggi inseriti a mano da chi non è il creatore: restano da confermare finché il creatore non li conferma
+function manualBody(t){return t.cars.map((c,i)=>`<div class="pc">${t.cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list">
+      <div class="ul-row cmp-drv"><span class="ul-n"><b>${esc(name(c.driver))}</b></span><span class="ul-v">+${t.weight*c.passengers.length}</span><span class="ul-s">Guida</span></div>
+      ${c.passengers.map(x=>`<div class="ul-row cmp-pax"><span class="ul-n"><b>${esc(name(x))}</b></span><span class="ul-v">−${t.weight}</span><span class="ul-s">Passeggero</span></div>`).join('')}</div></div>`).join('')}
+function manualRow(t){const n=t.cars.reduce((s,c)=>s+1+c.passengers.length,0);
+  return `<div class="tr tr-pend"><a class="tr-h" href="#conferma"><span class="tr-d"><b>${esc(shortD(t.date))}</b><small>inserito${t.by?' da '+esc(t.by):''} · ${n} persone</small></span><span class="tr-badge">Da confermare</span><span class="tr-chev" aria-hidden="true">›</span></a></div>`}
+function manualCard(t){const adm=isAdmin();
+  return `<div class="panel pend" data-mt="${t.id}"><div class="row between"><h2 class="pend-day">${esc(shortD(t.date))}</h2><span class="hint">inserito${t.by?' da '+esc(t.by):''}${t.weight!==1?' · peso ×'+t.weight:''}</span></div>
+    ${manualBody(t)}${t.note?`<p class="hint" style="margin:0">${esc(t.note)}</p>`:''}
+    ${adm?`<div class="pend-act"><button class="ghost danger" data-mdel="${t.id}">Elimina viaggio</button><button class="bk-main" data-mok="${t.id}">Conferma</button></div>`:'<p class="pend-ro">Lo conferma il creatore della squadra.</p>'}</div>`}
+$('pend-list').addEventListener('click',e=>{const ok=e.target.closest('[data-mok]'),del=e.target.closest('[data-mdel]');if(!ok&&!del)return;
+  if(!isAdmin()){snack('Solo il creatore della squadra può confermare i viaggi');return}
+  if(ok){const t=state.trips.find(x=>x.id===ok.dataset.mok);if(!t)return;delete t.pend;persist();render();snack(`Viaggio di ${bkLong(t.date)} registrato`);return}
+  if(del.dataset.arm!=='1'){del.dataset.arm='1';del.textContent='Tocca di nuovo';setTimeout(()=>{if(del.isConnected){del.dataset.arm='';del.textContent='Elimina viaggio'}},4000);return}
+  const t=state.trips.find(x=>x.id===del.dataset.mdel);state.trips=state.trips.filter(x=>x.id!==del.dataset.mdel);persist();render();snack(t?`Viaggio di ${bkLong(t.date)} eliminato`:'Viaggio eliminato')});
+function renderPending(){const ds=pendingDates(),mp=state.trips.filter(t=>t.pend),np=ds.length+mp.length;
   ds.forEach(d=>{if(!planOf(d))savePlan(d,pendingCars(d))});   // la composizione si fissa al momento in cui scade
   if(pendEdit&&!ds.includes(pendEdit))pendEdit='';
-  $('tab-badge').hidden=!ds.length;$('tab-badge').textContent=ds.length;
-  $('dm-pend').textContent=ds.length?`${ds.length} ${ds.length===1?'viaggio':'viaggi'} in attesa`:'Nessun viaggio in attesa';
+  $('tab-badge').hidden=!np;$('tab-badge').textContent=np;
+  $('dm-pend').textContent=np?`${np} ${np===1?'viaggio':'viaggi'} in attesa`:'Nessun viaggio in attesa';
   // se ci sono viaggi da confermare anche il prossimo viaggio è compresso (si apre toccandolo)
-  const nextOpen=!ds.length||trOpen.has('next');$('tr-next').classList.toggle('open',nextOpen);$('tr-next').classList.toggle('closed',!nextOpen);
-  $('tr-next-h').setAttribute('aria-expanded',nextOpen);$('tr-next-chev').hidden=!ds.length;$('tr-next-h').classList.toggle('tr-static',!ds.length);
-  const last=[...state.trips].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-  $('trip-rows').innerHTML=[...ds].reverse().map(pendRow).join('')+last.map(t=>doneCard(t,trOpen.has('t:'+t.id))).join('');
+  const nextOpen=!np||trOpen.has('next');$('tr-next').classList.toggle('open',nextOpen);$('tr-next').classList.toggle('closed',!nextOpen);
+  $('tr-next-h').setAttribute('aria-expanded',nextOpen);$('tr-next-chev').hidden=!np;$('tr-next-h').classList.toggle('tr-static',!np);
+  const last=state.trips.filter(t=>!t.pend).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  $('trip-rows').innerHTML=[...ds].reverse().map(pendRow).join('')+mp.map(manualRow).join('')+last.map(t=>doneCard(t,trOpen.has('t:'+t.id))).join('');
   if(drag)return;
   if($('pend-list').closest('.view').hidden&&location.hash!=='#conferma')return;
   if(selBusy($('pend-list')))return;
-  $('pend-list').innerHTML=ds.length?ds.map(pendCard).join(''):'<div class="panel"><p class="hint" style="margin:0">Nessun viaggio da confermare.</p></div>';
+  $('pend-list').innerHTML=np?ds.map(pendCard).join('')+mp.map(manualCard).join(''):'<div class="panel"><p class="hint" style="margin:0">Nessun viaggio da confermare.</p></div>';
 }
 // --- modifiche alla composizione (salvate subito, uguali su tutti i telefoni)
 function pendSave(d,cars){savePlan(d,cars.filter(c=>c.driver||c.passengers.length));renderPending()}
@@ -2319,13 +2373,14 @@ function tripClick(e){const go=e.target.closest('[data-go]');
     pendSave(d,cars);snack(`${name(id)} tolto dal viaggio`);return}
   if(e.target.closest('[data-del]')){if(pendArm!=='del'+d){pendArm='del'+d;renderPending();setTimeout(()=>{if(pendArm==='del'+d){pendArm='';renderPending()}},4000);return}
     pendArm='';pendEdit='';savePlan(d,pendingCars(d),{discarded:true});render();snack(`Viaggio di ${bkLong(d)} eliminato`);return}
-  if(e.target.closest('[data-ok]')){const all=pendingCars(d),cars=all.filter(c=>c.driver&&c.passengers.length);
+  if(e.target.closest('[data-ok]')){if(!isAdmin()){snack('Solo il creatore della squadra può confermare i viaggi');return}
+    const all=pendingCars(d),cars=all.filter(c=>c.driver&&c.passengers.length);
     if(all.some(c=>!c.driver&&c.passengers.length)){snack('Un\'auto non ha il guidatore: tocca Modifica');return}
     if(!cars.length){snack('Serve almeno un\'auto con guidatore e passeggeri');return}
     state.trips.push({id:uid(),date:d,weight:1,note:'',cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
     state.trips.sort((a,b)=>a.date.localeCompare(b.date));savePlan(d,cars,{done:true});persist();render();snack(`Viaggio di ${bkLong(d)} registrato`)}}
 $('trip-rows').onclick=tripClick;$('pend-list').onclick=tripClick;
-$('tr-next-h').onclick=()=>{if(!pendingDates().length)return;trOpen.has('next')?trOpen.delete('next'):trOpen.add('next');renderPending()};
+$('tr-next-h').onclick=()=>{if(!pendingDates().length&&!state.trips.some(t=>t.pend))return;trOpen.has('next')?trOpen.delete('next'):trOpen.add('next');renderPending()};
 $('pend-list').onchange=e=>{const s=e.target.closest('[data-add]');if(s)s.blur();if(!s||!s.value)return;const d=s.closest('[data-d]').dataset.d;if(!pendCan(d))return;
   const [i,role]=s.dataset.add.split('|'),cars=pendingCars(d),c=cars[+i],id=s.value;if(!c)return;
   if(role==='drv')c.driver=id;else{if(c.passengers.length>=SEATS_DEF){snack('Quell\'auto è piena');return}c.passengers.push(id)}
@@ -4656,6 +4711,7 @@ function shareData(){
   return {url,text};
 }
 function renderShare(){
+  if(!canShare()){location.replace('#viaggio');return}
   const {url,text}=shareData();
   $('sh-team-box').hidden=!sync.code;
   if(sync.code)$('sh-team-lbl').textContent=`Includi l'invito alla squadra "${teamLabel(curTeam())}"`;
@@ -4665,10 +4721,10 @@ function renderShare(){
   $('sh-tg').href='https://t.me/share/url?url='+encodeURIComponent(url)+'&text='+encodeURIComponent(text);
   $('sh-native').hidden=!navigator.share;
 }
-function openShare(){location.hash='condividi'}
+function openShare(){if(canShare())location.hash='condividi'}
 $('sh-team').onchange=renderShare;
-$('sh-native').onclick=()=>{const {url,text}=shareData();navigator.share({title:'CollegAuto',text,url}).catch(()=>{})};
-$('sh-copy').onclick=()=>{const {url}=shareData();const ok=()=>{$('sh-msg').textContent='Link copiato'},ko=()=>{const r=document.createRange();r.selectNodeContents($('sh-link'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('sh-msg').textContent='Link selezionato: copialo'};
+$('sh-native').onclick=()=>{if(!canShare())return;const {url,text}=shareData();navigator.share({title:'CollegAuto',text,url}).catch(()=>{})};
+$('sh-copy').onclick=()=>{if(!canShare())return;const {url}=shareData();const ok=()=>{$('sh-msg').textContent='Link copiato'},ko=()=>{const r=document.createRange();r.selectNodeContents($('sh-link'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('sh-msg').textContent='Link selezionato: copialo'};
   try{navigator.clipboard?navigator.clipboard.writeText(url).then(ok,ko):ko()}catch(e){ko()}};
 // chi arriva da un invito (?squadra=COL-...) trova il codice già pronto
 (function(){let inv='';try{inv=normCode(new URLSearchParams(location.search).get('squadra')||'')}catch(e){}
@@ -4726,7 +4782,9 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
- ['6.6','Corretto: con la cache attiva lo stato poteva restare "In attesa di rete" anche se i dati erano già sincronizzati.'],
+ ['6.8','Prenotazione semplificata: "Orario normale" con la casella FLEX (7:30–16:00), "Altro orario" e "Vado da solo". I viaggi inseriti a mano da chi non è il creatore restano "da confermare" e non contano nei punti finché il creatore non li conferma.'],
+ ['6.7','Solo il creatore della squadra può confermare i viaggi da confermare (gli altri possono modificare quelli a cui hanno partecipato). Condividere l\'app e il codice della squadra è riservato al creatore. Non si possono più creare nuove squadre: si entra solo con un codice.'],
+ ['6.6','Viaggi registrati: possono essere eliminati solo da chi ha partecipato al viaggio e dal creatore della squadra; i viaggi dello storico importato solo dal creatore. Gli altri non vedono più il tasto "elimina".'],
  ['6.5','Meno letture su Firebase: cache sul telefono, prenotazioni filtrate dal server (ultime 2 settimane), registro e suggerimenti scaricati solo quando si aprono le loro pagine, ascolti chiusi quando l\'app resta in background.'],
  ['6.4','Se ci sono viaggi da confermare anche il prossimo viaggio è compresso (si apre toccandolo). I viaggi registrati riportano "Confermato".'],
  ['6.3','Il viaggio del giorno si può confermare dalle 7:00 (da quell\'ora la presenza vale per il viaggio successivo). Con più orari gli elenchi sono compressi e si aprono toccandoli; ogni orario ha un colore diverso.'],
@@ -4776,7 +4834,7 @@ function renderInfo(){
   $('info-ver').textContent=` versione ${APP_VERSION}`;
   const rows=[['Squadra',sync.code?teamLabel(curTeam()):'nessuna (dati solo su questo dispositivo)'],['Il tuo nome',sync.me||'—'],
     ['Sincronizzazione',{off:'non attiva',wait:'connessione…',ok:'attiva',pending:'in attesa di rete',bad:'errore'}[syncState]||syncState],
-    ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist).length)],
+    ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist&&!t.pend).length)],
     ['Installata come app',(matchMedia('(display-mode: standalone)').matches||navigator.standalone)?'sì':'no']];
   $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
   $('info-notes').innerHTML=NOTES.map(([v,t])=>`<div class="note"><b>v${v}</b><span>${esc(t)}</span></div>`).join('');
