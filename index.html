@@ -697,10 +697,7 @@ a.tr-h{text-decoration:none}
 .shift-opts button{display:flex!important;align-items:baseline;justify-content:space-between;gap:10px;min-height:54px!important;padding:10px 14px!important;text-align:left}
 .shift-opts b{font-size:16px}.shift-opts small{font-size:13px;color:var(--muted);font-weight:500}
 .shift-opts [data-sh="solo"]{border-style:dashed!important}
-.shift-reg{display:flex;flex-direction:column;gap:6px}
-.shift-flex{display:flex;align-items:center;gap:10px;padding:2px 6px 0 14px;font-size:15px;cursor:pointer}
-.shift-flex input{width:22px;height:22px;flex:none;accent-color:var(--teal)}
-.shift-flex small{font-size:13px;color:var(--muted)}
+
 .shift{display:flex;flex-direction:column;gap:6px}
 .shift+.shift{margin-top:6px}
 .shift-h{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--teal);letter-spacing:.02em}
@@ -1063,10 +1060,7 @@ button.tr-static{cursor:default}
     <h2 id="shift-t">Che orario fai?</h2>
     <p class="hint" style="margin:0" id="shift-d"></p>
     <div class="shift-opts" id="shift-step1">
-      <div class="shift-reg">
-        <button data-sh="reg"><b>Orario normale</b><small id="sh-reg-t">8:00 – 16:30</small></button>
-        <label class="shift-flex"><input type="checkbox" id="sh-flex"><b>FLEX</b><small>flessibile 7:30 – 16:00</small></label>
-      </div>
+      <button data-sh="reg"><b>Orario normale</b><small>8:00 – 16:30</small></button>
       <button data-sh="alt"><b>Altro orario</b><small>scegli inizio e fine</small></button>
       <button data-sh="solo"><b>Vado da solo</b><small>non entro nelle auto</small></button>
     </div>
@@ -1117,7 +1111,7 @@ button.tr-static{cursor:default}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.8';
+const APP_VERSION='6.9';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -2142,7 +2136,7 @@ function shiftColor(label,all){if(/^Orario flessibile/.test(label))return 'var(-
   const others=[...new Set(all.filter(l=>!/^Orario (flessibile|normale)/.test(l)))];return SH_COL[Math.max(0,others.indexOf(label))%SH_COL.length]}
 const shOpen=new Set();
 const SHIFT_ORDER=['flex','reg','alt','cfi','str','nd'];
-const bkShift=b=>SHIFTS[b.shift]?b.shift:'nd';
+const bkShift=b=>b.shift==='flex'?'reg':SHIFTS[b.shift]?b.shift:'nd';
 const hhmm=t=>String(t||'').replace(/^0(\d)/,'$1');
 const shiftLabel=b=>{const k=bkShift(b),S=SHIFTS[k];if(S.custom)return `${S.t} ${hhmm(b.from)}–${hhmm(b.to)}`;if(S.from)return `${S.t} ${hhmm(S.from)}–${hhmm(S.to)}`;return S.t};
 function bkLayout(date){const all=bkList(date),groups=[],buckets=new Map();
@@ -2196,7 +2190,7 @@ function renderBookings(){
         if(!cars.length)cars=[{driver:'',seats:SEATS_DEF,pax:w.splice(0,SEATS_DEF)}];
         const col=shiftColor(g.label,L.groups.map(x=>x.label)),open=!many||shOpen.has(g.key),mine=g.list.some(b=>b.pid===me);
         const nc=cars.length,ac=cars.map(c=>carH(c,L.cars.length+(g.cars.length?0:1)>1?`Auto ${++n}`:'')).join('');
-        const head=`<span class="shift-l">${esc(g.label)}</span><i>${g.list.length}</i>${mine?'<small class="shift-me">tu</small>':''}${many?`<small class="shift-sub">${nc} ${nc===1?'auto':'auto'}</small><span class="shift-chev" aria-hidden="true">›</span>`:''}`;
+        const head=`<span class="shift-l">${many?'Gruppo '+(gi+1):'Presenti'}</span><i>${g.list.length}</i>${mine?'<small class="shift-me">tu</small>':''}${many?`<small class="shift-sub">${nc} ${nc===1?'auto':'auto'}</small><span class="shift-chev" aria-hidden="true">›</span>`:''}`;
         return `<div class="shift${open?' open':''}" style="--sc:${col}">${many?`<button class="shift-h shift-tog" data-shk="${esc(g.key)}" aria-expanded="${open}">${head}</button>`:`<div class="shift-h">${head}</div>`}${open?ac+waitH(w):''}</div>`}).join('')
     :carH({driver:'',seats:SEATS_DEF,pax:[]},'');
   const abs=bkAbsent(d),done=new Set(bkAll(d).map(b=>b.pid)),missP=active().filter(p=>!done.has(p.id));
@@ -2211,7 +2205,7 @@ function renderBookings(){
   const mineB=me&&L.list.find(b=>b.pid===me),meAbs=me&&abs.some(b=>b.pid===me);
   $('bk-open-t').textContent=mineB?'Presente ✓':'Presente';
   const sub={};L.cars.forEach((c,i)=>{const k=L.cars.length>1?` ${i+1}`:'';sub[c.driver]=k?`Guidi l'auto${k}`:'Guidi tu';c.pax.forEach(x=>{sub[x]=`Passeggero${k?' auto'+k:''}`})});L.wait.forEach(x=>{sub[x]='Senza posto'});L.solo.forEach(x=>{sub[x]='Vai da solo'});
-  if(mineB)sub[me]=[bkShift(mineB)==='solo'?'':shiftLabel(mineB),sub[me]].filter(Boolean).join(' · ');
+  
   $('bk-open-s').textContent=mineB?(sub[me]?`${sub[me]} · tocca per annullare`:'tocca per annullare'):'al prossimo viaggio';
   $('bk-away-t').textContent=meAbs?'Assente ✓':'Assente';$('bk-away-s').textContent=meAbs?'tocca per annullare':'al prossimo viaggio';
   $('bk-open').classList.toggle('on',!!mineB);$('bk-away').classList.toggle('on',!!meAbs);
@@ -2238,15 +2232,10 @@ $('bk-open').onclick=()=>{const me=myPid();if(!me){needMe();return}
 
 // --- "Presente": scelta dell'orario (CFI e straordinario chiedono inizio e fine)
 let shPick='';
-const shRegTxt=()=>{$('sh-reg-t').textContent=$('sh-flex').checked?'FLEX · 7:30 – 16:00':'8:00 – 16:30'};
-$('sh-flex').onchange=shRegTxt;
-function shiftOpen(){shPick='';
-  const lastSh=(state.bookings||[]).filter(x=>x.pid===myPid()&&x.shift).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
-  $('sh-flex').checked=!!(lastSh&&lastSh.shift==='flex');shRegTxt();$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?';
+function shiftOpen(){shPick='';$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?';
   $('shift-d').textContent=`Prossimo viaggio: ${bkLong(tripDay())}.`;$('shift-sheet').hidden=false}
 function shiftDone(sh){const me=myPid();$('shift-sheet').hidden=true;if(!me)return;bkSet(me,'pres','forse',sh);snack(`Presente · ${shiftLabel(sh)}`)}
-$('shift-step1').onclick=e=>{const b=e.target.closest('[data-sh]');if(!b)return;let k=b.dataset.sh;
-  if(k==='reg'&&$('sh-flex').checked)k='flex';
+$('shift-step1').onclick=e=>{const b=e.target.closest('[data-sh]');if(!b)return;const k=b.dataset.sh;
   if(!SHIFTS[k].custom){shiftDone({shift:k});return}
   shPick=k;const last=(state.bookings||[]).filter(x=>x.pid===myPid()&&x.shift===k&&x.from).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
   $('sh-from').value=last?last.from:'08:00';$('sh-to').value=last?last.to:'16:30';$('sh-msg').textContent='';
@@ -2305,7 +2294,7 @@ function pendCard(d){const cars=pendingCars(d),can=pendCan(d),ed=can&&pendEdit==
       ${ed?`<span class="pc-grip" data-grip="1" aria-label="Trascina ${esc(name(id))}">⋮⋮</span>`:''}<span class="ul-n"><b>${esc(name(id))}</b></span><span class="ul-v">${sc(id)}</span><span class="ul-s">${drv?'Guida':'Passeggero'}</span>
       ${ed?`<button class="pc-rm" data-rm="${i}|${id}" aria-label="Togli ${esc(name(id))}">✕</button>`:''}</div>`};
   const body=cars.map((c,i)=>{const pax=ed?[...c.passengers,...Array(Math.max(0,SEATS_DEF-c.passengers.length)).fill('')]:c.passengers;
-    return `<div class="pc">${cars.length>1||c.grp?`<div class="cmp-h">Auto ${i+1}${c.grp?` · <span class="grp-l" style="color:${shiftColor(c.grp,cars.map(x=>x.grp||''))}">${esc(c.grp)}</span>`:''}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
+    return `<div class="pc">${cars.length>1?`<div class="cmp-h">Auto ${i+1}</div>`:''}<div class="cmp-list${ed?' editing':''}">${row(i,'drv',0,c.driver)}${pax.map((x,k)=>row(i,'pax',k,x)).join('')}</div>
       ${!ed&&c.driver&&!c.passengers.length?'<p class="hint" style="margin:0">Senza passeggeri: questa auto non verrà registrata.</p>':''}</div>`}).join('')||'<p class="hint" style="margin:0">Nessuno in questo viaggio.</p>';
   const foot=!can?'<p class="pend-ro">Solo chi ha partecipato a questo viaggio può modificarlo. Lo conferma il creatore della squadra.</p>'
     :ed?`<p class="hint" style="margin:0">Trascina ⋮⋮ per spostare (anche al posto del guidatore), ✕ per togliere, "+ Aggiungi persona" nei posti liberi.</p>
@@ -4782,6 +4771,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['6.9','Tolta la casella FLEX dal menu della prenotazione. Nella tabella dei presenti non compaiono più gli orari: gli elenchi si chiamano "Presenti" o "Gruppo 1, 2…".'],
  ['6.8','Prenotazione semplificata: "Orario normale" con la casella FLEX (7:30–16:00), "Altro orario" e "Vado da solo". I viaggi inseriti a mano da chi non è il creatore restano "da confermare" e non contano nei punti finché il creatore non li conferma.'],
  ['6.7','Solo il creatore della squadra può confermare i viaggi da confermare (gli altri possono modificare quelli a cui hanno partecipato). Condividere l\'app e il codice della squadra è riservato al creatore. Non si possono più creare nuove squadre: si entra solo con un codice.'],
  ['6.6','Viaggi registrati: possono essere eliminati solo da chi ha partecipato al viaggio e dal creatore della squadra; i viaggi dello storico importato solo dal creatore. Gli altri non vedono più il tasto "elimina".'],
