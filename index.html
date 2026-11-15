@@ -697,6 +697,13 @@ a.tr-h{text-decoration:none}
 .shift-opts button{display:flex!important;align-items:baseline;justify-content:space-between;gap:10px;min-height:54px!important;padding:10px 14px!important;text-align:left}
 .shift-opts b{font-size:16px}.shift-opts small{font-size:13px;color:var(--muted);font-weight:500}
 .shift-opts [data-sh="solo"]{border-style:dashed!important}
+.sh-l{display:flex;flex-direction:column;align-items:flex-start;gap:2px}.shift-opts [data-sh="reg"]{align-items:center}
+.sw{display:inline-flex;align-items:center;gap:7px;padding:5px 10px 5px 6px;border:1px solid var(--line);border-radius:999px;font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sw .trk{width:30px;height:18px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .15s}
+.sw .trk::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--fg);transition:left .15s}
+.sw[aria-checked="true"]{color:var(--teal);border-color:var(--teal)}
+.sw[aria-checked="true"] .trk{background:var(--teal)}
+.sw[aria-checked="true"] .trk::after{left:14px;background:#fff}
 
 .shift{display:flex;flex-direction:column;gap:6px}
 .shift+.shift{margin-top:6px}
@@ -1060,7 +1067,7 @@ button.tr-static{cursor:default}
     <h2 id="shift-t">Che orario fai?</h2>
     <p class="hint" style="margin:0" id="shift-d"></p>
     <div class="shift-opts" id="shift-step1">
-      <button data-sh="reg"><b>Orario normale</b><small>8:00 – 16:30</small></button>
+      <button data-sh="reg"><span class="sh-l"><b>Orario normale</b><small id="sh-reg-t">8:00 – 16:30</small></span><span class="sw" id="sh-sw" role="switch" aria-checked="false" aria-label="FLEX"><span class="trk"></span>FLEX</span></button>
       <button data-sh="alt"><b>Altro orario</b><small>scegli inizio e fine</small></button>
       <button data-sh="solo"><b>Vado da solo</b><small>non entro nelle auto</small></button>
     </div>
@@ -1111,7 +1118,7 @@ button.tr-static{cursor:default}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='6.9';
+const APP_VERSION='7.0';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -2136,7 +2143,7 @@ function shiftColor(label,all){if(/^Orario flessibile/.test(label))return 'var(-
   const others=[...new Set(all.filter(l=>!/^Orario (flessibile|normale)/.test(l)))];return SH_COL[Math.max(0,others.indexOf(label))%SH_COL.length]}
 const shOpen=new Set();
 const SHIFT_ORDER=['flex','reg','alt','cfi','str','nd'];
-const bkShift=b=>b.shift==='flex'?'reg':SHIFTS[b.shift]?b.shift:'nd';
+const bkShift=b=>SHIFTS[b.shift]?b.shift:'nd';
 const hhmm=t=>String(t||'').replace(/^0(\d)/,'$1');
 const shiftLabel=b=>{const k=bkShift(b),S=SHIFTS[k];if(S.custom)return `${S.t} ${hhmm(b.from)}–${hhmm(b.to)}`;if(S.from)return `${S.t} ${hhmm(S.from)}–${hhmm(S.to)}`;return S.t};
 function bkLayout(date){const all=bkList(date),groups=[],buckets=new Map();
@@ -2232,10 +2239,16 @@ $('bk-open').onclick=()=>{const me=myPid();if(!me){needMe();return}
 
 // --- "Presente": scelta dell'orario (CFI e straordinario chiedono inizio e fine)
 let shPick='';
-function shiftOpen(){shPick='';$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?';
+let shFlex=false;
+function shFlexSet(v){shFlex=!!v;$('sh-sw').setAttribute('aria-checked',String(shFlex));$('sh-reg-t').textContent=shFlex?'7:30 – 16:00':'8:00 – 16:30'}
+function shiftOpen(){shPick='';
+  const lastSh=(state.bookings||[]).filter(x=>x.pid===myPid()&&(x.shift==='flex'||x.shift==='reg')).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
+  shFlexSet(!!(lastSh&&lastSh.shift==='flex'));$('shift-step1').hidden=false;$('shift-step2').hidden=true;$('shift-t').textContent='Che orario fai?';
   $('shift-d').textContent=`Prossimo viaggio: ${bkLong(tripDay())}.`;$('shift-sheet').hidden=false}
 function shiftDone(sh){const me=myPid();$('shift-sheet').hidden=true;if(!me)return;bkSet(me,'pres','forse',sh);snack(`Presente · ${shiftLabel(sh)}`)}
-$('shift-step1').onclick=e=>{const b=e.target.closest('[data-sh]');if(!b)return;const k=b.dataset.sh;
+$('shift-step1').onclick=e=>{if(e.target.closest('#sh-sw')){shFlexSet(!shFlex);return}
+  const b=e.target.closest('[data-sh]');if(!b)return;let k=b.dataset.sh;
+  if(k==='reg'&&shFlex)k='flex';
   if(!SHIFTS[k].custom){shiftDone({shift:k});return}
   shPick=k;const last=(state.bookings||[]).filter(x=>x.pid===myPid()&&x.shift===k&&x.from).sort((a,c)=>(c.t||'').localeCompare(a.t||''))[0];
   $('sh-from').value=last?last.from:'08:00';$('sh-to').value=last?last.to:'16:30';$('sh-msg').textContent='';
@@ -4771,6 +4784,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.0','Prenotazione: nel tasto "Orario normale" c\'è un interruttore FLEX che porta l\'orario a 7:30–16:00.'],
  ['6.9','Tolta la casella FLEX dal menu della prenotazione. Nella tabella dei presenti non compaiono più gli orari: gli elenchi si chiamano "Presenti" o "Gruppo 1, 2…".'],
  ['6.8','Prenotazione semplificata: "Orario normale" con la casella FLEX (7:30–16:00), "Altro orario" e "Vado da solo". I viaggi inseriti a mano da chi non è il creatore restano "da confermare" e non contano nei punti finché il creatore non li conferma.'],
  ['6.7','Solo il creatore della squadra può confermare i viaggi da confermare (gli altri possono modificare quelli a cui hanno partecipato). Condividere l\'app e il codice della squadra è riservato al creatore. Non si possono più creare nuove squadre: si entra solo con un codice.'],
