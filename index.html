@@ -917,7 +917,7 @@ button.tr-static{cursor:default}
       <button class="ghost wide" id="admin-claim-toggle">Hai creato tu questa squadra? Recupera i permessi</button>
       <div id="admin-claim-form" class="sync-box sub" hidden>
         <p class="hint" style="margin:0" id="admin-claim-hint"></p>
-        <label class="f">Password amministratore<input type="password" id="admin-pw" autocomplete="current-password" minlength="6"></label>
+        <label class="f">Password amministratore<input type="password" id="admin-pw" autocomplete="current-password"></label>
         <button class="primary wide" id="admin-claim-go">Recupera i permessi</button>
         <span class="msg" id="admin-msg" role="status"></span>
       </div>
@@ -925,7 +925,7 @@ button.tr-static{cursor:default}
     <details id="admin-set" class="admin-box" hidden><summary id="admin-set-sum">Password amministratore</summary>
       <div class="sync-box" style="margin-top:10px">
         <p class="hint" style="margin:0">Serve a riavere i permessi da creatore se cambi telefono, reinstalli l'app o la apri da un altro dispositivo. Tienila per te.</p>
-        <label class="f">Nuova password (almeno 6 caratteri)<input type="password" id="admin-pw-new" autocomplete="new-password" minlength="6"></label>
+        <label class="f">Nuova password (almeno 10 caratteri)<input type="password" id="admin-pw-new" autocomplete="new-password"></label>
         <button class="wide" id="admin-pw-save">Salva password</button>
         <span class="msg" id="admin-set-msg" role="status"></span>
       </div>
@@ -1118,7 +1118,7 @@ button.tr-static{cursor:default}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='7.0';
+const APP_VERSION='7.1';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1796,7 +1796,20 @@ sync.pendingDel=sync.pendingDel||[];sync.dirty=sync.dirty||[];
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 const syncSupported=()=>!inViewer&&!!window.firebase;
 let fsdb=null,remoteTrips=null,remoteMeta,applying=false,unsubs=[],lastMeta='',pushing=false,pushAgain=false,syncState='off';
-const metaOf=()=>({people:state.people||[],groups:state.groups||[],start:state.start||null,teamName:state.teamName||'',adminHash:state.adminHash||''});
+let remoteZone,adminOk=null,lastZone='',protNagged=false,adminBusy=false;
+const PW_MIN=10;
+// meta/stato: solo il creatore (people, punti di partenza, nome). meta/zone: le zone, modificabili da tutti i membri.
+const metaOf=()=>({people:state.people||[],start:state.start||null,teamName:state.teamName||''});
+const zoneOf=()=>({groups:state.groups||[]});
+function teamProt(){const t=(sync.teams||[]).find(x=>x.code===sync.code);return !!((remoteMeta&&remoteMeta.prot)||(t&&t.prot))}
+function canPushStato(){return !!sync.creator||!teamProt()}
+// i permessi da creatore li decide il server: esiste il documento admins/<tuo uid>? (1 lettura per apertura)
+async function checkAdmin(){const u=firebase.auth().currentUser,code=sync.code;if(!u||!code)return;
+  try{const d=await gref().collection('admins').doc(u.uid).get();if(code!==sync.code)return;adminOk=d.exists}catch(e){return}
+  applyAdmin()}
+function applyAdmin(){
+  if(adminOk===null||remoteMeta===undefined||!teamProt())return;
+  if(!!sync.creator!==adminOk){sync.creator=adminOk;const t=sync.teams.find(x=>x.code===sync.code);if(t)t.creator=adminOk;saveSync();renderSync();render()}}
 const clean=o=>JSON.parse(JSON.stringify(o));
 const core=t=>JSON.stringify({date:t.date,weight:t.weight||1,note:t.note||'',cars:t.cars||[],hist:!!t.hist,pend:!!t.pend});
 const gref=()=>fsdb.collection('gruppi').doc(sync.code);
@@ -1810,7 +1823,7 @@ function setSync(st,detail){syncState=st;
   if($('sync-status')){$('sync-status').className='sync-pill '+st;$('sync-status').textContent=lab+(detail?' · '+detail:'')}}
 
 async function syncStart(){
-  unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;
+  unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteZone=undefined;adminOk=null;
   if(!sync.code){setSync('off');return}
   if(!syncSupported()){setSync('bad','non disponibile qui');return}
   setSync('wait');
@@ -1828,6 +1841,8 @@ async function syncStart(){
     state.bookings=list;persistLocal();if(typeof renderBookings==='function'){renderBookings();renderPending()}},()=>{}));
   unsubs.push(gref().collection('iscritti').onSnapshot(snap=>{const j={};snap.forEach(d=>{const x=d.data();if(x&&!x.left&&x.pid)j[x.pid]=x});joined=j;joinCheck();render()},()=>{}));
   unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
+  unsubs.push(gref().collection('meta').doc('zone').onSnapshot(d=>{remoteZone=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},()=>{remoteZone=null;syncMerge(true)}));
+  checkAdmin();
   syncPaused=false;lazySync();
 }
 // --- ascolti "su richiesta": registro delle modifiche e suggerimenti solo mentre la loro pagina è aperta
@@ -1846,40 +1861,48 @@ document.addEventListener('visibilitychange',()=>{clearTimeout(hideTimer);
   else if(syncPaused&&sync.code){syncStart()}});
 // unisce i dati remoti con quelli locali non ancora inviati
 function syncMerge(fromCache){
-  if(remoteTrips===null||remoteMeta===undefined)return;
+  if(remoteTrips===null||remoteMeta===undefined||remoteZone===undefined)return;
+  if(remoteMeta&&remoteMeta.prot){const pt=sync.teams.find(x=>x.code===sync.code);if(pt&&!pt.prot){pt.prot=true;saveSync()}}
+  applyAdmin();
   applying=true;
-  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.groups=remoteMeta.groups||[];migrateGroups(state);state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';state.adminHash=remoteMeta.adminHash||'';
+  if(remoteMeta&&sync.metaDirty&&!canPushStato()){sync.metaDirty=false;saveSync()}
+  if(remoteMeta&&!sync.metaDirty){state.people=remoteMeta.people||[];state.start=remoteMeta.start||null;state.teamName=remoteMeta.teamName||'';
     const tt=sync.teams&&sync.teams.find(x=>x.code===sync.code);if(tt&&tt.name!==state.teamName){tt.name=state.teamName;saveSync()}}
+  {const zg=remoteZone?(remoteZone.groups||[]):(remoteMeta&&Array.isArray(remoteMeta.groups)?remoteMeta.groups:null);if(zg&&!sync.zoneDirty)state.groups=clean(zg)}
+  migrateGroups(state);
   const del=new Set(sync.pendingDel),dirty=new Set(sync.dirty),localById=new Map(state.trips.map(t=>[t.id,t])),out=[];
   remoteTrips.forEach((d,id)=>{if(dirty.has(id)&&localById.has(id)){out.push(localById.get(id));return}
     if(!d.deleted&&!del.has(id)){const t={id,date:d.date,weight:d.weight||1,note:d.note||'',cars:d.cars||[]};if(d.hist)t.hist=true;if(d.pend)t.pend=true;if(d.by)t.by=d.by;out.push(t)}});
   state.trips.forEach(t=>{if(!remoteTrips.has(t.id)&&!del.has(t.id))out.push(t)});
   out.sort((a,b)=>a.date.localeCompare(b.date));
   state.trips=out;delete state.sample;
-  persistLocal();lastMeta=JSON.stringify(metaOf());lastSnap=snapOf();
+  persistLocal();lastMeta=JSON.stringify(metaOf());lastZone=JSON.stringify(zoneOf());lastSnap=snapOf();
   render();applying=false;
   setSync(fromCache?'pending':'ok');
   if(!fromCache)setTimeout(maybeAskWho,0);
+  if(!fromCache&&sync.creator&&!teamProt()&&!protNagged){protNagged=true;setTimeout(()=>snack('Squadra non ancora protetta: apri Squadra › la tua squadra › Proteggi la squadra.'),1500)}
   if(!fromCache&&/…$/.test($('sync-msg').textContent))smsg('Dati sincronizzati.');
   if(!fromCache&&remoteMeta===null&&!sync.creator&&!remoteTrips.size)smsg('Nessuna squadra trovata con questo codice: controllalo, oppure esci dalla squadra.');
   syncPush();
 }
 async function syncPush(){
-  if(!fsdb||remoteTrips===null||remoteMeta===undefined)return;
+  if(!fsdb||remoteTrips===null||remoteMeta===undefined||remoteZone===undefined)return;
   if(pushing){pushAgain=true;return}
   const ops=[],by=sync.me||'',at=firebase.firestore.FieldValue.serverTimestamp();
   const upd=[...sync.dirty];
   state.trips.forEach(t=>{if(!remoteTrips.has(t.id)||upd.includes(t.id)){const d=clean({date:t.date,weight:t.weight,note:t.note||'',cars:t.cars,by:t.by||by});if(t.hist)d.hist=true;if(t.pend)d.pend=true;d.at=at;ops.push(['viaggi',t.id,d,false])}});
   const dels=[...sync.pendingDel];dels.forEach(id=>ops.push(['viaggi',id,{deleted:true,delBy:by,at},true]));
-  const meta=sync.metaDirty||(remoteMeta===null&&sync.creator);if(meta)ops.push(['meta','stato',{...clean(metaOf()),by,at},false]);
+  const own=canPushStato();
+  const meta=own&&(sync.metaDirty||(remoteMeta===null&&sync.creator));if(meta)ops.push(['meta','stato',{...clean(metaOf()),...(teamProt()?{prot:true}:{}),by,at},false]);
+  const zone=!!sync.zoneDirty||(meta&&remoteZone===null&&(state.groups||[]).length>0);if(zone)ops.push(['meta','zone',{...clean(zoneOf()),by,at},false]);
   const evs=sync.pendingEv.slice(0,400);
   if(!ops.length&&!evs.length)return;
-  pushing=true;sync.metaDirty=false;saveSync();
+  pushing=true;sync.metaDirty=false;sync.zoneDirty=false;saveSync();
   try{
     for(let i=0;i<ops.length;i+=400){const b=fsdb.batch();
       ops.slice(i,i+400).forEach(([c,id,d,merge])=>b.set(gref().collection(c).doc(id),d,merge?{merge:true}:{}));await b.commit()}
     sync.pendingDel=sync.pendingDel.filter(id=>!dels.includes(id));sync.dirty=sync.dirty.filter(id=>!upd.includes(id));saveSync();setSync('ok');
-  }catch(e){if(meta)sync.metaDirty=true;saveSync();setSync(e&&e.code==='permission-denied'?'bad':'pending',e&&e.code||'')}
+  }catch(e){if(meta)sync.metaDirty=true;if(zone)sync.zoneDirty=true;saveSync();setSync(e&&e.code==='permission-denied'?'bad':'pending',e&&e.code||'')}
   // le modifiche al registro eventi vanno in un invio separato: le regole permettono solo di aggiungerle
   if(evs.length){try{const b=fsdb.batch();evs.forEach(e=>b.set(gref().collection('eventi').doc(e.id),{...e,at},{}));await b.commit();
       const sent=new Set(evs.map(e=>e.id));sync.pendingEv=sync.pendingEv.filter(e=>!sent.has(e.id));saveSync()}
@@ -1961,7 +1984,8 @@ persist=function(){persistLocal();
   if(applying)return;
   const cur=snapOf();addEvents(diffEvents(lastSnap,cur));lastSnap=cur;
   if(!sync.code)return;
-  if(JSON.stringify(metaOf())!==lastMeta){sync.metaDirty=true;lastMeta=JSON.stringify(metaOf())}
+  if(JSON.stringify(metaOf())!==lastMeta){if(canPushStato())sync.metaDirty=true;lastMeta=JSON.stringify(metaOf())}
+  if(JSON.stringify(zoneOf())!==lastZone){sync.zoneDirty=true;lastZone=JSON.stringify(zoneOf())}
   if(remoteTrips){const ids=new Set(state.trips.map(t=>t.id));
     remoteTrips.forEach((d,id)=>{if(!d.deleted&&!ids.has(id)&&!sync.pendingDel.includes(id))sync.pendingDel.push(id)});
     state.trips.forEach(t=>{const d=remoteTrips.get(t.id);if(d&&!d.deleted&&core(t)!==core(d)&&!sync.dirty.includes(t.id))sync.dirty.push(t.id)})}
@@ -1976,18 +2000,18 @@ const curTeam=()=>sync.teams.find(t=>t.code===sync.code);
 const teamLabel=t=>t&&t.name?t.name:'Squadra senza nome';
 function rememberTeam(){const t=curTeam();if(!t)return;t.me=sync.me||'';t.creator=!!sync.creator;if(state.teamName)t.name=state.teamName;
   try{localStorage.setItem(CACHE_PREFIX+sync.code,JSON.stringify(state))}catch(e){}saveSync()}
-const hasPending=()=>sync.pendingEv.length||sync.pendingDel.length||sync.dirty.length||sync.metaDirty;
-function stopSync(){joined={};lazyStop();unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteEvents=null}
+const hasPending=()=>sync.pendingEv.length||sync.pendingDel.length||sync.dirty.length||sync.metaDirty||sync.zoneDirty;
+function stopSync(){joined={};lazyStop();unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteZone=undefined;adminOk=null;remoteEvents=null}
 // passa a un'altra squadra (già nota o nuova); i dati arrivano da Firebase, nel frattempo si mostra la copia salvata
 function openTeam(code,{me='',creator=false,name='',fresh:newState=null}={}){
   if(sync.code){if(hasPending()){smsg('Ci sono modifiche non ancora inviate: aspetta che il pallino diventi verde e riprova.');return false}rememberTeam()}
   stopSync();
   let t=sync.teams.find(x=>x.code===code);
   if(!t){t={code,name,me,creator};sync.teams.push(t)}
-  sync.code=code;sync.me=t.me||me;sync.creator=!!(t.creator||creator);sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];sync.metaDirty=!!newState;
+  sync.code=code;sync.me=t.me||me;sync.creator=!!(t.creator||creator);sync.pendingDel=[];sync.dirty=[];sync.pendingEv=[];sync.metaDirty=!!newState;sync.zoneDirty=!!newState;
   let cached=null;try{cached=JSON.parse(localStorage.getItem(CACHE_PREFIX+code))}catch(e){}
   applying=true;state=newState||cached||{people:[],trips:[],groups:[],start:null};migrateGroups(state);persistLocal();applying=false;
-  lastSnap=snapOf();lastMeta=newState?'':JSON.stringify(metaOf());
+  lastSnap=snapOf();lastMeta=newState?'':JSON.stringify(metaOf());lastZone=newState?'':JSON.stringify(zoneOf());
   saveSync();fresh();pMenu=null;render();syncStart();return true;
 }
 function renderSync(){
@@ -2017,11 +2041,13 @@ function renderSync(){
   $('team-title').textContent=on?teamLabel(t):'Su questo telefono';
   $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:(ALLOW_NEW_TEAMS?'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".':'Dati non condivisi: per condividerli entra in una squadra da "Le mie squadre".');
   $('team-rename-box').hidden=!on||!sync.creator;$('me-box').hidden=!on;
-  $('admin-claim').hidden=!on||!!sync.creator;$('admin-set').hidden=!on||!sync.creator;
-  if(on){$('admin-set-sum').textContent=state.adminHash?'Password amministratore · impostata':'Password amministratore · non ancora impostata';
-    $('admin-claim-hint').textContent=state.adminHash?'Inserisci la password amministratore che hai scelto quando hai creato o gestito la squadra.'
-      :'Questa squadra non ha ancora una password amministratore: chi la imposta per primo diventa amministratore. Fallo solo se sei tu il creatore, la cosa resta scritta nel registro.';
-    $('admin-claim-go').textContent=state.adminHash?'Recupera i permessi':'Imposta la password e recupera i permessi'}
+  const prot=teamProt();$('admin-claim').hidden=!on||(prot?!!sync.creator:!sync.creator);$('admin-set').hidden=!on||!sync.creator||!prot;
+  if(on){$('admin-set-sum').textContent='Password amministratore · impostata';
+    $('admin-claim-toggle').textContent=prot?'Hai creato tu questa squadra? Recupera i permessi':'Proteggi la squadra (consigliato)';
+    $('admin-claim-hint').textContent=prot?'Inserisci la password amministratore che hai scelto quando hai protetto la squadra.'
+      :`Scegli una password amministratore (almeno ${PW_MIN} caratteri) per proteggere la squadra: da quel momento solo chi la conosce può essere amministratore. Annotala: non si può recuperare. Fallo solo se sei tu il creatore.`;
+    $('admin-claim-go').textContent=prot?'Recupera i permessi':'Proteggi la squadra';
+    $('admin-pw').autocomplete=prot?'current-password':'new-password'}
   if(on){$('sync-code').textContent=sync.code;if(document.activeElement!==$('team-rename'))$('team-rename').value=t&&t.name||''}
   setSync(syncState);
 }
@@ -4784,6 +4810,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.1','Sicurezza: i permessi da creatore sono verificati dal server e la password amministratore non è più salvata nei dati condivisi. Le zone restano modificabili da tutti.'],
  ['7.0','Prenotazione: nel tasto "Orario normale" c\'è un interruttore FLEX che porta l\'orario a 7:30–16:00.'],
  ['6.9','Tolta la casella FLEX dal menu della prenotazione. Nella tabella dei presenti non compaiono più gli orari: gli elenchi si chiamano "Presenti" o "Gruppo 1, 2…".'],
  ['6.8','Prenotazione semplificata: "Orario normale" con la casella FLEX (7:30–16:00), "Altro orario" e "Vado da solo". I viaggi inseriti a mano da chi non è il creatore restano "da confermare" e non contano nei punti finché il creatore non li conferma.'],
@@ -4844,21 +4871,54 @@ function renderInfo(){
   $('info-notes').innerHTML=NOTES.map(([v,t])=>`<div class="note"><b>v${v}</b><span>${esc(t)}</span></div>`).join('');
 }
 
-// ===================== Permessi da creatore su più dispositivi: password amministratore =====================
-async function hashPw(pw){const data=new TextEncoder().encode('collegauto|'+sync.code+'|'+pw);
-  try{if(crypto&&crypto.subtle){const h=await crypto.subtle.digest('SHA-256',data);return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}}catch(e){}
-  let a=0x811c9dc5,b=0;for(const c of data){a=Math.imul(a^c,16777619)>>>0;b=(b*31+c)>>>0}return 'f'+a.toString(16)+b.toString(16)}
-function becomeAdmin(how){sync.creator=true;const t=curTeam();if(t)t.creator=true;saveSync();
-  addEvents([['team',`${sync.me||'Un partecipante'} ${how}`]]);persist();render();snack('Ora hai i permessi da creatore')}
+// ===================== Permessi da creatore: verificati dal server (regole Firestore) =====================
+// La password non viene mai salvata nei dati condivisi: se ne ricava una chiave lenta (PBKDF2) che solo le regole Firestore sanno confrontare.
+async function adminKey(pw){
+  if(!(window.crypto&&crypto.subtle))throw 'Questo browser non supporta la protezione con password.';
+  const enc=new TextEncoder(),km=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:enc.encode('collegauto-admin|'+sync.code),iterations:200000},km,256);
+  return [...new Uint8Array(bits)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+function becomeAdmin(how){adminOk=true;sync.creator=true;const t=curTeam();if(t)t.creator=true;saveSync();
+  addEvents([['team',`${sync.me||'Un partecipante'} ${how}`]]);persist();render();renderSync();snack('Ora hai i permessi da creatore')}
+const adminReady=m=>{if(!sync.code||!fsdb||!firebase.auth().currentUser){m('Squadra non collegata.');return false}
+  if(!navigator.onLine||syncState!=='ok'){m('Serve la connessione: aspetta il pallino verde e riprova.');return false}
+  if(remoteMeta===undefined||remoteZone===undefined){m('Aspetta che i dati siano sincronizzati e riprova.');return false}return true};
+// migrazione una tantum: un'unica scrittura atomica crea admin, chiave, zone e stato protetto (toglie anche il vecchio adminHash pubblico)
+async function protectTeam(k){
+  const u=firebase.auth().currentUser,by=sync.me||'',at=firebase.firestore.FieldValue.serverTimestamp(),b=fsdb.batch();
+  b.set(gref().collection('admins').doc(u.uid),{k,by,at});
+  b.set(gref().collection('meta').doc('protetta'),{k,adminUid:u.uid,by,at});
+  b.set(gref().collection('meta').doc('zone'),{...clean(zoneOf()),by,at});
+  b.set(gref().collection('meta').doc('stato'),{...clean(metaOf()),prot:true,by,at});
+  try{await b.commit()}catch(e){throw e&&e.code==='permission-denied'?'La squadra risulta già protetta da qualcun altro.':'Protezione non riuscita: controlla la connessione e riprova.'}
+  sync.metaDirty=false;sync.zoneDirty=false;lastMeta=JSON.stringify(metaOf());lastZone=JSON.stringify(zoneOf());
+  const t=curTeam();if(t)t.prot=true;delete state.adminHash;saveSync()}
 $('admin-claim-toggle').onclick=()=>{$('admin-claim-form').hidden=!$('admin-claim-form').hidden;if(!$('admin-claim-form').hidden)$('admin-pw').focus()};
-$('admin-claim-go').onclick=async()=>{const pw=$('admin-pw').value,m=t=>{$('admin-msg').textContent=t};
-  if(!sync.code)return;
-  if(!state.adminHash){if(pw.length<6){m('Scegli una password di almeno 6 caratteri.');return}
-    state.adminHash=await hashPw(pw);$('admin-pw').value='';becomeAdmin('ha impostato la password amministratore e recuperato i permessi da creatore');return}
-  if(await hashPw(pw)===state.adminHash){$('admin-pw').value='';becomeAdmin('ha recuperato i permessi da creatore con la password')}
-  else m('Password non corretta.')};
+$('admin-claim-go').onclick=async()=>{if(adminBusy)return;const pw=$('admin-pw').value,m=t=>{$('admin-msg').textContent=t};
+  if(!adminReady(m))return;
+  const u=firebase.auth().currentUser;adminBusy=true;m('Verifico…');
+  try{
+    if(teamProt()){
+      if(!pw){m('Scrivi la password.');return}
+      const k=await adminKey(pw);
+      try{await gref().collection('admins').doc(u.uid).set({k,by:sync.me||'',at:firebase.firestore.FieldValue.serverTimestamp()})}
+      catch(e){m(e&&e.code==='permission-denied'?'Password non corretta.':'Verifica non riuscita: controlla la connessione e riprova.');return}
+      $('admin-pw').value='';m('');becomeAdmin('ha recuperato i permessi da creatore con la password');
+    }else{
+      if(!sync.creator)return;
+      if(pw.length<PW_MIN){m(`Scegli una password di almeno ${PW_MIN} caratteri.`);return}
+      await protectTeam(await adminKey(pw));
+      $('admin-pw').value='';m('');becomeAdmin('ha protetto la squadra con la password amministratore');
+    }
+  }catch(e){m(typeof e==='string'?e:'Operazione non riuscita: riprova.')}
+  finally{adminBusy=false}};
 $('admin-pw').onkeydown=e=>{if(e.key==='Enter')$('admin-claim-go').click()};
-$('admin-pw-save').onclick=async()=>{const pw=$('admin-pw-new').value,m=t=>{$('admin-set-msg').textContent=t};
-  if(!sync.creator||!sync.code)return;if(pw.length<6){m('Almeno 6 caratteri.');return}
-  state.adminHash=await hashPw(pw);$('admin-pw-new').value='';addEvents([['team','Password amministratore aggiornata']]);persist();render();m('Password salvata.')};
+$('admin-pw-save').onclick=async()=>{if(adminBusy)return;const pw=$('admin-pw-new').value,m=t=>{$('admin-set-msg').textContent=t};
+  if(!sync.creator||!sync.code||!teamProt())return;if(pw.length<PW_MIN){m(`Almeno ${PW_MIN} caratteri.`);return}
+  if(!adminReady(m))return;adminBusy=true;m('Salvo…');
+  try{const k=await adminKey(pw);
+    await gref().collection('meta').doc('protetta').update({k,by:sync.me||'',at:firebase.firestore.FieldValue.serverTimestamp()});
+    $('admin-pw-new').value='';addEvents([['team','Password amministratore aggiornata']]);persist();render();m('Password salvata.')}
+  catch(e){m(typeof e==='string'?e:e&&e.code==='permission-denied'?'Non hai i permessi per cambiare la password.':'Salvataggio non riuscito: riprova.')}
+  finally{adminBusy=false}};
 </script>
