@@ -1118,7 +1118,7 @@ button.tr-static{cursor:default}
 </script>
 <!-- /firebase-sdk -->
 <script>
-const APP_VERSION='7.1';
+const APP_VERSION='7.2';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -1146,10 +1146,9 @@ const isAdmin=()=>!window.__startLocked;
 const ALLOW_NEW_TEAMS=false;
 // condividere l'app e il codice della squadra: solo il creatore della squadra
 const canShare=()=>isAdmin();
-// chi può eliminare un viaggio registrato: il creatore (o chiunque se l'app non è in una squadra); gli altri solo se hanno partecipato e il viaggio non è dello storico importato
-const canDelTrip=t=>{if(!t)return false;if(isAdmin())return true;if(t.hist)return false;
-  const me=state.people.find(x=>!x.deleted&&x.name===sync.me);if(!me)return false;
-  return t.cars.some(c=>c.driver===me.id||c.passengers.includes(me.id))};
+// chi può eliminare un viaggio: il creatore (o chiunque se l'app non è in una squadra); gli altri solo i propri viaggi ancora da confermare
+const canDelTrip=t=>{if(!t)return false;if(isAdmin())return true;if(t.hist||!t.pend)return false;
+  return t.uid?t.uid===myUid():(!!t.by&&t.by===sync.me)};
 // persone visibili (attive + archiviate); chi è eliminato resta solo nei viaggi già registrati
 const listed=()=>state.people.filter(p=>!p.deleted);
 persist();
@@ -1313,7 +1312,7 @@ function renderComposer(){
 }
 $('save').onclick=()=>{const v=validate();if(v){setMsg(v);return}
   if(state.sample){state={people:state.people,trips:[]}}
-  state.trips.push({id:uid(),...(sync.me?{by:sync.me}:{}),...(isAdmin()?{}:{pend:true}),date:$('trip-date').value,weight:+$('trip-weight').value,note:$('trip-note').value.trim(),
+  state.trips.push({id:uid(),...(sync.me?{by:sync.me}:{}),...(isAdmin()?{}:{pend:true}),date:$('trip-date').value,weight:isAdmin()?(+$('trip-weight').value||1):1,note:$('trip-note').value.trim(),
     cars:draft.cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
   state.trips.sort((a,b)=>a.date.localeCompare(b.date));
   persist();draft={who:new Set(),cars:[{driver:'',passengers:[]}]};$('trip-note').value='';$('trip-weight').value=1;render();if(!isAdmin())snack('Viaggio inserito: lo conferma il creatore della squadra')};
@@ -1343,6 +1342,7 @@ function personPanel(p,c){
       ${!isAdmin()?'':(p.archived?`<button data-act="rest" data-id="${p.id}"><span>Ripristina</span><span class="pm-val">torna tra gli attivi</span></button>`
                  :`<button data-act="arch" data-id="${p.id}"><span>Archivia</span><span class="pm-val">nasconde, i punti restano</span></button>`)+`
       <button data-act="m-rename" data-id="${p.id}"><span>Rinomina</span><span class="pm-val">›</span></button>
+      ${window.__inTeam&&joined[p.id]?`<button data-act="unlink" data-id="${p.id}"><span>Libera il nome</span><span class="pm-val">scollega il telefono</span></button>`:''}
       <button class="danger" data-act="m-del" data-id="${p.id}"><span>${window.__inTeam?'Espelli dalla squadra':'Elimina'}</span><span class="pm-val">›</span></button>`}
     </div>`;
   }else if(pMode==='group'){
@@ -1376,7 +1376,9 @@ $('people').onclick=e=>{const b=e.target.closest('[data-act]');if(!b)return;cons
   const done=msg=>{pMenu=null;pMode='';persist();render();if(msg)snack(msg)};
   const reveal=()=>{const el=document.querySelector('.pact');if(el)el.scrollIntoView({block:'nearest',behavior:'smooth'})};
   if(a==='menu'){if(!isAdmin())return;pMenu=pMenu===id?null:id;pMode='';render();reveal();return}
-  if(['arch','rest','m-rename','m-del','del','ren'].includes(a)&&!isAdmin())return;
+  if(['arch','rest','m-rename','m-del','del','ren','unlink'].includes(a)&&!isAdmin())return;
+  if(a==='unlink'){if(!fsdb||!sync.code||!p)return;const old=joined[id]||{};   // il vecchio proprietario non può riprendersi il nome da solo
+    gref().collection('iscritti').doc(id).set({pid:id,left:true,prevUid:old.uid||'',prevDev:old.dev||'',at:new Date().toISOString()}).then(()=>{delete joined[id];pMenu=null;render();snack(`${p.name}: nome liberato, ora può scegliere un altro telefono`)}).catch(()=>snack('Non riesco a liberare il nome: riprova.'));return}
   if(a==='m-group'){pMode='group';render();reveal();return}
   if(a==='m-rename'){pMode='rename';render();const i=$('pren-'+id);if(i){i.focus();i.select()}return}
   if(a==='m-del'){pMode='del';render();reveal();return}
@@ -1476,7 +1478,7 @@ $('log').onclick=e=>{const cf=e.target.closest('[data-conf]');
   if(cf){if(!isAdmin()){snack('Solo il creatore della squadra può confermare i viaggi');return}
     const t=state.trips.find(x=>x.id===cf.dataset.conf);if(t){delete t.pend;persist();render();snack('Viaggio confermato')}return}
   const b=e.target.closest('[data-trip]');if(!b)return;
-  if(!canDelTrip(state.trips.find(t=>t.id===b.dataset.trip))){snack('Solo chi ha partecipato al viaggio o il creatore della squadra può eliminarlo');render();return}
+  if(!canDelTrip(state.trips.find(t=>t.id===b.dataset.trip))){snack('Solo il creatore della squadra può eliminare i viaggi registrati: tu puoi eliminare solo i tuoi viaggi ancora da confermare');render();return}
   if(b.dataset.confirm){state.trips=state.trips.filter(t=>t.id!==b.dataset.trip);persist();render()}
   else{b.dataset.confirm='1';b.textContent='conferma?';b.style.color='var(--neg)'}};
 
@@ -1749,7 +1751,7 @@ $('wz-open').onclick=wzOpen;
 $('wz-next').onclick=()=>{const steps=wzSteps();
   if(steps[wz.k]!=='fine'){wz.k++;wzRender();return}
   if(state.sample){state={people:state.people,trips:[]}}
-  state.trips.push({id:uid(),...(sync.me?{by:sync.me}:{}),...(isAdmin()?{}:{pend:true}),date:wz.date,weight:wz.weight,note:wz.note.trim(),cars:wz.cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
+  state.trips.push({id:uid(),...(sync.me?{by:sync.me}:{}),...(isAdmin()?{}:{pend:true}),date:wz.date,weight:isAdmin()?wz.weight:1,note:wz.note.trim(),cars:wz.cars.map(c=>({driver:c.driver,passengers:[...c.passengers]}))});
   state.trips.sort((a,b)=>a.date.localeCompare(b.date));persist();
   const msg=`Viaggio del ${new Date(wz.date+'T12:00').toLocaleDateString('it-IT')} ${isAdmin()?'registrato':'inserito: lo conferma il creatore della squadra'}`;
   wz=null;wzClose();render();snack(msg);
@@ -1796,8 +1798,9 @@ sync.pendingDel=sync.pendingDel||[];sync.dirty=sync.dirty||[];
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 const syncSupported=()=>!inViewer&&!!window.firebase;
 let fsdb=null,remoteTrips=null,remoteMeta,applying=false,unsubs=[],lastMeta='',pushing=false,pushAgain=false,syncState='off';
-let remoteZone,adminOk=null,lastZone='',protNagged=false,adminBusy=false;
+let remoteZone,adminOk=null,lastZone='',protNagged=false,adminBusy=false,joinedReady=false;
 const PW_MIN=10;
+function myUid(){try{const u=firebase.auth().currentUser;return u?u.uid:''}catch(e){return ''}}
 // meta/stato: solo il creatore (people, punti di partenza, nome). meta/zone: le zone, modificabili da tutti i membri.
 const metaOf=()=>({people:state.people||[],start:state.start||null,teamName:state.teamName||''});
 const zoneOf=()=>({groups:state.groups||[]});
@@ -1823,7 +1826,7 @@ function setSync(st,detail){syncState=st;
   if($('sync-status')){$('sync-status').className='sync-pill '+st;$('sync-status').textContent=lab+(detail?' · '+detail:'')}}
 
 async function syncStart(){
-  unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteZone=undefined;adminOk=null;
+  unsubs.forEach(u=>{try{u()}catch(e){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteZone=undefined;adminOk=null;joinedReady=false;
   if(!sync.code){setSync('off');return}
   if(!syncSupported()){setSync('bad','non disponibile qui');return}
   setSync('wait');
@@ -1839,7 +1842,7 @@ async function syncStart(){
   // solo le ultime due settimane, filtrate dal server (le prenotazioni vecchie non vengono più scaricate)
   unsubs.push(gref().collection('prenotazioni').where('date','>=',isoShift(todayISO(),-14)).onSnapshot(snap=>{const list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted)list.push({...b,id:d.id})});
     state.bookings=list;persistLocal();if(typeof renderBookings==='function'){renderBookings();renderPending()}},()=>{}));
-  unsubs.push(gref().collection('iscritti').onSnapshot(snap=>{const j={};snap.forEach(d=>{const x=d.data();if(x&&!x.left&&x.pid)j[x.pid]=x});joined=j;joinCheck();render()},()=>{}));
+  unsubs.push(gref().collection('iscritti').onSnapshot(snap=>{const j={};snap.forEach(d=>{const x=d.data();if(x&&!x.left&&x.pid)j[x.pid]=x});joined=j;joinedReady=true;joinCheck();render();if(!$('whoami').hidden)whoList()},()=>{}));
   unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
   unsubs.push(gref().collection('meta').doc('zone').onSnapshot(d=>{remoteZone=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},()=>{remoteZone=null;syncMerge(true)}));
   checkAdmin();
@@ -1872,25 +1875,31 @@ function syncMerge(fromCache){
   migrateGroups(state);
   const del=new Set(sync.pendingDel),dirty=new Set(sync.dirty),localById=new Map(state.trips.map(t=>[t.id,t])),out=[];
   remoteTrips.forEach((d,id)=>{if(dirty.has(id)&&localById.has(id)){out.push(localById.get(id));return}
-    if(!d.deleted&&!del.has(id)){const t={id,date:d.date,weight:d.weight||1,note:d.note||'',cars:d.cars||[]};if(d.hist)t.hist=true;if(d.pend)t.pend=true;if(d.by)t.by=d.by;out.push(t)}});
+    if(!d.deleted&&!del.has(id)){const t={id,date:d.date,weight:d.weight||1,note:d.note||'',cars:d.cars||[]};if(d.hist)t.hist=true;if(d.pend)t.pend=true;if(d.by)t.by=d.by;if(d.uid)t.uid=d.uid;out.push(t)}});
   state.trips.forEach(t=>{if(!remoteTrips.has(t.id)&&!del.has(t.id))out.push(t)});
   out.sort((a,b)=>a.date.localeCompare(b.date));
   state.trips=out;delete state.sample;
   persistLocal();lastMeta=JSON.stringify(metaOf());lastZone=JSON.stringify(zoneOf());lastSnap=snapOf();
   render();applying=false;
   setSync(fromCache?'pending':'ok');
-  if(!fromCache)setTimeout(maybeAskWho,0);
+  if(!fromCache)setTimeout(()=>{joinCheck();maybeAskWho()},0);
   if(!fromCache&&sync.creator&&!teamProt()&&!protNagged){protNagged=true;setTimeout(()=>snack('Squadra non ancora protetta: apri Squadra › la tua squadra › Proteggi la squadra.'),1500)}
   if(!fromCache&&/…$/.test($('sync-msg').textContent))smsg('Dati sincronizzati.');
   if(!fromCache&&remoteMeta===null&&!sync.creator&&!remoteTrips.size)smsg('Nessuna squadra trovata con questo codice: controllalo, oppure esci dalla squadra.');
   syncPush();
 }
+// una scrittura negata dalle regole non deve bloccare le altre: si ripete una per una e quelle non consentite si annullano
+async function isolateDenied(ops){const bad=[];
+  for(const [c,id,d,merge] of ops){try{const b=fsdb.batch();b.set(gref().collection(c).doc(id),d,merge?{merge:true}:{});await b.commit()}catch(e){if(e&&e.code==='permission-denied')bad.push([c,id]);else throw e}}
+  return bad}
+function dropDenied(bad){bad.forEach(([c,id])=>{if(c==='viaggi'&&!(remoteTrips&&remoteTrips.has(id)))state.trips=state.trips.filter(t=>t.id!==id)});
+  persistLocal();snack('Alcune modifiche non sono consentite e sono state annullate.');setTimeout(()=>syncMerge(false),0)}
 async function syncPush(){
   if(!fsdb||remoteTrips===null||remoteMeta===undefined||remoteZone===undefined)return;
   if(pushing){pushAgain=true;return}
   const ops=[],by=sync.me||'',at=firebase.firestore.FieldValue.serverTimestamp();
   const upd=[...sync.dirty];
-  state.trips.forEach(t=>{if(!remoteTrips.has(t.id)||upd.includes(t.id)){const d=clean({date:t.date,weight:t.weight,note:t.note||'',cars:t.cars,by:t.by||by});if(t.hist)d.hist=true;if(t.pend)d.pend=true;d.at=at;ops.push(['viaggi',t.id,d,false])}});
+  state.trips.forEach(t=>{if(!remoteTrips.has(t.id)||upd.includes(t.id)){const d=clean({date:t.date,weight:isAdmin()?t.weight:1,note:t.note||'',cars:t.cars,by:t.by||by,uid:t.uid||myUid()});if(t.hist)d.hist=true;if(t.pend)d.pend=true;d.at=at;ops.push(['viaggi',t.id,d,false])}});
   const dels=[...sync.pendingDel];dels.forEach(id=>ops.push(['viaggi',id,{deleted:true,delBy:by,at},true]));
   const own=canPushStato();
   const meta=own&&(sync.metaDirty||(remoteMeta===null&&sync.creator));if(meta)ops.push(['meta','stato',{...clean(metaOf()),...(teamProt()?{prot:true}:{}),by,at},false]);
@@ -1899,12 +1908,16 @@ async function syncPush(){
   if(!ops.length&&!evs.length)return;
   pushing=true;sync.metaDirty=false;sync.zoneDirty=false;saveSync();
   try{
-    for(let i=0;i<ops.length;i+=400){const b=fsdb.batch();
-      ops.slice(i,i+400).forEach(([c,id,d,merge])=>b.set(gref().collection(c).doc(id),d,merge?{merge:true}:{}));await b.commit()}
-    sync.pendingDel=sync.pendingDel.filter(id=>!dels.includes(id));sync.dirty=sync.dirty.filter(id=>!upd.includes(id));saveSync();setSync('ok');
+    let bad=[];
+    try{for(let i=0;i<ops.length;i+=400){const b=fsdb.batch();
+      ops.slice(i,i+400).forEach(([c,id,d,merge])=>b.set(gref().collection(c).doc(id),d,merge?{merge:true}:{}));await b.commit()}}
+    catch(e){if(!(e&&e.code==='permission-denied'))throw e;bad=await isolateDenied(ops)}
+    sync.pendingDel=sync.pendingDel.filter(id=>!dels.includes(id));sync.dirty=sync.dirty.filter(id=>!upd.includes(id));
+    if(bad.length)dropDenied(bad);
+    saveSync();setSync('ok');
   }catch(e){if(meta)sync.metaDirty=true;if(zone)sync.zoneDirty=true;saveSync();setSync(e&&e.code==='permission-denied'?'bad':'pending',e&&e.code||'')}
   // le modifiche al registro eventi vanno in un invio separato: le regole permettono solo di aggiungerle
-  if(evs.length){try{const b=fsdb.batch();evs.forEach(e=>b.set(gref().collection('eventi').doc(e.id),{...e,at},{}));await b.commit();
+  if(evs.length){try{const b=fsdb.batch();evs.forEach(e=>b.set(gref().collection('eventi').doc(e.id),{...e,uid:myUid(),at},{}));await b.commit();
       const sent=new Set(evs.map(e=>e.id));sync.pendingEv=sync.pendingEv.filter(e=>!sent.has(e.id));saveSync()}
     catch(e){if(e&&e.code==='permission-denied'){const sent=new Set(evs.map(x=>x.id));sync.pendingEv=sync.pendingEv.filter(x=>!sent.has(x.id));saveSync()}}}
   pushing=false;if(pushAgain){pushAgain=false;syncPush()}
@@ -2001,7 +2014,7 @@ const teamLabel=t=>t&&t.name?t.name:'Squadra senza nome';
 function rememberTeam(){const t=curTeam();if(!t)return;t.me=sync.me||'';t.creator=!!sync.creator;if(state.teamName)t.name=state.teamName;
   try{localStorage.setItem(CACHE_PREFIX+sync.code,JSON.stringify(state))}catch(e){}saveSync()}
 const hasPending=()=>sync.pendingEv.length||sync.pendingDel.length||sync.dirty.length||sync.metaDirty||sync.zoneDirty;
-function stopSync(){joined={};lazyStop();unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteZone=undefined;adminOk=null;remoteEvents=null}
+function stopSync(){joined={};lazyStop();unsubs.forEach(u=>{try{u()}catch(x){}});unsubs=[];remoteTrips=null;remoteMeta=undefined;remoteZone=undefined;adminOk=null;joinedReady=false;remoteEvents=null}
 // passa a un'altra squadra (già nota o nuova); i dati arrivano da Firebase, nel frattempo si mostra la copia salvata
 function openTeam(code,{me='',creator=false,name='',fresh:newState=null}={}){
   if(sync.code){if(hasPending()){smsg('Ci sono modifiche non ancora inviate: aspetta che il pallino diventi verde e riprova.');return false}rememberTeam()}
@@ -2027,7 +2040,7 @@ function renderSync(){
   const on=!!sync.code,sup=syncSupported(),t=curTeam();
   $('sync-off').hidden=on||!sup;$('sync-on').hidden=!on;$('sync-na').hidden=sup;
   const opts=active().map(p=>p.name).sort((a,b)=>a.localeCompare(b));
-  ['sync-me','sync-me2'].forEach(id=>{$(id).innerHTML='<option value="">— scegli il tuo nome —</option>'+opts.map(n=>`<option ${n===sync.me?'selected':''}>${esc(n)}</option>`).join('')});
+  ['sync-me','sync-me2'].forEach(id=>{$(id).innerHTML='<option value="">— scegli il tuo nome —</option>'+opts.map(n=>{const tk=n!==sync.me&&takenName(n);return `<option ${n===sync.me?'selected':''}${tk?' disabled':''}>${esc(n)}${tk?' (già associato)':''}</option>`}).join('')});
   $('team-name').textContent=on?' · '+teamLabel(t):'';
   // elenco delle squadre, con il numero di iscritti
   const cnt=code=>{if(code===sync.code)return active().length;
@@ -2052,13 +2065,23 @@ function renderSync(){
   setSync(syncState);
 }
 const smsg=t=>{$('sync-msg').textContent=t};
-$('sync-me').onchange=$('sync-me2').onchange=e=>{sync.me=e.target.value;const t=curTeam();if(t)t.me=sync.me;saveSync();joinCheck();renderSync()};
+$('sync-me').onchange=$('sync-me2').onchange=e=>{if(takenName(e.target.value)){snack(TAKEN_MSG);renderSync();return}sync.me=e.target.value;const t=curTeam();if(t)t.me=sync.me;saveSync();joinCheck();renderSync()};
 const DEV=(()=>{let d='';try{d=localStorage.getItem('ca-dev')||'';if(!d){d=Math.random().toString(36).slice(2,10);localStorage.setItem('ca-dev',d)}}catch(e){d='x'}return d})();
 // segna "unito" il nome scelto su questo telefono (e lo toglie dal nome scelto prima, se cambiato)
-function joinCheck(){if(!fsdb||!sync.code)return;const me=myPid(),col=gref().collection('iscritti');
-  Object.values(joined).forEach(x=>{if(x.dev===DEV&&x.pid!==me){delete joined[x.pid];col.doc(x.pid).set({pid:x.pid,left:true,dev:DEV,at:new Date().toISOString()}).catch(()=>{})}});
-  // scrive solo se quel nome non risulta ancora unito (anche da un altro telefono): niente scritture continue
-  if(me&&!joined[me]){const x={pid:me,name:name(me),dev:DEV,at:new Date().toISOString()};joined[me]=x;col.doc(me).set(x).catch(()=>{})}}
+// un nome appartiene a un solo telefono: iscritti/<pid> porta l'uid dell'utente che lo ha scelto per primo
+const TAKEN_MSG="Questo nome è già associato a un altro telefono: chiedi all'amministratore di liberarlo.";
+const LOST_MSG="Questo nome non è più associato al tuo telefono: sceglilo di nuovo o chiedi all'amministratore.";
+const nameTaken=pid=>{const j=joined[pid],u=myUid();if(!j)return false;if(j.uid)return !!u&&j.uid!==u;return !!(j.dev&&j.dev!==DEV&&teamProt())};
+const takenName=n=>{const p=active().find(x=>x.name===n);return !!p&&nameTaken(p.id)};
+function releaseMine(msg){sync.me='';const t=curTeam();if(t)t.me='';saveSync();if(msg)snack(msg);render();renderSync()}
+function joinCheck(){if(!fsdb||!sync.code||!joinedReady||remoteMeta===undefined)return;const me=myPid(),col=gref().collection('iscritti'),u=myUid(),iso=new Date().toISOString();
+  // libera i nomi che questo telefono aveva scelto prima
+  Object.values(joined).forEach(x=>{if(x.pid!==me&&((u&&x.uid===u)||(!x.uid&&x.dev===DEV))){delete joined[x.pid];col.doc(x.pid).delete().catch(()=>{})}});
+  if(!me||!u)return;
+  const j=joined[me];
+  if(!j){const x={pid:me,name:name(me),dev:DEV,at:iso,uid:u};joined[me]=x;col.doc(me).set(x).catch(e=>{delete joined[me];if(e&&e.code==='permission-denied')releaseMine(LOST_MSG)})}
+  else if(!j.uid&&j.dev===DEV){const x={pid:me,name:j.name||name(me),dev:DEV,at:j.at||iso,uid:u};joined[me]=x;col.doc(me).set(x).catch(()=>{})}   // collegamento della versione precedente: lo si lega a questo utente
+  else if(nameTaken(me))releaseMine(TAKEN_MSG)}
 // nome della squadra: lo decide chi l'ha creata, viaggia con i dati condivisi
 $('team-rename').onchange=()=>{const n=$('team-rename').value.trim().slice(0,40);if(!n||!sync.creator)return;state.teamName=n;const t=curTeam();if(t)t.name=n;persist();render();smsg('Nome della squadra aggiornato.')};
 $('team-rename').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
@@ -2154,7 +2177,7 @@ const DRIVE_TXT={si:'guida: sì',no:'non guida',forse:'guida: non so'};
 function bkWrite(b,del){
   state.bookings=(state.bookings||[]).filter(x=>x.id!==b.id);if(!del)state.bookings.push(b);
   persistLocal();
-  if(fsdb&&sync.code){const ref=gref().collection('prenotazioni').doc(b.id);(del?ref.set({deleted:true,date:b.date,pid:b.pid,t:new Date().toISOString()}):ref.set(b)).catch(()=>{})}
+  if(fsdb&&sync.code){const ref=gref().collection('prenotazioni').doc(b.id);(del?ref.set({deleted:true,date:b.date,pid:b.pid,t:new Date().toISOString()}):ref.set(b)).catch(e=>{if(e&&e.code==='permission-denied')snack('Modifica non consentita: non è stata salvata.')})}
 }
 // --- composizione automatica delle auto
 // 1) guidano prima quelli che hanno risposto "sì", da chi ha meno punti; poi, se servono altri posti, quelli che hanno risposto "non so"
@@ -4779,10 +4802,10 @@ function maybeAskWho(){
 }
 function whoList(){const q=$('who-find').value.trim().toLowerCase();
   const ppl=active().filter(p=>!q||p.name.toLowerCase().includes(q)).sort((a,c)=>a.name.localeCompare(c.name));
-  $('who-list').innerHTML=ppl.length?ppl.map(p=>`<button data-who="${esc(p.name)}"><span>${dotsOf(p.id)} ${esc(p.name)}</span><span class="pm-val">sono io ›</span></button>`).join('')
+  $('who-list').innerHTML=ppl.length?ppl.map(p=>{const tk=nameTaken(p.id);return `<button data-who="${esc(p.name)}"${tk?' disabled':''}><span>${dotsOf(p.id)} ${esc(p.name)}</span><span class="pm-val">${tk?'già associato':'sono io ›'}</span></button>`}).join('')
     :`<p class="hint" style="margin:10px">${active().length?'Nessun nome trovato. Se non sei in elenco, contatta l\'amministratore della squadra.':'La squadra è ancora vuota: contatta l\'amministratore.'}</p>`}
 $('who-find').oninput=whoList;
-function setMe(n){sync.me=n;const t=curTeam();if(t)t.me=n;saveSync();$('whoami').hidden=true;joinCheck();render();snack(`Ciao ${n}!`)}
+function setMe(n){if(takenName(n)){snack(TAKEN_MSG);whoList();return}sync.me=n;const t=curTeam();if(t)t.me=n;saveSync();$('whoami').hidden=true;joinCheck();render();snack(`Ciao ${n}!`)}
 $('who-list').onclick=e=>{const b=e.target.closest('[data-who]');if(b)setMe(b.dataset.who)};
 $('who-add').onclick=()=>{if(!isAdmin())return;const n=$('who-new').value.trim().slice(0,40);if(!n)return;
   const ex=listed().find(p=>p.name.toLowerCase()===n.toLowerCase());
@@ -4810,6 +4833,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.2','Sicurezza: ogni nome è associato a un solo telefono (il creatore può liberarlo dal menu del partecipante), i colleghi possono solo inserire viaggi da confermare con peso 1 e il registro delle modifiche non è falsificabile.'],
  ['7.1','Sicurezza: i permessi da creatore sono verificati dal server e la password amministratore non è più salvata nei dati condivisi. Le zone restano modificabili da tutti.'],
  ['7.0','Prenotazione: nel tasto "Orario normale" c\'è un interruttore FLEX che porta l\'orario a 7:30–16:00.'],
  ['6.9','Tolta la casella FLEX dal menu della prenotazione. Nella tabella dei presenti non compaiono più gli orari: gli elenchi si chiamano "Presenti" o "Gruppo 1, 2…".'],
