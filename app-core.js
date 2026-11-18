@@ -1,4 +1,4 @@
-const APP_VERSION='7.5.1';
+const APP_VERSION='7.5.2';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);

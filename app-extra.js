@@ -140,7 +140,7 @@ $('app-ver').textContent='v'+APP_VERSION;   // intestazione sempre allineata all
 function renderInfo(){
   $('info-ver').textContent=` versione ${APP_VERSION}`;$('app-ver').textContent='v'+APP_VERSION;
   const rows=[['Squadra',sync.code?teamLabel(curTeam()):'nessuna (dati solo su questo dispositivo)'],['Il tuo nome',sync.me||'—'],
-    ['Sincronizzazione',{off:'non attiva',wait:'connessione…',ok:'attiva',pending:'in attesa di rete',bad:'errore'}[syncState]||syncState],
+    ['Sincronizzazione',({off:'non attiva',wait:'connessione…',ok:'attiva',pending:'in attesa di rete',bad:'errore'}[syncState]||syncState)+(syncDetail?' · '+syncDetail:'')],
     ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist&&!t.pend).length)],
     ['Installata come app',(matchMedia('(display-mode: standalone)').matches||navigator.standalone)?'sì':'no']];
   $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');

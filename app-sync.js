@@ -34,7 +34,8 @@ function newCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=new Uint32Array(
   const c=[...r].map(x=>A[x%A.length]).join('');return 'COL-'+c.match(/.{4}/g).join('-')}
 const normCode=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/^(?!(BLA|COL)-)/,'COL-');
 
-function setSync(st,detail){syncState=st;
+let syncDetail='';
+function setSync(st,detail){syncState=st;syncDetail=detail||'';
   const lab={off:'Non condiviso',wait:'Connessione…',ok:'Sincronizzato',pending:'In attesa di rete',bad:'Errore di sincronizzazione'}[st];
   $('sync-dot').className='sync-dot '+st;$('sync-dot').title=lab;
   if($('sync-status')){$('sync-status').className='sync-pill '+st;$('sync-status').textContent=lab+(detail?' · '+detail:'')}}
@@ -50,7 +51,7 @@ async function syncStart(){
     if(!fsdb){fsdb=firebase.firestore();
       // cache locale: alla riapertura i documenti già scaricati si leggono dal telefono e il server invia solo le novità
       try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
-  }catch(e){setSync('pending',e&&e.code||'');setTimeout(syncStart,15000);return}
+  }catch(e){setSync('pending',String(e&&(e.code||e.message)||e).slice(0,80));setTimeout(syncStart,15000);return}
   unsubs.push(gref().collection('viaggi').onSnapshot(snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
   // solo le ultime due settimane, filtrate dal server (le prenotazioni vecchie non vengono più scaricate)
