@@ -1,3 +1,4 @@
+(window.__V=window.__V||{})['app-extra']='7.5.4';
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
 const APP_URL='https://mariolive82100.github.io/collegauto/';
 const appBase=()=>location.protocol==='https:'&&!inViewer?location.origin+location.pathname:APP_URL;
@@ -81,6 +82,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.5.4','Più affidabile: se l\'app trova file di versioni diverse, si ripara da sola. In Info vedi le versioni dei file.'],
  ['7.5','Il tutorial ora mostra le schermate reali dell\'app, in tema chiaro e scuro.'],
  ['7.4','Nuovo tutorial al primo utilizzo; lo rivedi dal menu, voce "Come si usa".'],
  ['7.3','App divisa in più file per aggiornamenti più rapidi; la versione nell\'intestazione ora è sempre aggiornata.'],
@@ -148,6 +150,7 @@ function renderInfo(){
       ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist&&!t.pend).length)],
       ['Installata come app',(matchMedia('(display-mode: standalone)').matches||navigator.standalone)?'sì':'no']];
   }catch(e){rows=[['Errore nella pagina',String(e&&e.message||e)]]}
+  rows.push(['File caricati',Object.keys(window.__V||{}).map(k=>k.replace('app-','')+' '+__V[k]).join(' · ')+((window.__bad&&__bad.length)?' · DIVERSI: '+__bad.join(', '):'')+(sessionStorage.getItem('ca-heal')?' · ripristino fatto':'')]);
   rows.push(['Errori del codice',(window.__errs&&__errs.length)?__errs.slice(-3).join(' | '):'nessuno']);
   $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
 }

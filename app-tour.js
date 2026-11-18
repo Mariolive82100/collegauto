@@ -1,3 +1,4 @@
+(window.__V=window.__V||{})['app-tour']='7.5.4';
 // ===================== Tutorial al primo utilizzo =====================
 // Compare una sola volta per telefono (scelta ricordata in localStorage) e si rivede dal menu: "Come si usa".
 const TOUR_KEY='ca-tour-done';
@@ -61,3 +62,9 @@ $('menu-tour').onclick=e=>{e.preventDefault();openTour()};
 // prima apertura: parte da solo, una volta
 (function(){let done='';try{done=localStorage.getItem(TOUR_KEY)}catch(e){done='1'}
   if(!done)setTimeout(()=>{if(!document.getElementById('tour')||document.getElementById('tour').hidden)openTour()},900)})();
+
+// controllo finale: ogni file deve avere la stessa versione richiesta dall'index. Se no (copia vecchia in cache), si svuota la cache e si ricarica una volta.
+(function(){try{const bad=[];document.querySelectorAll('script[src]').forEach(s=>{const m=(s.getAttribute('src')||'').match(/^(app-[a-z]+)\.js\?v=(.+)$/);if(m&&(!window.__V||window.__V[m[1]]!==m[2]))bad.push(m[1])});
+  window.__bad=bad;if(!bad.length)return;
+  if(sessionStorage.getItem('ca-heal'))return;sessionStorage.setItem('ca-heal','1');
+  (async()=>{try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}catch(e){}location.reload()})()}catch(e){}})();
