@@ -81,6 +81,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.4','Nuovo tutorial al primo utilizzo; lo rivedi dal menu, voce "Come si usa".'],
  ['7.3','App divisa in più file per aggiornamenti più rapidi; la versione nell\'intestazione ora è sempre aggiornata.'],
  ['7.2','Sicurezza: ogni nome è associato a un solo telefono (il creatore può liberarlo dal menu del partecipante), i colleghi possono solo inserire viaggi da confermare con peso 1 e il registro delle modifiche non è falsificabile.'],
  ['7.1','Sicurezza: i permessi da creatore sono verificati dal server e la password amministratore non è più salvata nei dati condivisi. Le zone restano modificabili da tutti.'],

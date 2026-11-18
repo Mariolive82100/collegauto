@@ -731,3 +731,19 @@ a.tr-h{text-decoration:none}
 button.tr-static{cursor:default}
 .tr-ok{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--teal) 16%,transparent);color:var(--teal)!important}
 #bk-add:disabled{opacity:.45}
+/* ===== tutorial primo utilizzo ===== */
+.tour{position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));overflow:auto}
+.tour[hidden]{display:none}
+.tour-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;width:min(440px,100%);display:flex;flex-direction:column;gap:14px}
+.tour-top{display:flex;justify-content:space-between;align-items:center}
+.tour-n{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tour-skip{background:none;border:0;color:var(--muted);padding:6px 4px}
+.tour-h{font-family:var(--mono);font-size:19px;font-weight:600;text-transform:none;letter-spacing:-.01em;color:var(--amber);margin:0}
+.tour-body{display:flex;flex-direction:column;gap:10px;font-size:16px}
+.tour-body p{margin:0}
+.tour-act:empty{display:none}
+.tour-dots{display:flex;gap:6px;justify-content:center}
+.tour-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.tour-dots i.on{background:var(--amber)}
+.tour-nav{display:flex;gap:8px;justify-content:flex-end}
+.tour-nav button{min-height:44px;min-width:96px}
