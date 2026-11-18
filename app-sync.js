@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-sync']='7.5.7';
+(window.__V=window.__V||{})['app-sync']='7.5.8';
 // ===================== Condivisione con i colleghi (Firebase Firestore) =====================
 // Percorsi: gruppi/{codice}/viaggi/{id} (un documento per viaggio, cancellazione = deleted:true)
 //           gruppi/{codice}/meta/stato   (persone, gruppi, punti di partenza: vince l'ultima modifica)
@@ -55,14 +55,14 @@ async function syncStart(){
       // cache locale: alla riapertura i documenti già scaricati si leggono dal telefono e il server invia solo le novità
       try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
   }catch(e){setSync('pending',String(e&&(e.code||e.message)||e).slice(0,80));setTimeout(syncStart,15000);return}
-  unsubs.push(gref().collection('viaggi').onSnapshot(snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
+  unsubs.push(gref().collection('viaggi').onSnapshot({includeMetadataChanges:true},snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));
   // solo le ultime due settimane, filtrate dal server (le prenotazioni vecchie non vengono più scaricate)
   unsubs.push(gref().collection('prenotazioni').where('date','>=',isoShift(todayISO(),-14)).onSnapshot(snap=>{const list=[];snap.forEach(d=>{const b=d.data();if(!b.deleted)list.push({...b,id:d.id})});
     state.bookings=list;persistLocal();if(typeof renderBookings==='function'){renderBookings();renderPending()}},()=>{}));
   unsubs.push(gref().collection('iscritti').onSnapshot(snap=>{const j={};snap.forEach(d=>{const x=d.data();if(x&&!x.left&&x.pid)j[x.pid]=x});joined=j;joinedReady=true;joinCheck();render();if(!$('whoami').hidden)whoList()},()=>{}));
-  unsubs.push(gref().collection('meta').doc('stato').onSnapshot(d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
-  unsubs.push(gref().collection('meta').doc('zone').onSnapshot(d=>{remoteZone=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},()=>{remoteZone=null;syncMerge(true)}));
+  unsubs.push(gref().collection('meta').doc('stato').onSnapshot({includeMetadataChanges:true},d=>{remoteMeta=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},e=>setSync('bad',e.code)));
+  unsubs.push(gref().collection('meta').doc('zone').onSnapshot({includeMetadataChanges:true},d=>{remoteZone=d.exists?d.data():null;syncMerge(d.metadata.fromCache)},()=>{remoteZone=null;syncMerge(true)}));
   checkAdmin();
   syncPaused=false;lazySync();
 }
