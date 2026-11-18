@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-sync']='7.5.4';
+(window.__V=window.__V||{})['app-sync']='7.5.5';
 // ===================== Condivisione con i colleghi (Firebase Firestore) =====================
 // Percorsi: gruppi/{codice}/viaggi/{id} (un documento per viaggio, cancellazione = deleted:true)
 //           gruppi/{codice}/meta/stato   (persone, gruppi, punti di partenza: vince l'ultima modifica)
@@ -50,6 +50,8 @@ async function syncStart(){
     if(!firebase.apps.length)firebase.initializeApp(FB_CONFIG);
     if(!firebase.auth().currentUser)await firebase.auth().signInAnonymously();
     if(!fsdb){fsdb=firebase.firestore();
+      // reti che bloccano il collegamento continuo: si passa da sola a una modalità più tollerante (stesso numero di letture)
+      try{fsdb.settings({experimentalAutoDetectLongPolling:true,merge:true})}catch(e){}
       // cache locale: alla riapertura i documenti già scaricati si leggono dal telefono e il server invia solo le novità
       try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
   }catch(e){setSync('pending',String(e&&(e.code||e.message)||e).slice(0,80));setTimeout(syncStart,15000);return}
@@ -97,7 +99,7 @@ function syncMerge(fromCache){
   state.trips=out;delete state.sample;
   persistLocal();lastMeta=JSON.stringify(metaOf());lastZone=JSON.stringify(zoneOf());lastSnap=snapOf();
   render();applying=false;
-  setSync(fromCache?'pending':'ok');
+  setSync(fromCache?'pending':'ok',fromCache?'server non raggiunto, dati del telefono':'');
   if(!fromCache)setTimeout(()=>{joinCheck();maybeAskWho()},0);
   if(!fromCache&&sync.creator&&!teamProt()&&!protNagged){protNagged=true;setTimeout(()=>snack('Squadra non ancora protetta: apri Squadra › la tua squadra › Proteggi la squadra.'),1500)}
   if(!fromCache&&/…$/.test($('sync-msg').textContent))smsg('Dati sincronizzati.');

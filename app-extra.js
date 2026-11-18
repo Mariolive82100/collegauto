@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-extra']='7.5.4';
+(window.__V=window.__V||{})['app-extra']='7.5.5';
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
 const APP_URL='https://mariolive82100.github.io/collegauto/';
 const appBase=()=>location.protocol==='https:'&&!inViewer?location.origin+location.pathname:APP_URL;
@@ -82,6 +82,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.5.5','Collegamento più tollerante sulle reti che bloccano la sincronizzazione; in Info il motivo è più chiaro.'],
  ['7.5.4','Più affidabile: se l\'app trova file di versioni diverse, si ripara da sola. In Info vedi le versioni dei file.'],
  ['7.5','Il tutorial ora mostra le schermate reali dell\'app, in tema chiaro e scuro.'],
  ['7.4','Nuovo tutorial al primo utilizzo; lo rivedi dal menu, voce "Come si usa".'],
