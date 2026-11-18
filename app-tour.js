@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-tour']='7.5.10';
+(window.__V=window.__V||{})['app-tour']='7.5.11';
 // ===================== Tutorial al primo utilizzo =====================
 // Compare una sola volta per telefono (scelta ricordata in localStorage) e si rivede dal menu: "Come si usa".
 const TOUR_KEY='ca-tour-done';

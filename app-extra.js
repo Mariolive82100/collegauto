@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-extra']='7.5.10';
+(window.__V=window.__V||{})['app-extra']='7.5.11';
 // l'invito va letto subito: più sotto il parametro ?squadra= viene tolto dall'indirizzo
 const SPL_INV=(()=>{try{return /(^|[?&])squadra=/.test(location.search)}catch(e){return false}})();
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
@@ -37,12 +37,13 @@ $('sh-copy').onclick=()=>{if(!canShare())return;const {url}=shareData();const ok
   setTimeout(()=>{if(sync.code){$('team-join-box').hidden=false;$('team-join-code').value=inv}else{$('sync-join-code').value=inv;$('team-join-code').value=inv}
     smsg('Hai ricevuto un invito: scegli il tuo nome se te lo chiede e tocca "Entra".');window.scrollTo(0,0)},150)})();
 // ===================== Schermata di benvenuto (chi arriva da un link) =====================
-// Si vede una volta per telefono, solo nel browser (non nell'app installata): da un invito alla squadra, oppure se non c'è ancora nulla. Per provarla: aggiungi ?splash=1 al link.
+// Solo nel browser (non nell'app installata): sempre se il link è un invito alla squadra, altrimenti una volta sola e solo se non c'è ancora nulla. Per provarla: aggiungi ?splash=1 al link.
 (function(){
   let seen='',force=false;try{seen=localStorage.getItem('ca-splash');force=/(^|[?&])splash=1/.test(location.search)}catch(e){seen='1'}
   const web=location.protocol==='https:'&&!inViewer||force;
-  if(!force&&(seen||!web||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true))return;
-  if(!force&&!SPL_INV&&(sync.code||state.people.length))return;
+  if(!force&&(!web||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true))return;
+  // un link di invito la mostra sempre (anche se l'app era già stata usata e poi disinstallata); gli altri accessi, una sola volta e solo se l'app è vuota
+  if(!force&&!SPL_INV&&(seen||sync.code||state.people.length))return;
   const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const W='<g class="spl-wh"><circle r="15" fill="#161b1e" stroke="#0a0c0d" stroke-width="2"/><circle r="8.5" fill="#aab6ba"/><path d="M0-8V8M-8 0H8M-5.6-5.6L5.6 5.6M5.6-5.6L-5.6 5.6" stroke="#161b1e" stroke-width="1.6"/><circle r="2.4" fill="#161b1e"/></g>';
   const el=document.createElement('div');el.id='splash';el.className='spl';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','spl-h');
@@ -134,6 +135,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 // ===================== Info sull'app =====================
 const NOTES=[
  ['7.5.9','Nuova schermata di benvenuto animata per chi arriva da un link, con il pulsante Installa app. Il tutorial parte solo dopo la registrazione.'],
+ ['7.5.11','Il link di invito mostra sempre la schermata animata con Installa app, anche se l\'app era già stata usata.'],
  ['7.5.10','Primo accesso (app installata o invito ricevuto): compare solo la pagina per creare una squadra o entrare con un codice.'],
  ['7.5.8','Corretto l\'indicatore "in attesa di rete": ora passa a verde appena il server conferma i dati.'],
  ['7.5.5','Collegamento più tollerante sulle reti che bloccano la sincronizzazione; in Info il motivo è più chiaro.'],
