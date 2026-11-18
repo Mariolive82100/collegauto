@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-extra']='7.5.9';
+(window.__V=window.__V||{})['app-extra']='7.5.10';
 // l'invito va letto subito: più sotto il parametro ?squadra= viene tolto dall'indirizzo
 const SPL_INV=(()=>{try{return /(^|[?&])squadra=/.test(location.search)}catch(e){return false}})();
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
@@ -34,7 +34,7 @@ $('sh-copy').onclick=()=>{if(!canShare())return;const {url}=shareData();const ok
   try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}
   if(sync.teams.some(t=>t.code===inv)){if(sync.code!==inv)openTeam(inv);return}
   location.hash='squadra';
-  setTimeout(()=>{if(sync.code){$('team-join-box').hidden=false;$('team-join-code').value=inv}else $('sync-join-code').value=inv;
+  setTimeout(()=>{if(sync.code){$('team-join-box').hidden=false;$('team-join-code').value=inv}else{$('sync-join-code').value=inv;$('team-join-code').value=inv}
     smsg('Hai ricevuto un invito: scegli il tuo nome se te lo chiede e tocca "Entra".');window.scrollTo(0,0)},150)})();
 // ===================== Schermata di benvenuto (chi arriva da un link) =====================
 // Si vede una volta per telefono, solo nel browser (non nell'app installata): da un invito alla squadra, oppure se non c'è ancora nulla. Per provarla: aggiungi ?splash=1 al link.
@@ -74,6 +74,17 @@ $('sh-copy').onclick=()=>{if(!canShare())return;const {url}=shareData();const ok
   addEventListener('appinstalled',close);
   $('spl-inst').focus({preventScroll:true});
 })();
+// ===================== Primo accesso: solo "crea una squadra" o "entra con un codice" =====================
+// App installata (o invito ricevuto), nessuna squadra e nessun dato sul telefono: si vede solo la pagina Squadra, senza menu né schede.
+const gateOn=()=>!sync.code&&state.people.length===0&&(isStandalone||SPL_INV);
+function applyGate(){const g=gateOn();document.body.classList.toggle('gate',g);
+  $('t-teams').textContent=g?'Crea o entra in una squadra':'Le mie squadre';
+  if(!g)return;
+  if(location.hash!=='#squadra')location.replace('#squadra');
+  $('team-join-box').hidden=false;$('team-new-box').hidden=!canNewTeam()}
+addEventListener('hashchange',applyGate);
+const _renderGate=render;render=function(){_renderGate();applyGate()};
+applyGate();
 // ===================== Menu a panino =====================
 function openMenu(){$('drawer').hidden=false;$('drawer-bg').hidden=false;$('menu-open').setAttribute('aria-expanded','true')}
 function closeMenu(){$('drawer').hidden=true;$('drawer-bg').hidden=true;$('menu-open').setAttribute('aria-expanded','false')}
@@ -123,6 +134,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 // ===================== Info sull'app =====================
 const NOTES=[
  ['7.5.9','Nuova schermata di benvenuto animata per chi arriva da un link, con il pulsante Installa app. Il tutorial parte solo dopo la registrazione.'],
+ ['7.5.10','Primo accesso (app installata o invito ricevuto): compare solo la pagina per creare una squadra o entrare con un codice.'],
  ['7.5.8','Corretto l\'indicatore "in attesa di rete": ora passa a verde appena il server conferma i dati.'],
  ['7.5.5','Collegamento più tollerante sulle reti che bloccano la sincronizzazione; in Info il motivo è più chiaro.'],
  ['7.5.4','Più affidabile: se l\'app trova file di versioni diverse, si ripara da sola. In Info vedi le versioni dei file.'],

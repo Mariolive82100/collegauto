@@ -1,6 +1,6 @@
 // CollegAuto: funziona anche senza rete.
 // Pagina, CSS e JS: prima la rete (sempre l'ultima versione). Offline si usa la copia della STESSA versione (?v=) richiesta dalla pagina, mai di un'altra.
-const CACHE='collegauto-v7.5.9';
+const CACHE='collegauto-v7.5.10';
 const STATIC=['./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 // all'installazione si salvano la pagina e i file con le versioni esatte che la pagina richiede
 async function precache(){

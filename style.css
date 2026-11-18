@@ -800,3 +800,7 @@ button.tr-static{cursor:default}
 @keyframes spl-puff{0%,37%{opacity:0;transform:translate(0,0) scale(.5)}42%{opacity:.5}58%,100%{opacity:0;transform:translate(-90px,-18px) scale(2.4)}}
 @keyframes spl-spd{0%,39%{opacity:0;transform:translateX(100vw)}44%{opacity:.8}62%,100%{opacity:0;transform:translateX(-30vw)}}
 @media (prefers-reduced-motion:reduce){.spl *{animation:none!important}.spl-car{transform:none}.spl-head,.spl-foot{animation:none}}
+
+/* primo accesso: solo crea squadra / entra con codice */
+body.gate .m-tabs,body.gate #menu-open,body.gate #welcome,body.gate #install,body.gate #zero,body.gate #teams-list,body.gate #teams-hint,body.gate #sync-off,body.gate [data-view="squadra"] .m-grid2{display:none!important}
+body.gate{padding-bottom:24px}
