@@ -1,6 +1,6 @@
 // CollegAuto: funziona anche senza rete.
 // Pagina, CSS e JS: prima la rete (sempre l'ultima versione), poi la copia salvata se sei offline.
-const CACHE='collegauto-v7.4';
+const CACHE='collegauto-v7.5';
 const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png',
   './style.css','./firebase-sdk.js','./qr.js','./app-core.js','./app-sync.js','./app-prenotazioni.js','./app-extra.js','./app-tour.js'];
 // un file mancante non deve bloccare l'installazione

@@ -5,6 +5,11 @@ const FB_CONFIG={apiKey:"AIzaSyATgur8Y7opmHZoo3kL28pPB3Y1878q0sg",authDomain:"bl
   storageBucket:"blabla-app-a8f40.firebasestorage.app",messagingSenderId:"1016025393075",appId:"1:1016025393075:web:1db0af4de6c2ee4ed84dc6"};
 const SYNC_KEY='blabla-sync';
 let sync={};try{sync=JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e){}
+// una sola squadra creata per telefono: la scelta è ricordata (anche se poi la squadra viene eliminata)
+const CREATED_KEY='ca-team-created';
+const teamCreated=()=>{try{if(localStorage.getItem(CREATED_KEY))return true}catch(e){}return !!(sync.teams&&sync.teams.some(t=>t.creator))};
+const canNewTeam=()=>ALLOW_NEW_TEAMS&&!teamCreated();
+const markCreated=()=>{try{localStorage.setItem(CREATED_KEY,'1')}catch(e){}};
 sync.pendingDel=sync.pendingDel||[];sync.dirty=sync.dirty||[];
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 const syncSupported=()=>!inViewer&&!!window.firebase;
@@ -244,9 +249,9 @@ function renderSync(){
   const shareOk=canShare();
   $('sync-share-box').hidden=!shareOk;
   document.querySelectorAll('.dm[href="#condividi"]').forEach(a=>{a.style.display=shareOk?'':'none'});
-  $('team-new').style.display=ALLOW_NEW_TEAMS?'':'none';
-  if(!ALLOW_NEW_TEAMS)$('team-new-box').hidden=true;
-  $('sync-create-box').hidden=!ALLOW_NEW_TEAMS;
+  $('team-new').style.display=canNewTeam()?'':'none';
+  if(!canNewTeam())$('team-new-box').hidden=true;
+  $('sync-create-box').hidden=!canNewTeam();
   if(location.hash==='#condividi'&&!shareOk)location.replace('#viaggio');
   const on=!!sync.code,sup=syncSupported(),t=curTeam();
   $('sync-off').hidden=on||!sup;$('sync-on').hidden=!on;$('sync-na').hidden=sup;
@@ -260,10 +265,10 @@ function renderSync(){
     return `<button class="tm${x.code===sync.code?' cur':''}" data-team="${esc(x.code)}"><span><b>${esc(teamLabel(x))}</b><small>${x.creator?'creata da te':'creata da un collega'}${x.code===sync.code?' · aperta':''}</small></span><span class="tm-n">${n==null?'—':n}<small>${n===1?'iscritto':'iscritti'}</small></span><span class="tm-go">›</span></button>`}).join('');
   if(!on)rows=`<button class="tm cur" data-team=""><span><b>Su questo telefono</b><small>non condivisa</small></span><span class="tm-n">${active().length}<small>persone</small></span><span class="tm-go">›</span></button>`+rows;
   $('teams-list').innerHTML=rows;
-  $('teams-hint').textContent=on?'Tocca una squadra per vedere i partecipanti e il codice di condivisione.':(ALLOW_NEW_TEAMS?'Non sei ancora in una squadra condivisa: entra con un codice ricevuto o creane una.':'Non sei ancora in una squadra condivisa: entra con un codice ricevuto.');
+  $('teams-hint').textContent=on?'Tocca una squadra per vedere i partecipanti e il codice di condivisione.':(canNewTeam()?'Non sei ancora in una squadra condivisa: entra con un codice ricevuto o creane una.':'Non sei ancora in una squadra condivisa: entra con un codice ricevuto.');
   // pagina della squadra aperta
   $('team-title').textContent=on?teamLabel(t):'Su questo telefono';
-  $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:(ALLOW_NEW_TEAMS?'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".':'Dati non condivisi: per condividerli entra in una squadra da "Le mie squadre".');
+  $('team-sub').textContent=on?`${active().length} ${active().length===1?'iscritto':'iscritti'} · ${sync.creator?"l'hai creata tu":'creata da un collega'}`:(canNewTeam()?'Dati non condivisi: per condividerli crea una squadra da "Le mie squadre".':'Dati non condivisi: per condividerli entra in una squadra da "Le mie squadre".');
   $('team-rename-box').hidden=!on||!sync.creator;$('me-box').hidden=!on;
   const prot=teamProt();$('admin-claim').hidden=!on||(prot?!!sync.creator:!sync.creator);$('admin-set').hidden=!on||!sync.creator||!prot;
   if(on){$('admin-set-sum').textContent='Password amministratore · impostata';
@@ -298,11 +303,11 @@ $('team-rename').onchange=()=>{const n=$('team-rename').value.trim().slice(0,40)
 $('team-rename').onkeydown=e=>{if(e.key==='Enter')e.target.blur()};
 // dal telefono non collegato: i dati attuali diventano una squadra
 $('sync-create').onclick=()=>{
-  if(!ALLOW_NEW_TEAMS)return;
+  if(!canNewTeam())return;
   if(!sync.me){smsg('Scegli prima il tuo nome.');return}
   const n=$('team-name-new').value.trim().slice(0,40)||'La mia squadra';
   state.teamName=n;persistLocal();
-  sync.code=newCode();sync.creator=true;sync.metaDirty=true;sync.pendingDel=[];sync.teams.push({code:sync.code,name:n,me:sync.me,creator:true});
+  sync.code=newCode();sync.creator=true;sync.metaDirty=true;sync.pendingDel=[];sync.teams.push({code:sync.code,name:n,me:sync.me,creator:true});markCreated();
   saveSync();renderSync();smsg('Squadra creata: sto caricando i tuoi dati…');syncStart()};
 $('sync-join').onclick=e=>joinTeam($('sync-join-code').value,e.target,true);
 $('team-join').onclick=e=>joinTeam($('team-join-code').value,e.target,false);
@@ -316,15 +321,15 @@ function joinTeam(raw,btn,replacesLocal){
   if(openTeam(c,{fresh:null}))smsg('Collegamento alla squadra…');
 }
 // nuova squadra vuota: parte da zero, con te come primo viaggiatore
-$('team-new').onclick=()=>{if(!ALLOW_NEW_TEAMS)return;$('team-new-box').hidden=!$('team-new-box').hidden;if(!$('team-new-box').hidden)$('team-new-name').focus()};
+$('team-new').onclick=()=>{if(!canNewTeam())return;$('team-new-box').hidden=!$('team-new-box').hidden;if(!$('team-new-box').hidden)$('team-new-name').focus()};
 $('team-new-ok').onclick=()=>{
-  if(!ALLOW_NEW_TEAMS)return;
+  if(!canNewTeam())return;
   const n=$('team-new-name').value.trim().slice(0,40),me=$('team-new-me').value.trim().slice(0,40);
   if(!n){smsg('Dai un nome alla nuova squadra.');return}
   if(!me){smsg('Scrivi il tuo nome: sarai il primo viaggiatore.');return}
   const st={people:[{id:uid(),name:me}],trips:[],groups:[],start:null,teamName:n};
   if(openTeam(newCode(),{me,creator:true,name:n,fresh:st})){
-    $('team-new-box').hidden=true;$('team-new-name').value='';$('team-new-me').value='';
+    markCreated();$('team-new-box').hidden=true;$('team-new-name').value='';$('team-new-me').value='';
     addEvents([['team',`Creata la squadra ${n}`]]);syncPush();smsg(`Squadra "${n}" creata: manda il codice ai colleghi.`)}};
 $('teams-list').onclick=e=>{const b=e.target.closest('[data-team]');if(!b)return;const c=b.dataset.team;
   if(c&&c!==sync.code&&!openTeam(c))return;location.hash='membri'};
