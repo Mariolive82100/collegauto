@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-extra']='7.5.5';
+(window.__V=window.__V||{})['app-extra']='7.5.6';
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
 const APP_URL='https://mariolive82100.github.io/collegauto/';
 const appBase=()=>location.protocol==='https:'&&!inViewer?location.origin+location.pathname:APP_URL;

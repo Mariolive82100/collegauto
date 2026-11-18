@@ -1,8 +1,10 @@
-(window.__V=window.__V||{})['app-core']='7.5.5';
-const APP_VERSION='7.5.5';
+(window.__V=window.__V||{})['app-core']='7.5.6';
+const APP_VERSION='7.5.6';
 // ultimi errori del codice, mostrati in Info sull'app (aiuta a capire cosa non va)
 window.__errs=[];addEventListener('error',e=>{__errs.push(String(e.message||'errore').slice(0,70)+' @'+String(e.filename||'').split('/').pop().split('?')[0]+':'+e.lineno)});
 addEventListener('unhandledrejection',e=>{const r=e.reason;__errs.push('promessa: '+String(r&&(r.code||r.message)||r).slice(0,70))});
+// i messaggi di Firebase (rete, quota, permessi) finiscono nell'elenco errori mostrato in Info
+['warn','error'].forEach(k=>{const o=console[k];console[k]=function(){try{const m=Array.prototype.slice.call(arguments).map(a=>String(a&&a.message||a)).join(' ');if(/firestore|firebase/i.test(m))__errs.push(m.replace(/^.*?(Firestore|Firebase)[^:]*:\s*/i,'').slice(0,110))}catch(e){}return o.apply(console,arguments)}});
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
