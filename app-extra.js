@@ -139,12 +139,17 @@ const NOTES=[
 $('app-ver').textContent='v'+APP_VERSION;   // intestazione sempre allineata alla versione
 function renderInfo(){
   $('info-ver').textContent=` versione ${APP_VERSION}`;$('app-ver').textContent='v'+APP_VERSION;
-  const rows=[['Squadra',sync.code?teamLabel(curTeam()):'nessuna (dati solo su questo dispositivo)'],['Il tuo nome',sync.me||'—'],
-    ['Sincronizzazione',({off:'non attiva',wait:'connessione…',ok:'attiva',pending:'in attesa di rete',bad:'errore'}[syncState]||syncState)+(syncDetail?' · '+syncDetail:'')],
-    ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist&&!t.pend).length)],
-    ['Installata come app',(matchMedia('(display-mode: standalone)').matches||navigator.standalone)?'sì':'no']];
+  try{$('info-notes').innerHTML=NOTES.map(([v,t])=>`<div class="note"><b>v${v}</b><span>${esc(t)}</span></div>`).join('')}catch(e){}
+  let rows;
+  try{
+    const det=typeof syncDetail==='string'&&syncDetail?' · '+syncDetail:'';
+    rows=[['Squadra',sync.code?teamLabel(curTeam()):'nessuna (dati solo su questo dispositivo)'],['Il tuo nome',sync.me||'—'],
+      ['Sincronizzazione',({off:'non attiva',wait:'connessione…',ok:'attiva',pending:'in attesa di rete',bad:'errore'}[syncState]||syncState)+det],
+      ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist&&!t.pend).length)],
+      ['Installata come app',(matchMedia('(display-mode: standalone)').matches||navigator.standalone)?'sì':'no']];
+  }catch(e){rows=[['Errore nella pagina',String(e&&e.message||e)]]}
+  rows.push(['Errori del codice',(window.__errs&&__errs.length)?__errs.slice(-3).join(' | '):'nessuno']);
   $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
-  $('info-notes').innerHTML=NOTES.map(([v,t])=>`<div class="note"><b>v${v}</b><span>${esc(t)}</span></div>`).join('');
 }
 
 // ===================== Permessi da creatore: verificati dal server (regole Firestore) =====================

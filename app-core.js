@@ -1,4 +1,7 @@
-const APP_VERSION='7.5.2';
+const APP_VERSION='7.5.3';
+// ultimi errori del codice, mostrati in Info sull'app (aiuta a capire cosa non va)
+window.__errs=[];addEventListener('error',e=>{__errs.push(String(e.message||'errore').slice(0,70)+' @'+String(e.filename||'').split('/').pop().split('?')[0]+':'+e.lineno)});
+addEventListener('unhandledrejection',e=>{const r=e.reason;__errs.push('promessa: '+String(r&&(r.code||r.message)||r).slice(0,70))});
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
