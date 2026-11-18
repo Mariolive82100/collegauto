@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-sync']='7.5.11';
+(window.__V=window.__V||{})['app-sync']='7.5.12';
 // ===================== Condivisione con i colleghi (Firebase Firestore) =====================
 // Percorsi: gruppi/{codice}/viaggi/{id} (un documento per viaggio, cancellazione = deleted:true)
 //           gruppi/{codice}/meta/stato   (persone, gruppi, punti di partenza: vince l'ultima modifica)

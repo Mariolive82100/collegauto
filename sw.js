@@ -1,6 +1,6 @@
 // CollegAuto: funziona anche senza rete.
 // Pagina, CSS e JS: prima la rete (sempre l'ultima versione). Offline si usa la copia della STESSA versione (?v=) richiesta dalla pagina, mai di un'altra.
-const CACHE='collegauto-v7.5.11';
+const CACHE='collegauto-v7.5.12';
 const STATIC=['./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 // all'installazione si salvano la pagina e i file con le versioni esatte che la pagina richiede
 async function precache(){
@@ -18,7 +18,7 @@ self.addEventListener('fetch',e=>{
   if(e.request.method!=='GET'||u.origin!==location.origin)return;   // Firebase e Google: mai in cache
   const nav=e.request.mode==='navigate';
   const key=nav?'./index.html':e.request;
-  e.respondWith((nav?fetch(e.request):fetch(e.request,{cache:'no-cache'})).then(r=>{
+  e.respondWith(fetch(e.request,{cache:'no-cache'}).then(r=>{
     if(r.ok){const c=r.clone();caches.open(CACHE).then(async x=>{await x.put(key,c);
       if(!nav)(await x.keys()).forEach(k=>{const ku=new URL(k.url);if(ku.pathname===u.pathname&&ku.search!==u.search)x.delete(k)})})}   // restano solo le copie dell'ultima versione
     return r

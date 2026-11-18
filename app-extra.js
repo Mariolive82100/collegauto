@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-extra']='7.5.11';
+(window.__V=window.__V||{})['app-extra']='7.5.12';
 // l'invito va letto subito: più sotto il parametro ?squadra= viene tolto dall'indirizzo
 const SPL_INV=(()=>{try{return /(^|[?&])squadra=/.test(location.search)}catch(e){return false}})();
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
@@ -135,6 +135,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 // ===================== Info sull'app =====================
 const NOTES=[
  ['7.5.9','Nuova schermata di benvenuto animata per chi arriva da un link, con il pulsante Installa app. Il tutorial parte solo dopo la registrazione.'],
+ ['7.5.12','Gli aggiornamenti arrivano subito anche aprendo un link: la pagina non resta più in cache per 10 minuti.'],
  ['7.5.11','Il link di invito mostra sempre la schermata animata con Installa app, anche se l\'app era già stata usata.'],
  ['7.5.10','Primo accesso (app installata o invito ricevuto): compare solo la pagina per creare una squadra o entrare con un codice.'],
  ['7.5.8','Corretto l\'indicatore "in attesa di rete": ora passa a verde appena il server conferma i dati.'],
