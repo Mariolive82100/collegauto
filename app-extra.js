@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-extra']='7.5.6';
+(window.__V=window.__V||{})['app-extra']='7.5.7';
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
 const APP_URL='https://mariolive82100.github.io/collegauto/';
 const appBase=()=>location.protocol==='https:'&&!inViewer?location.origin+location.pathname:APP_URL;
@@ -153,7 +153,11 @@ function renderInfo(){
   }catch(e){rows=[['Errore nella pagina',String(e&&e.message||e)]]}
   rows.push(['File caricati',Object.keys(window.__V||{}).map(k=>k.replace('app-','')+' '+__V[k]).join(' · ')+((window.__bad&&__bad.length)?' · DIVERSI: '+__bad.join(', '):'')+(sessionStorage.getItem('ca-heal')?' · ripristino fatto':'')]);
   rows.push(['Errori del codice',(window.__errs&&__errs.length)?__errs.slice(-3).join(' | '):'nessuno']);
-  $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('');
+  rows.push(['Ultimo dato dal server',(typeof lastServer==='number'&&lastServer)?new Date(lastServer).toLocaleTimeString('it-IT'):'nessuno in questa apertura']);
+  $('info-state').innerHTML=rows.map(([k,v])=>`<div><span>${k}</span><b>${esc(v)}</b></div>`).join('')+'<div><span>Scritture in coda</span><b id="info-q">controllo…</b></div>';
+  try{if(typeof fsdb!=='undefined'&&fsdb&&fsdb.waitForPendingWrites){
+    Promise.race([fsdb.waitForPendingWrites().then(()=>'nessuna'),new Promise(r=>setTimeout(()=>r('BLOCCATE: il server non le conferma'),5000))]).then(t=>{const el=$('info-q');if(el)el.textContent=t}).catch(e=>{const el=$('info-q');if(el)el.textContent='errore: '+String(e&&(e.code||e.message)||e).slice(0,60)})
+  }else $('info-q').textContent='non applicabile'}catch(e){}
 }
 
 // ===================== Permessi da creatore: verificati dal server (regole Firestore) =====================

@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-sync']='7.5.5';
+(window.__V=window.__V||{})['app-sync']='7.5.7';
 // ===================== Condivisione con i colleghi (Firebase Firestore) =====================
 // Percorsi: gruppi/{codice}/viaggi/{id} (un documento per viaggio, cancellazione = deleted:true)
 //           gruppi/{codice}/meta/stato   (persone, gruppi, punti di partenza: vince l'ultima modifica)
@@ -35,7 +35,7 @@ function newCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=new Uint32Array(
   const c=[...r].map(x=>A[x%A.length]).join('');return 'COL-'+c.match(/.{4}/g).join('-')}
 const normCode=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/^(?!(BLA|COL)-)/,'COL-');
 
-let syncDetail='';
+let syncDetail='',lastServer=0;
 function setSync(st,detail){syncState=st;syncDetail=detail||'';
   const lab={off:'Non condiviso',wait:'Connessione…',ok:'Sincronizzato',pending:'In attesa di rete',bad:'Errore di sincronizzazione'}[st];
   $('sync-dot').className='sync-dot '+st;$('sync-dot').title=lab;
@@ -99,6 +99,7 @@ function syncMerge(fromCache){
   state.trips=out;delete state.sample;
   persistLocal();lastMeta=JSON.stringify(metaOf());lastZone=JSON.stringify(zoneOf());lastSnap=snapOf();
   render();applying=false;
+  if(!fromCache)lastServer=Date.now();
   setSync(fromCache?'pending':'ok',fromCache?'server non raggiunto, dati del telefono':'');
   if(!fromCache)setTimeout(()=>{joinCheck();maybeAskWho()},0);
   if(!fromCache&&sync.creator&&!teamProt()&&!protNagged){protNagged=true;setTimeout(()=>snack('Squadra non ancora protetta: apri Squadra › la tua squadra › Proteggi la squadra.'),1500)}
