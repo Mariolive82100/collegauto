@@ -8,7 +8,7 @@ const TOUR_STEPS=[
       'Nella scheda <b>Punti</b> vedi la graduatoria: chi ha meno punti è il prossimo a guidare.']},
   {t:'La tua squadra',skipIfTeam:true,img:'2-squadra',alt:'Schermata Squadra: campo per inserire il codice e pulsante Entra nella squadra',
    p:['Se un collega ti ha mandato un <b>invito o il codice</b>, aprilo e tocca <b>Entra</b>: troverai subito viaggi e punti di tutti.',
-      'Se sei il primo, crei tu la squadra da <b>Squadra → Nuova squadra</b> (una sola per telefono) e poi mandi il codice ai colleghi.'],
+      'Se sei il primo, crei tu la squadra da <b>Squadra → Nuova squadra</b> (se non sei già in una squadra) e poi mandi il codice ai colleghi.'],
    btn:['Apri Squadra',()=>{location.hash='squadra'}]},
   {t:'Presente o assente',img:'3-viaggio',alt:'Schermata Viaggio: pulsanti Presente e Assente',
    p:['Nella scheda <b>Viaggio</b> tocca <b>Presente</b> se vieni al prossimo viaggio, <b>Assente</b> se non vieni.',

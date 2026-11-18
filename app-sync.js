@@ -5,11 +5,9 @@ const FB_CONFIG={apiKey:"AIzaSyATgur8Y7opmHZoo3kL28pPB3Y1878q0sg",authDomain:"bl
   storageBucket:"blabla-app-a8f40.firebasestorage.app",messagingSenderId:"1016025393075",appId:"1:1016025393075:web:1db0af4de6c2ee4ed84dc6"};
 const SYNC_KEY='blabla-sync';
 let sync={};try{sync=JSON.parse(localStorage.getItem(SYNC_KEY))||{}}catch(e){}
-// una sola squadra creata per telefono: la scelta è ricordata (anche se poi la squadra viene eliminata)
-const CREATED_KEY='ca-team-created';
-const teamCreated=()=>{try{if(localStorage.getItem(CREATED_KEY))return true}catch(e){}return !!(sync.teams&&sync.teams.some(t=>t.creator))};
-const canNewTeam=()=>ALLOW_NEW_TEAMS&&!teamCreated();
-const markCreated=()=>{try{localStorage.setItem(CREATED_KEY,'1')}catch(e){}};
+// chi appartiene già a una squadra (anche il creatore) non può crearne altre
+const inAnyTeam=()=>!!(sync.teams&&sync.teams.length);
+const canNewTeam=()=>ALLOW_NEW_TEAMS&&!inAnyTeam();
 sync.pendingDel=sync.pendingDel||[];sync.dirty=sync.dirty||[];
 const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(sync))}catch(e){}};
 const syncSupported=()=>!inViewer&&!!window.firebase;
@@ -307,7 +305,7 @@ $('sync-create').onclick=()=>{
   if(!sync.me){smsg('Scegli prima il tuo nome.');return}
   const n=$('team-name-new').value.trim().slice(0,40)||'La mia squadra';
   state.teamName=n;persistLocal();
-  sync.code=newCode();sync.creator=true;sync.metaDirty=true;sync.pendingDel=[];sync.teams.push({code:sync.code,name:n,me:sync.me,creator:true});markCreated();
+  sync.code=newCode();sync.creator=true;sync.metaDirty=true;sync.pendingDel=[];sync.teams.push({code:sync.code,name:n,me:sync.me,creator:true});
   saveSync();renderSync();smsg('Squadra creata: sto caricando i tuoi dati…');syncStart()};
 $('sync-join').onclick=e=>joinTeam($('sync-join-code').value,e.target,true);
 $('team-join').onclick=e=>joinTeam($('team-join-code').value,e.target,false);
@@ -329,7 +327,7 @@ $('team-new-ok').onclick=()=>{
   if(!me){smsg('Scrivi il tuo nome: sarai il primo viaggiatore.');return}
   const st={people:[{id:uid(),name:me}],trips:[],groups:[],start:null,teamName:n};
   if(openTeam(newCode(),{me,creator:true,name:n,fresh:st})){
-    markCreated();$('team-new-box').hidden=true;$('team-new-name').value='';$('team-new-me').value='';
+    $('team-new-box').hidden=true;$('team-new-name').value='';$('team-new-me').value='';
     addEvents([['team',`Creata la squadra ${n}`]]);syncPush();smsg(`Squadra "${n}" creata: manda il codice ai colleghi.`)}};
 $('teams-list').onclick=e=>{const b=e.target.closest('[data-team]');if(!b)return;const c=b.dataset.team;
   if(c&&c!==sync.code&&!openTeam(c))return;location.hash='membri'};

@@ -1,4 +1,4 @@
-const APP_VERSION='7.5';
+const APP_VERSION='7.5.1';
 const KEY='turni-auto-v2';
 const IMPORTED={"people":[],"groups":[],"start":null,"trips":[]};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
@@ -22,7 +22,7 @@ state.trips.forEach(t=>t.weight=Math.max(1,Math.round(+t.weight||1)));
 const active=()=>state.people.filter(p=>!p.archived&&!p.deleted);
 // chi gestisce i componenti: chi ha creato la squadra (o chiunque, se l'app non è collegata a una squadra)
 const isAdmin=()=>!window.__startLocked;
-// true: si può creare una squadra, ma una sola per telefono (vedi canNewTeam in app-sync.js). false: nessuno può crearne, si può solo entrare con un codice.
+// true: si può creare una squadra solo se non si appartiene già a una (vedi canNewTeam in app-sync.js). false: nessuno può crearne, si può solo entrare con un codice.
 const ALLOW_NEW_TEAMS=true;
 // condividere l'app e il codice della squadra: solo il creatore della squadra
 const canShare=()=>isAdmin();
