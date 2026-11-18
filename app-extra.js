@@ -1,4 +1,6 @@
-(window.__V=window.__V||{})['app-extra']='7.5.8';
+(window.__V=window.__V||{})['app-extra']='7.5.9';
+// l'invito va letto subito: più sotto il parametro ?squadra= viene tolto dall'indirizzo
+const SPL_INV=(()=>{try{return /(^|[?&])squadra=/.test(location.search)}catch(e){return false}})();
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
 const APP_URL='https://mariolive82100.github.io/collegauto/';
 const appBase=()=>location.protocol==='https:'&&!inViewer?location.origin+location.pathname:APP_URL;
@@ -34,6 +36,44 @@ $('sh-copy').onclick=()=>{if(!canShare())return;const {url}=shareData();const ok
   location.hash='squadra';
   setTimeout(()=>{if(sync.code){$('team-join-box').hidden=false;$('team-join-code').value=inv}else $('sync-join-code').value=inv;
     smsg('Hai ricevuto un invito: scegli il tuo nome se te lo chiede e tocca "Entra".');window.scrollTo(0,0)},150)})();
+// ===================== Schermata di benvenuto (chi arriva da un link) =====================
+// Si vede una volta per telefono, solo nel browser (non nell'app installata): da un invito alla squadra, oppure se non c'è ancora nulla. Per provarla: aggiungi ?splash=1 al link.
+(function(){
+  let seen='',force=false;try{seen=localStorage.getItem('ca-splash');force=/(^|[?&])splash=1/.test(location.search)}catch(e){seen='1'}
+  const web=location.protocol==='https:'&&!inViewer||force;
+  if(!force&&(seen||!web||matchMedia('(display-mode: standalone)').matches||navigator.standalone===true))return;
+  if(!force&&!SPL_INV&&(sync.code||state.people.length))return;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const W='<g class="spl-wh"><circle r="15" fill="#161b1e" stroke="#0a0c0d" stroke-width="2"/><circle r="8.5" fill="#aab6ba"/><path d="M0-8V8M-8 0H8M-5.6-5.6L5.6 5.6M5.6-5.6L-5.6 5.6" stroke="#161b1e" stroke-width="1.6"/><circle r="2.4" fill="#161b1e"/></g>';
+  const el=document.createElement('div');el.id='splash';el.className='spl';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-labelledby','spl-h');
+  el.innerHTML=`<div class="spl-head"><img class="spl-logo" src="icon-192.png" alt="" width="64" height="64"><h1 class="spl-h" id="spl-h">Colleg<span>Auto</span></h1><p class="spl-tag">Chi guida, chi viaggia, a chi tocca.<br>Il car sharing tra colleghi, a somma zero.</p></div>
+<div class="spl-stage" aria-hidden="true"><div class="spl-city"></div><div class="spl-road"></div><div class="spl-spd"><i></i><i></i><i></i></div>
+<div class="spl-car"><div class="spl-pts"><b>+2</b><b>−1</b><b>−1</b></div><span class="spl-puff"></span><span class="spl-puff"></span><span class="spl-puff"></span>
+<svg viewBox="0 0 240 100"><ellipse cx="120" cy="96" rx="112" ry="5" fill="#000" opacity=".28"/>
+<polygon class="spl-beam" points="228,64 330,44 330,86" fill="#ffe9a8" opacity=".5"/>
+<g class="bd"><defs><linearGradient id="splg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6bd5c"/><stop offset="1" stop-color="#d98e1c"/></linearGradient></defs>
+<circle cx="56" cy="82" r="19" fill="var(--bg)"/><circle cx="186" cy="82" r="19" fill="var(--bg)"/>
+<path d="M8 76V66Q8 58 18 56L44 52Q56 34 80 30H140Q168 32 184 52L214 56Q232 60 232 72V76Q232 82 226 82H14Q8 82 8 76Z" fill="url(#splg)"/>
+<path d="M58 52Q66 38 82 35H112V52Z M120 35H140Q158 38 170 52H120Z" fill="#2a6f68"/>
+<g fill="#10181a" opacity=".85"><circle cx="82" cy="46" r="5.5"/><circle cx="100" cy="46" r="5.5"/><circle cx="142" cy="46" r="5.5"/></g>
+<path d="M62 52Q70 40 84 37" stroke="#fff" stroke-opacity=".35" stroke-width="2" fill="none"/>
+<path d="M115 36V80" stroke="#a96a0f" stroke-width="1.5"/><path d="M12 68H228" stroke="#3fc1b0" stroke-width="2.4" opacity=".9"/>
+<rect x="8" y="60" width="5" height="7" rx="1.5" fill="#e0705e"/><rect x="223" y="60" width="9" height="7" rx="2" fill="#fff6c8"/></g>
+<g transform="translate(56 82)">${W}</g><g transform="translate(186 82)">${W}</g></svg></div></div>
+<div class="spl-foot"><button type="button" class="spl-inst" id="spl-inst"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>Installa app</button>
+<div class="spl-how" id="spl-how" hidden></div><button type="button" class="spl-skip" id="spl-skip">Continua nel browser</button></div>`;
+  document.body.appendChild(el);
+  const close=()=>{try{localStorage.setItem('ca-splash','1')}catch(e){}el.remove();document.removeEventListener('keydown',esc);dispatchEvent(new Event('splash-closed'))};
+  const esc=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',esc);
+  $('spl-skip').onclick=close;
+  $('spl-inst').onclick=async()=>{
+    if(typeof installEvt!=='undefined'&&installEvt){installEvt.prompt();try{const r=await installEvt.userChoice;if(r&&r.outcome==='accepted')close()}catch(e){}return}
+    const h=$('spl-how');h.hidden=false;
+    h.innerHTML=ios?'In Safari tocca <span class="ins-share" aria-label="Condividi"></span> <b>Condividi</b>, poi <b>Aggiungi alla schermata Home</b>.'
+      :'Apri il menu del browser (⋮) e scegli <b>Installa app</b> oppure <b>Aggiungi a schermata Home</b>.'};
+  addEventListener('appinstalled',close);
+  $('spl-inst').focus({preventScroll:true});
+})();
 // ===================== Menu a panino =====================
 function openMenu(){$('drawer').hidden=false;$('drawer-bg').hidden=false;$('menu-open').setAttribute('aria-expanded','true')}
 function closeMenu(){$('drawer').hidden=true;$('drawer-bg').hidden=true;$('menu-open').setAttribute('aria-expanded','false')}
@@ -82,6 +122,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.5.9','Nuova schermata di benvenuto animata per chi arriva da un link, con il pulsante Installa app. Il tutorial parte solo dopo la registrazione.'],
  ['7.5.8','Corretto l\'indicatore "in attesa di rete": ora passa a verde appena il server conferma i dati.'],
  ['7.5.5','Collegamento più tollerante sulle reti che bloccano la sincronizzazione; in Info il motivo è più chiaro.'],
  ['7.5.4','Più affidabile: se l\'app trova file di versioni diverse, si ripara da sola. In Info vedi le versioni dei file.'],

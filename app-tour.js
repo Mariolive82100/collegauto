@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-tour']='7.5.4';
+(window.__V=window.__V||{})['app-tour']='7.5.9';
 // ===================== Tutorial al primo utilizzo =====================
 // Compare una sola volta per telefono (scelta ricordata in localStorage) e si rivede dal menu: "Come si usa".
 const TOUR_KEY='ca-tour-done';
@@ -59,9 +59,14 @@ function openTour(){
 function closeTour(){const el=document.getElementById('tour');if(el)el.hidden=true;tourDone();
   try{if(tourBack&&tourBack.focus)tourBack.focus()}catch(e){}}
 $('menu-tour').onclick=e=>{e.preventDefault();openTour()};
-// prima apertura: parte da solo, una volta
+// prima apertura: parte da solo, una volta, ma solo dopo la registrazione (squadra scelta + nome scelto) e dopo la schermata di benvenuto
 (function(){let done='';try{done=localStorage.getItem(TOUR_KEY)}catch(e){done='1'}
-  if(!done)setTimeout(()=>{if(!document.getElementById('tour')||document.getElementById('tour').hidden)openTour()},900)})();
+  if(done)return;
+  const t=setInterval(()=>{
+    const tr=document.getElementById('tour'),wh=document.getElementById('whoami');
+    if(document.getElementById('splash')||(tr&&!tr.hidden)||(wh&&!wh.hidden))return;
+    if(!(sync&&sync.code&&sync.me))return;
+    clearInterval(t);openTour()},1500)})();
 
 // controllo finale: ogni file deve avere la stessa versione richiesta dall'index. Se no (copia vecchia in cache), si svuota la cache e si ricarica una volta.
 (function(){try{const bad=[];document.querySelectorAll('script[src]').forEach(s=>{const m=(s.getAttribute('src')||'').match(/^(app-[a-z]+)\.js\?v=(.+)$/);if(m&&(!window.__V||window.__V[m[1]]!==m[2]))bad.push(m[1])});
