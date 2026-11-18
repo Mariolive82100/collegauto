@@ -81,6 +81,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.3','App divisa in più file per aggiornamenti più rapidi; la versione nell\'intestazione ora è sempre aggiornata.'],
  ['7.2','Sicurezza: ogni nome è associato a un solo telefono (il creatore può liberarlo dal menu del partecipante), i colleghi possono solo inserire viaggi da confermare con peso 1 e il registro delle modifiche non è falsificabile.'],
  ['7.1','Sicurezza: i permessi da creatore sono verificati dal server e la password amministratore non è più salvata nei dati condivisi. Le zone restano modificabili da tutti.'],
  ['7.0','Prenotazione: nel tasto "Orario normale" c\'è un interruttore FLEX che porta l\'orario a 7:30–16:00.'],
@@ -133,8 +134,9 @@ const NOTES=[
  ['1.6','Condivisione in tempo reale tra colleghi.'],
  ['1.4','Inserimento guidato di un viaggio.'],
  ['1.0','Prima versione: punti a somma zero per ogni auto.']];
+$('app-ver').textContent='v'+APP_VERSION;   // intestazione sempre allineata alla versione
 function renderInfo(){
-  $('info-ver').textContent=` versione ${APP_VERSION}`;
+  $('info-ver').textContent=` versione ${APP_VERSION}`;$('app-ver').textContent='v'+APP_VERSION;
   const rows=[['Squadra',sync.code?teamLabel(curTeam()):'nessuna (dati solo su questo dispositivo)'],['Il tuo nome',sync.me||'—'],
     ['Sincronizzazione',{off:'non attiva',wait:'connessione…',ok:'attiva',pending:'in attesa di rete',bad:'errore'}[syncState]||syncState],
     ['Componenti',String(active().length)],['Viaggi registrati',String(state.trips.filter(t=>!t.hist&&!t.pend).length)],
