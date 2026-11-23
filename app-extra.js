@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-extra']='7.5.13';
+(window.__V=window.__V||{})['app-extra']='7.5.14';
 // l'invito va letto subito: più sotto il parametro ?squadra= viene tolto dall'indirizzo
 const SPL_INV=(()=>{try{return /(^|[?&])squadra=/.test(location.search)}catch(e){return false}})();
 // ===================== Condividi l'app (link, QR, WhatsApp, Telegram) e inviti alla squadra =====================
@@ -134,6 +134,7 @@ $('sug-send').onclick=()=>{const t=$('sug-text').value.trim();if(!t)return;
 
 // ===================== Info sull'app =====================
 const NOTES=[
+ ['7.5.14','I viaggi fatti da una sola persona non compaiono più tra quelli da confermare.'],
  ['7.5.9','Nuova schermata di benvenuto animata per chi arriva da un link, con il pulsante Installa app. Il tutorial parte solo dopo la registrazione.'],
  ['7.5.13','La schermata di benvenuto con Installa app compare a ogni apertura nel browser (non nell\'app installata), anche senza codice d\'invito.'],
  ['7.5.12','Gli aggiornamenti arrivano subito anche aprendo un link: la pagina non resta più in cache per 10 minuti.'],

@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-prenotazioni']='7.5.4';
+(window.__V=window.__V||{})['app-prenotazioni']='7.5.14';
 // ===================== Prenotazioni: presenze e auto composte in automatico =====================
 // Una sola prenotazione per il prossimo viaggio: prima delle 7:00 è quello di oggi, dopo le 7:00 quello di domani.
 // state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, present:true, drive:'si'|'no'|'forse', seats?, by, t}  oppure  {.., absent:true}]
@@ -173,7 +173,7 @@ const planId=d=>'plan_'+d;
 const planOf=d=>(state.bookings||[]).find(b=>b.id===planId(d));
 function pendingDates(){const td=tripDay(),reg=new Set(state.trips.filter(t=>!t.hist&&!t.pend).map(t=>t.date)),ds=new Set();
   (state.bookings||[]).forEach(b=>{if(b.date<td&&((b.pid&&!b.absent&&state.people.some(p=>p.id===b.pid))||b.plan))ds.add(b.date)});
-  return [...ds].filter(d=>{const p=planOf(d);return !(p&&(p.done||p.discarded))&&!reg.has(d)}).sort()}
+  return [...ds].filter(d=>{const p=planOf(d);return !(p&&(p.done||p.discarded))&&!reg.has(d)&&(p||pendingCars(d).some(c=>c.driver&&c.passengers.length))}).sort()}   // viaggi fatti da una persona sola: non serve confermarli
 function pendingCars(d){const p=planOf(d);if(p&&Array.isArray(p.cars))return p.cars.map(c=>({driver:c.driver,passengers:[...(c.passengers||[])],grp:c.grp||''}));
   return bkLayout(d).cars.map(c=>({driver:c.driver,passengers:[...c.pax],grp:c.grp||''}))}
 function savePlan(d,cars,extra={}){bkWrite({id:planId(d),date:d,plan:true,cars:cars.map(c=>({driver:c.driver,passengers:[...c.passengers],grp:c.grp||''})),by:sync.me||'',t:new Date().toISOString(),...extra})}
