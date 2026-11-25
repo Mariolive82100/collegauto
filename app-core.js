@@ -1,5 +1,13 @@
-(window.__V=window.__V||{})['app-core']='7.5.14';
-const APP_VERSION='7.5.14';
+(window.__V=window.__V||{})['app-core']='7.5.15';
+const APP_VERSION='7.5.15';
+// BETA: stessa app pubblicata in /beta/. Memoria del telefono e dati online separati da quelli veri.
+const BETA=/\/beta\/(index\.html)?$/.test(location.pathname);
+if(BETA){
+  try{const P=Storage.prototype;['getItem','setItem','removeItem'].forEach(m=>{const f=P[m];P[m]=function(k,...a){return f.call(this,'beta:'+k,...a)}})}catch(e){}
+  const tag=document.createElement('div');tag.id='beta-tag';tag.textContent='BETA · dati di prova';
+  tag.style.cssText='position:fixed;top:env(safe-area-inset-top,0px);left:50%;transform:translateX(-50%);z-index:2147483647;background:#ffb300;color:#000;font:700 11px/1.6 system-ui,sans-serif;padding:0 10px;border-radius:0 0 8px 8px;pointer-events:none;white-space:nowrap';
+  document.body.appendChild(tag);document.title='CollegAuto BETA';
+}
 // ultimi errori del codice, mostrati in Info sull'app (aiuta a capire cosa non va)
 window.__errs=[];addEventListener('error',e=>{__errs.push(String(e.message||'errore').slice(0,70)+' @'+String(e.filename||'').split('/').pop().split('?')[0]+':'+e.lineno)});
 addEventListener('unhandledrejection',e=>{const r=e.reason;__errs.push('promessa: '+String(r&&(r.code||r.message)||r).slice(0,70))});

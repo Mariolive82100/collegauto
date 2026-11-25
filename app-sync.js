@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-sync']='7.5.14';
+(window.__V=window.__V||{})['app-sync']='7.5.15';
 // ===================== Condivisione con i colleghi (Firebase Firestore) =====================
 // Percorsi: gruppi/{codice}/viaggi/{id} (un documento per viaggio, cancellazione = deleted:true)
 //           gruppi/{codice}/meta/stato   (persone, gruppi, punti di partenza: vince l'ultima modifica)
@@ -30,7 +30,8 @@ function applyAdmin(){
   if(!!sync.creator!==adminOk){sync.creator=adminOk;const t=sync.teams.find(x=>x.code===sync.code);if(t)t.creator=adminOk;saveSync();renderSync();render()}}
 const clean=o=>JSON.parse(JSON.stringify(o));
 const core=t=>JSON.stringify({date:t.date,weight:t.weight||1,note:t.note||'',cars:t.cars||[],hist:!!t.hist,pend:!!t.pend});
-const gref=()=>fsdb.collection('gruppi').doc(sync.code);
+// la beta scrive in documenti a parte (beta-CODICE): non può toccare le squadre vere
+const gref=()=>fsdb.collection('gruppi').doc((BETA?'beta-':'')+sync.code);
 function newCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r=new Uint32Array(16);crypto.getRandomValues(r);
   const c=[...r].map(x=>A[x%A.length]).join('');return 'COL-'+c.match(/.{4}/g).join('-')}
 const normCode=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9-]/g,'').replace(/^(?!(BLA|COL)-)/,'COL-');
@@ -53,7 +54,7 @@ async function syncStart(){
       // reti che bloccano il collegamento continuo: si passa da sola a una modalità più tollerante (stesso numero di letture)
       try{fsdb.settings({experimentalAutoDetectLongPolling:true,merge:true})}catch(e){}
       // cache locale: alla riapertura i documenti già scaricati si leggono dal telefono e il server invia solo le novità
-      try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
+      if(!BETA)try{await fsdb.enablePersistence({synchronizeTabs:true})}catch(e){/* più schede o browser senza IndexedDB: si continua senza */}}
   }catch(e){setSync('pending',String(e&&(e.code||e.message)||e).slice(0,80));setTimeout(syncStart,15000);return}
   unsubs.push(gref().collection('viaggi').onSnapshot({includeMetadataChanges:true},snap=>{remoteTrips=new Map();snap.forEach(d=>remoteTrips.set(d.id,d.data()));
       syncMerge(snap.metadata.fromCache||snap.metadata.hasPendingWrites)},e=>setSync('bad',e.code)));

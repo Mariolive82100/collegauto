@@ -1,0 +1,48 @@
+# Pubblica il sito: ramo main nella pagina principale, ramo beta in /beta/
+name: Pubblica sito
+on:
+  push:
+    branches: [main, beta]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  # un push su beta chiede la pubblicazione al ramo main (GitHub pubblica solo da lì)
+  richiama:
+    if: github.ref != 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: gh workflow run pages.yml --ref main -R "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+  pubblica:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main, path: main }
+      - uses: actions/checkout@v4
+        with: { ref: beta, path: beta }
+      - name: Prepara il sito
+        run: |
+          mkdir -p site/beta
+          rsync -a --exclude .git --exclude .github main/ site/
+          rsync -a --delete --exclude .git --exclude .github beta/ site/beta/
+          sed -i 's/"CollegAuto"/"CollegAuto BETA"/g' site/beta/manifest.webmanifest
+          sed -i 's/\(apple-mobile-web-app-title" content="\)CollegAuto"/\1CA BETA"/' site/beta/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+      - id: deploy
+        uses: actions/deploy-pages@v4

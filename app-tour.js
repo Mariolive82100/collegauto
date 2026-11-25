@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-tour']='7.5.14';
+(window.__V=window.__V||{})['app-tour']='7.5.15';
 // ===================== Tutorial al primo utilizzo =====================
 // Compare una sola volta per telefono (scelta ricordata in localStorage) e si rivede dal menu: "Come si usa".
 const TOUR_KEY='ca-tour-done';
@@ -72,4 +72,4 @@ $('menu-tour').onclick=e=>{e.preventDefault();openTour()};
 (function(){try{const bad=[];document.querySelectorAll('script[src]').forEach(s=>{const m=(s.getAttribute('src')||'').match(/^(app-[a-z]+)\.js\?v=(.+)$/);if(m&&(!window.__V||window.__V[m[1]]!==m[2]))bad.push(m[1])});
   window.__bad=bad;if(!bad.length)return;
   if(sessionStorage.getItem('ca-heal'))return;sessionStorage.setItem('ca-heal','1');
-  (async()=>{try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}catch(e){}location.reload()})()}catch(e){}})();
+  (async()=>{try{const ks=await caches.keys();await Promise.all(ks.filter(k=>k.startsWith('collegauto-beta-')===BETA).map(k=>caches.delete(k)));const here=new URL('./',location.href).href,rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.filter(r=>r.scope===here).map(r=>r.unregister()))}catch(e){}location.reload()})()}catch(e){}})();

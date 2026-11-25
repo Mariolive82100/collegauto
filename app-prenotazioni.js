@@ -1,4 +1,4 @@
-(window.__V=window.__V||{})['app-prenotazioni']='7.5.14';
+(window.__V=window.__V||{})['app-prenotazioni']='7.5.15';
 // ===================== Prenotazioni: presenze e auto composte in automatico =====================
 // Una sola prenotazione per il prossimo viaggio: prima delle 7:00 è quello di oggi, dopo le 7:00 quello di domani.
 // state.bookings = [{id:'AAAA-MM-GG_idPersona', date, pid, present:true, drive:'si'|'no'|'forse', seats?, by, t}  oppure  {.., absent:true}]
