@@ -20,16 +20,9 @@ jobs:
       - run: gh workflow run pages.yml --ref main -R "$GITHUB_REPOSITORY"
         env:
           GH_TOKEN: ${{ github.token }}
-  pubblica:
+  prepara:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
         with: { ref: main, path: main }
@@ -44,5 +37,16 @@ jobs:
           sed -i 's/\(apple-mobile-web-app-title" content="\)CollegAuto"/\1CA BETA"/' site/beta/index.html
       - uses: actions/upload-pages-artifact@v3
         with: { path: site }
+  # fase separata: evita l'errore di GitHub "No artifacts named github-pages"
+  pubblica:
+    needs: prepara
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - id: deploy
         uses: actions/deploy-pages@v4
